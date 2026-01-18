@@ -39,3 +39,22 @@ Metrics are designed to make failures visible, not hidden.
 ## Local quickstart
 ```bash
 make up
+
+## Failure drills (reproducible)
+
+Faultline ships with operational drills that validate correctness under real failure:
+
+- **Worker crash mid-job:** leased jobs are reclaimed after lease expiry and complete without double-write.
+- **Duplicate submission:** idempotency guarantees prevent duplicate rows and duplicate execution.
+- **Database outage:** workers tolerate transient DB/DNS failures and resume processing after recovery.
+
+See `drills/` for step-by-step commands and expected outcomes.
+
+
+### Proof (local run)
+
+```bash
+curl -X POST http://localhost:8000/jobs \
+  -H "Content-Type: application/json" \
+  -d '{"payload":{"fail_n_times":2},"idempotency_key":"proof-1"}'
+# {"job_id":"6b356cc7-f8a4-4ca6-8227-0c3d57153559"}
