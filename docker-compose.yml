@@ -1,24 +1,63 @@
+version: "3.9"
+
 services:
   postgres:
-    image: postgres:16
+    image: postgres:15
+    container_name: faultline-postgres
     environment:
       POSTGRES_USER: faultline
       POSTGRES_PASSWORD: faultline
       POSTGRES_DB: faultline
     ports:
-      - "5433:5432"
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U faultline -d faultline"]
-      interval: 2s
-      timeout: 2s
-      retries: 30
+      test: ["CMD-SHELL", "pg_isready -U faultline"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7
+    container_name: faultline-redis
     ports:
       - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 2s
-      timeout: 2s
-      retries: 30
+    command: redis-server --save 60 1 --loglevel warning
+
+  api:
+    build: ./services/api
+    container_name: faultline-api
+    environment:
+      DATABASE_URL: postgres://faultline:faultline@postgres:5432/faultline
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    ports:
+      - "8000:8000"
+
+  worker:
+    build: ./services/worker
+    container_name: faultline-worker
+    environment:
+      DATABASE_URL: postgres://faultline:faultline@postgres:5432/faultline
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: faultline-prometheus
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+volumes:
+  postgres_data:

@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: "faultline-api"
+    static_configs:
+      - targets: ["api:8000"]
+
+  - job_name: "faultline-worker"
+    static_configs:
+      - targets: ["worker:8000"]
