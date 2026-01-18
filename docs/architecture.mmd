@@ -1,0 +1,15 @@
+
+---
+### Create `docs/architecture.mmd`
+
+```mermaid
+flowchart LR
+    Client --> API
+    API -->|enqueue| Redis
+    API --> Postgres
+
+    Worker -->|claim job| Redis
+    Worker --> Postgres
+
+    API -->|metrics| Prometheus
+    Worker -->|metrics| Prometheus
