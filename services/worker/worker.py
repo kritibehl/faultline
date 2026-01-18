@@ -40,6 +40,23 @@ def get_conn():
     return psycopg2.connect(DATABASE_URL)
 
 
+def wait_for_schema(timeout_seconds=60):
+    """
+    Block worker startup until the jobs table exists.
+    Prevents crash loops on cold start before migrations run.
+    """
+    deadline = time.time() + timeout_seconds
+    while time.time() < deadline:
+        try:
+            with get_conn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("SELECT 1 FROM jobs LIMIT 1;")
+            return
+        except Exception:
+            time.sleep(2)
+    raise RuntimeError("schema not ready after waiting")
+
+
 def claim_one_job(cur):
     lease_until = datetime.utcnow() + timedelta(seconds=LEASE_SECONDS)
     cur.execute(
@@ -150,6 +167,9 @@ def mark_failed(cur, job_id, attempts, error_msg):
 if __name__ == "__main__":
     start_http_server(8000)
 
+    # Ensure schema exists before processing jobs
+    wait_for_schema()
+
     while True:
         heartbeat.inc()
 
@@ -166,10 +186,10 @@ if __name__ == "__main__":
                         fail_n = get_fail_n_times(payload)
                         if attempts < fail_n:
                             raise RuntimeError(
-                                f"simulated failure (attempt {attempts+1}/{fail_n})"
+                                f"simulated failure (attempt {attempts + 1}/{fail_n})"
                             )
 
-                        # Work succeeded
+                        # Simulated work
                         time.sleep(2)
                         mark_succeeded(cur, job_id)
                         jobs_succeeded.inc()
@@ -179,7 +199,6 @@ if __name__ == "__main__":
                         msg = str(e)
 
                         if new_attempts < max_attempts:
-                            # Exponential backoff: 2,4,8,... capped at 30
                             delay = min(30, 2 ** max(1, new_attempts))
                             schedule_retry(cur, job_id, new_attempts, delay, msg)
                             retries_total.inc()
