@@ -4,6 +4,7 @@ import uuid
 from datetime import datetime, timedelta
 
 import psycopg2
+from psycopg2 import OperationalError
 from prometheus_client import Counter, start_http_server
 
 DATABASE_URL = os.environ["DATABASE_URL"]
@@ -173,37 +174,43 @@ if __name__ == "__main__":
     while True:
         heartbeat.inc()
 
-        with get_conn() as conn:
-            with conn.cursor() as cur:
-                job_id = claim_one_job(cur)
-                if job_id:
-                    jobs_claimed.inc()
+        try:
+            with get_conn() as conn:
+                with conn.cursor() as cur:
+                    job_id = claim_one_job(cur)
+                    if job_id:
+                        jobs_claimed.inc()
 
-                    payload, attempts, max_attempts = get_job(cur, job_id)
+                        payload, attempts, max_attempts = get_job(cur, job_id)
 
-                    try:
-                        # Deterministic failure simulation: fail first N times
-                        fail_n = get_fail_n_times(payload)
-                        if attempts < fail_n:
-                            raise RuntimeError(
-                                f"simulated failure (attempt {attempts + 1}/{fail_n})"
-                            )
+                        try:
+                            # Deterministic failure simulation: fail first N times
+                            fail_n = get_fail_n_times(payload)
+                            if attempts < fail_n:
+                                raise RuntimeError(
+                                    f"simulated failure (attempt {attempts + 1}/{fail_n})"
+                                )
 
-                        # Simulated work
-                        time.sleep(2)
-                        mark_succeeded(cur, job_id)
-                        jobs_succeeded.inc()
+                            # Simulated work
+                            time.sleep(2)
+                            mark_succeeded(cur, job_id)
+                            jobs_succeeded.inc()
 
-                    except Exception as e:
-                        new_attempts = attempts + 1
-                        msg = str(e)
+                        except Exception as e:
+                            new_attempts = attempts + 1
+                            msg = str(e)
 
-                        if new_attempts < max_attempts:
-                            delay = min(30, 2 ** max(1, new_attempts))
-                            schedule_retry(cur, job_id, new_attempts, delay, msg)
-                            retries_total.inc()
-                        else:
-                            mark_failed(cur, job_id, new_attempts, msg)
-                            jobs_failed.inc()
+                            if new_attempts < max_attempts:
+                                delay = min(30, 2 ** max(1, new_attempts))
+                                schedule_retry(cur, job_id, new_attempts, delay, msg)
+                                retries_total.inc()
+                            else:
+                                mark_failed(cur, job_id, new_attempts, msg)
+                                jobs_failed.inc()
+
+        except OperationalError:
+            # DB down / DNS hiccup / transient network failure.
+            # Don't crash the worker; back off and retry.
+            time.sleep(2)
 
         time.sleep(2)
