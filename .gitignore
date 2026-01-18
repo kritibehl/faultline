@@ -1,7 +1,23 @@
-cat <<EOF > .gitignore
-.venv/
+# Python
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 .env
+.venv
+venv/
+
+# OS
 .DS_Store
-EOF
+
+# Tooling
+.pytest_cache/
+.mypy_cache/
+.coverage
+
+# Docker
+*.log
+
+# IDE
+.vscode/
+.idea/
