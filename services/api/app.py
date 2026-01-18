@@ -1,5 +1,6 @@
 import uuid
 import hashlib
+from psycopg2.extras import Json
 
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -35,7 +36,7 @@ async def count_requests(request, call_next):
 
 @app.post("/jobs")
 def create_job(req: JobRequest):
-    job_id = uuid.uuid4()
+    job_id = str(uuid.uuid4())
 
     payload_bytes = str(req.payload).encode("utf-8")
     payload_hash = hashlib.sha256(payload_bytes).hexdigest()
@@ -63,7 +64,7 @@ def create_job(req: JobRequest):
                 INSERT INTO jobs (id, idempotency_key, payload_hash, state, payload)
                 VALUES (%s, %s, %s, %s, %s)
                 """,
-                (job_id, req.idempotency_key, payload_hash, "queued", req.payload)
+                (job_id, req.idempotency_key, payload_hash, "queued", Json(req.payload))
             )
 
     return {"job_id": job_id}
