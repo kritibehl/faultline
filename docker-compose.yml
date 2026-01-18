@@ -1,4 +1,3 @@
-
 services:
   postgres:
     image: postgres:15
@@ -37,6 +36,8 @@ services:
         condition: service_started
     ports:
       - "8000:8000"
+    volumes:
+      - ./migrations:/app/migrations:ro
 
   worker:
     build: ./services/worker

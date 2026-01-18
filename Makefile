@@ -14,3 +14,5 @@ ps:
 
 clean:
 	docker compose down -v
+migrate:
+	docker compose run --rm api python migrate.py
