@@ -1,8 +1,9 @@
 # Faultline — Production-Grade Distributed Job Processing System
 
 Faultline is a PostgreSQL-backed distributed job processing system designed for **correctness under failure**.
-It uses Postgres as the **source of truth**, with **lease-based execution** and **row-level locking**
+It uses PostgreSQL as the **source of truth and coordination layer**, with **lease-based execution** and **row-level locking**
 (`FOR UPDATE SKIP LOCKED`) to provide crash-safe recovery and at-least-once execution semantics.
+
 
 
 ## Why This Exists
@@ -66,6 +67,14 @@ Faultline includes scripted failure drills that validate system behavior under:
 - Lease expiration and recovery by other workers
 
 These drills demonstrate that the system recovers without manual intervention.
+
+## Tech Stack
+
+- Python
+- PostgreSQL
+- Docker
+- Prometheus
+
 
 ## Features
 - **Durable job state machine**: `queued → running → succeeded|failed`
