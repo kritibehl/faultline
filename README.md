@@ -74,17 +74,6 @@ These drills demonstrate that the system recovers without manual intervention.
 - PostgreSQL
 - Docker
 - Prometheus
-
-
-## Features
-- **Durable job state machine**: `queued → running → succeeded|failed`
-- **Lease-based execution**: `lease_owner`, `lease_expires_at`
-- **Crash recovery**: expired leases are re-claimed automatically
-- **Hard idempotency**: idempotency key enforced at DB level
-- **Retries w/ exponential backoff**: `next_run_at`, `attempts`, `max_attempts`
-- **Terminal failure** after max attempts
-- **Observability**: Prometheus metrics for API + worker
-- **Failure drills**: scripted proof that the system recovers
   
 ## Quickstart
 
