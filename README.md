@@ -67,6 +67,8 @@ These drills demonstrate that the system recovers without manual intervention.
 
 ## Correctness Guarantees (Retry-Safe Ledger Semantics)
 
+**Schema-backed invariant:** Each job may produce at most one ledger entry (`ledger_entries.job_id UNIQUE`), enforcing idempotent application at the database boundary.
+
 Faultline is designed to behave predictably under retries, partial failures, and worker crashes by enforcing correctness at the database boundary.
 
 ### Guarantees
