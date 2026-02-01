@@ -113,6 +113,38 @@ def get_job(cur, job_id):
 
 
 def mark_succeeded(cur, job_id):
+    """
+    Payments-grade idempotent success:
+    - ledger_entries.job_id UNIQUE is the at-most-once boundary
+    - job is marked succeeded iff a ledger entry exists (inserted now or earlier)
+    """
+
+    # Serialize state transition for this job
+    cur.execute(
+        """
+        SELECT id, state
+        FROM jobs
+        WHERE id = %s
+        FOR UPDATE
+        """,
+        (job_id,),
+    )
+
+    # Minimal ledger semantics for now (we’ll wire payload later)
+    account_id = "default"
+    delta = 1
+
+    # Idempotent apply (at-most-once)
+    cur.execute(
+        """
+        INSERT INTO ledger_entries (job_id, account_id, delta)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (job_id) DO NOTHING
+        """,
+        (job_id, account_id, delta),
+    )
+
+    # Converge state: succeed if ledger exists (inserted now or earlier)
     cur.execute(
         """
         UPDATE jobs
@@ -123,8 +155,9 @@ def mark_succeeded(cur, job_id):
             next_run_at = NULL,
             updated_at = NOW()
         WHERE id = %s
+          AND EXISTS (SELECT 1 FROM ledger_entries WHERE job_id = %s)
         """,
-        (job_id,),
+        (job_id, job_id),
     )
 
 
