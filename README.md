@@ -65,6 +65,27 @@ Faultline includes scripted failure drills that validate system behavior under:
 
 These drills demonstrate that the system recovers without manual intervention.
 
+## Correctness Guarantees (Retry-Safe Ledger Semantics)
+
+Faultline is designed to behave predictably under retries, partial failures, and worker crashes by enforcing correctness at the database boundary.
+
+### Guarantees
+- **Idempotent effects:** Each transaction/job is applied **at most once** using an idempotency key (`transaction_id`) and database uniqueness constraints.
+- **Atomic visibility:** Applying an effect and recording its ledger entry happens in a **single database transaction**, preventing partial state from becoming visible.
+- **Ordered state transitions:** Jobs/transactions follow a strict lifecycle (e.g., `INIT → APPLIED → RECONCILED` or `INIT → FAILED`). Illegal transitions are rejected.
+- **Crash-safe recovery:** A periodic **reconciliation job** repairs incomplete state after crashes by ensuring ledger state and transaction state converge.
+
+### Supported Failure Scenarios
+- Worker crash mid-apply
+- Duplicate retries / duplicate submissions
+- Out-of-order retries
+- Partial writes (repaired by reconciliation)
+
+### Invariants (informal)
+- No duplicate ledger entries for the same `transaction_id`
+- A transaction marked `APPLIED` must have a corresponding ledger entry
+- Reconciliation eventually converges `INIT` transactions to the correct terminal state
+
 ## Tech Stack
 
 - Python  
