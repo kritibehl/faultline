@@ -10,7 +10,9 @@ from prometheus_client import Counter, start_http_server
 
 DATABASE_URL = os.environ["DATABASE_URL"]
 WORKER_ID = str(uuid.uuid4())
-LEASE_SECONDS = 30
+
+# Allow test to force short leases
+LEASE_SECONDS = int(os.getenv("LEASE_SECONDS", "30"))
 
 CRASH_AT = os.getenv("CRASH_AT")  # after_lease_acquire | mid_execute | before_commit | after_commit
 CLOCK_SKEW_MS = int(os.getenv("CLOCK_SKEW_MS", "0"))
@@ -18,6 +20,14 @@ CLOCK_SKEW_MS = int(os.getenv("CLOCK_SKEW_MS", "0"))
 BARRIER_WAIT = os.getenv("BARRIER_WAIT")
 BARRIER_OPEN = os.getenv("BARRIER_OPEN")
 BARRIER_TIMEOUT_S = int(os.getenv("BARRIER_TIMEOUT_S", "30"))
+
+# Allow deterministic timing in tests
+WORK_SLEEP_SECONDS = float(os.getenv("WORK_SLEEP_SECONDS", "2"))
+
+# Allow subprocess workers to exit in CI
+MAX_LOOPS = int(os.getenv("MAX_LOOPS", "0"))  # 0 = infinite
+EXIT_ON_SUCCESS = os.getenv("EXIT_ON_SUCCESS", "0") == "1"
+EXIT_ON_STALE = os.getenv("EXIT_ON_STALE", "0") == "1"
 
 
 # =============================
@@ -193,13 +203,22 @@ def assert_fence(cur, job_id, token):
             job_id=job_id,
             stale_token=token,
             current_token=current_token,
+            reason="token_mismatch",
         )
         raise RuntimeError("stale_token")
 
+    # Validate lease using DB time
     cur.execute("SELECT NOW()")
     now_db = cur.fetchone()[0]
 
     if lease_expires_at and lease_expires_at < now_db:
+        log_event(
+            "stale_write_blocked",
+            job_id=job_id,
+            stale_token=token,
+            current_token=current_token,
+            reason="lease_expired",
+        )
         raise RuntimeError("lease_expired")
 
 
@@ -218,6 +237,13 @@ def mark_succeeded(cur, job_id, token):
 
     current_token = int(row[0])
     if token != current_token:
+        log_event(
+            "stale_write_blocked",
+            job_id=job_id,
+            stale_token=token,
+            current_token=current_token,
+            reason="token_mismatch_precommit",
+        )
         raise RuntimeError("stale_token")
 
     account_id = "default"
@@ -262,31 +288,54 @@ if __name__ == "__main__":
     start_http_server(8000)
     wait_for_schema()
 
+    loops = 0
+
     while True:
+        if MAX_LOOPS and loops >= MAX_LOOPS:
+            log_event("worker_exit", reason="max_loops")
+            break
+        loops += 1
+
         heartbeat.inc()
 
         try:
             with get_conn() as conn:
                 with conn.cursor() as cur:
-
                     job_id, token = claim_one_job(cur)
 
-                    if job_id:
-                        jobs_claimed.inc()
+                    if not job_id:
+                        time.sleep(0.2)
+                        continue
 
+                    jobs_claimed.inc()
+                    log_event("execution_started", job_id=job_id, token=token)
+
+                    try:
+                        # Gate before doing work
                         assert_fence(cur, job_id, token)
 
-                        log_event("execution_started", job_id=job_id, token=token)
-
                         maybe_crash("mid_execute")
-                        time.sleep(2)
+                        time.sleep(WORK_SLEEP_SECONDS)
 
+                        # Gate again before commit/apply
                         assert_fence(cur, job_id, token)
 
                         mark_succeeded(cur, job_id, token)
                         jobs_succeeded.inc()
 
-        except OperationalError:
-            time.sleep(2)
+                        if EXIT_ON_SUCCESS:
+                            log_event("worker_exit", reason="success", job_id=job_id, token=token)
+                            break
 
-        time.sleep(2)
+                    except Exception as e:
+                        # For the lease-race CI test, we want stale workers to exit cleanly
+                        if str(e) in ("stale_token", "lease_expired") and EXIT_ON_STALE:
+                            log_event("worker_exit", reason="stale", error=str(e), job_id=job_id, token=token)
+                            break
+                        # Otherwise, surface error (keeps behavior loud during development)
+                        raise
+
+        except OperationalError:
+            time.sleep(0.5)
+
+        time.sleep(0.2)
