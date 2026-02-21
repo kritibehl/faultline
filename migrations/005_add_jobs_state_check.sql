@@ -1,6 +1,13 @@
 -- 005_add_jobs_state_check.sql
--- Enforce legal job lifecycle states
-
-ALTER TABLE jobs
-  ADD CONSTRAINT IF NOT EXISTS ck_jobs_state
-  CHECK (state IN ('queued','running','succeeded','failed'));
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'ck_jobs_state'
+  ) THEN
+    ALTER TABLE jobs
+      ADD CONSTRAINT ck_jobs_state
+      CHECK (state IN ('queued','running','succeeded','failed'));
+  END IF;
+END $$;
