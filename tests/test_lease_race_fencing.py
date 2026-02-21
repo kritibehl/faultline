@@ -35,8 +35,8 @@ def _seed_job(cur, job_id):
     payload = "{}"
     cur.execute(
         """
-        INSERT INTO jobs (id, payload, payload_hash, state, attempts, max_attempts)
-        VALUES (%s, %s, %s, 'queued', 0, 5)
+        INSERT INTO jobs (id, payload, payload_hash, state, attempts, max_attempts, next_run_at)
+        VALUES (%s, %s, %s, 'queued', 0, 5, NOW() + INTERVAL '1 day')
         """,
         (job_id, payload, _payload_hash(payload)),
     )
