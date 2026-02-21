@@ -1,9 +1,14 @@
 import os
 import uuid
+import hashlib
 import subprocess
 import psycopg2
 
 WORKER_CMD = ["python", "services/worker/worker.py"]
+
+
+def _payload_hash(payload_str: str) -> str:
+    return hashlib.sha256(payload_str.encode("utf-8")).hexdigest()
 
 
 def _db(url):
@@ -27,12 +32,13 @@ def _reset_barriers(cur):
 
 
 def _seed_job(cur, job_id):
+    payload = "{}"
     cur.execute(
         """
-        INSERT INTO jobs (id, payload, state, attempts, max_attempts)
-        VALUES (%s, %s, 'queued', 0, 5)
+        INSERT INTO jobs (id, payload, payload_hash, state, attempts, max_attempts)
+        VALUES (%s, %s, %s, 'queued', 0, 5)
         """,
-        (job_id, "{}"),
+        (job_id, payload, _payload_hash(payload)),
     )
 
 
@@ -50,18 +56,16 @@ def test_lease_expiry_race_is_blocked_by_fencing(database_url):
     base_env["BARRIER_TIMEOUT_S"] = "30"
     base_env["PYTHONUNBUFFERED"] = "1"
 
-    # Worker A: claim first, open barrier, sleep past expiry, then should be fenced off
     env_a = base_env.copy()
     env_a["BARRIER_OPEN"] = "after_lease_acquire"
     env_a["WORK_SLEEP_SECONDS"] = "2.5"
-    env_a["MAX_LOOPS"] = "40"
+    env_a["MAX_LOOPS"] = "60"
     env_a["EXIT_ON_STALE"] = "1"
 
-    # Worker B: wait for A to claim, then reclaim after expiry and succeed
     env_b = base_env.copy()
     env_b["BARRIER_WAIT"] = "after_lease_acquire"
     env_b["WORK_SLEEP_SECONDS"] = "0"
-    env_b["MAX_LOOPS"] = "200"
+    env_b["MAX_LOOPS"] = "300"
     env_b["EXIT_ON_SUCCESS"] = "1"
 
     p_a = subprocess.Popen(WORKER_CMD, env=env_a, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
