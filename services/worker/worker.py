@@ -8,12 +8,16 @@ import psycopg2
 from psycopg2 import OperationalError
 from prometheus_client import Counter, start_http_server
 
+
+# ============================================================
+# Environment
+# ============================================================
+
 DATABASE_URL = os.environ["DATABASE_URL"]
 WORKER_ID = str(uuid.uuid4())
 
 LEASE_SECONDS = int(os.getenv("LEASE_SECONDS", "30"))
-
-CRASH_AT = os.getenv("CRASH_AT")  # after_lease_acquire | mid_execute | before_commit | after_commit
+CRASH_AT = os.getenv("CRASH_AT")
 CLOCK_SKEW_MS = int(os.getenv("CLOCK_SKEW_MS", "0"))
 
 BARRIER_WAIT = os.getenv("BARRIER_WAIT")
@@ -22,21 +26,20 @@ BARRIER_TIMEOUT_S = int(os.getenv("BARRIER_TIMEOUT_S", "30"))
 
 WORK_SLEEP_SECONDS = float(os.getenv("WORK_SLEEP_SECONDS", "2"))
 
-MAX_LOOPS = int(os.getenv("MAX_LOOPS", "0"))  # 0 = infinite
+MAX_LOOPS = int(os.getenv("MAX_LOOPS", "0"))
 EXIT_ON_SUCCESS = os.getenv("EXIT_ON_SUCCESS", "0") == "1"
 EXIT_ON_STALE = os.getenv("EXIT_ON_STALE", "0") == "1"
 
-# Metrics server controls (avoid port collisions in tests)
 METRICS_ENABLED = os.getenv("METRICS_ENABLED", "1") == "1"
 METRICS_PORT = int(os.getenv("METRICS_PORT", "8000"))
 
-# Test-only override: force workers to claim a specific job id (bypasses next_run_at filter)
+# Test override: restrict claiming to one specific job id, but still obey lease rules.
 CLAIM_JOB_ID = os.getenv("CLAIM_JOB_ID")
 
 
-# =============================
-# Clock Abstraction
-# =============================
+# ============================================================
+# Clock
+# ============================================================
 
 class Clock:
     def now(self):
@@ -54,9 +57,9 @@ class SkewedClock(Clock):
 clock = SkewedClock(CLOCK_SKEW_MS) if CLOCK_SKEW_MS else Clock()
 
 
-# =============================
+# ============================================================
 # Logging
-# =============================
+# ============================================================
 
 def log_event(event, **fields):
     payload = {
@@ -74,15 +77,17 @@ def maybe_crash(point):
         os._exit(137)
 
 
-# =============================
-# Barrier Helpers
-# =============================
+# ============================================================
+# Barriers
+# ============================================================
 
-def open_barrier(cur, name):
+def open_barrier(conn, cur, name):
     cur.execute(
         "INSERT INTO barriers(name) VALUES (%s) ON CONFLICT DO NOTHING",
         (name,),
     )
+    # Ensure visibility across processes
+    conn.commit()
 
 
 def wait_barrier(cur, name, timeout_s):
@@ -95,10 +100,10 @@ def wait_barrier(cur, name, timeout_s):
     return False
 
 
-def maybe_barrier(cur, point):
+def maybe_barrier(conn, cur, point):
     if BARRIER_OPEN == point:
         log_event("barrier_open", name=point)
-        open_barrier(cur, point)
+        open_barrier(conn, cur, point)
 
     if BARRIER_WAIT == point:
         log_event("barrier_wait", name=point)
@@ -107,20 +112,20 @@ def maybe_barrier(cur, point):
             raise RuntimeError(f"barrier_timeout {point}")
 
 
-# =============================
+# ============================================================
 # Metrics
-# =============================
+# ============================================================
 
 heartbeat = Counter("faultline_worker_heartbeat_total", "Worker heartbeat ticks")
-jobs_claimed = Counter("faultline_jobs_claimed_total", "Jobs claimed by worker")
-jobs_succeeded = Counter("faultline_jobs_succeeded_total", "Jobs marked succeeded by worker")
-retries_total = Counter("faultline_retries_total", "Total job retries scheduled")
-jobs_failed = Counter("faultline_jobs_failed_total", "Total jobs marked failed")
+jobs_claimed = Counter("faultline_jobs_claimed_total", "Jobs claimed")
+jobs_succeeded = Counter("faultline_jobs_succeeded_total", "Jobs succeeded")
+jobs_failed = Counter("faultline_jobs_failed_total", "Jobs failed")
+retries_total = Counter("faultline_retries_total", "Retries")
 
 
-# =============================
+# ============================================================
 # DB Helpers
-# =============================
+# ============================================================
 
 def get_conn():
     return psycopg2.connect(DATABASE_URL)
@@ -136,28 +141,33 @@ def wait_for_schema(timeout_seconds=60):
             return
         except Exception:
             time.sleep(2)
-    raise RuntimeError("schema not ready after waiting")
+    raise RuntimeError("schema not ready")
 
 
-# =============================
+# ============================================================
 # Lease Claim
-# =============================
+# ============================================================
 
-def claim_one_job(cur):
+def claim_one_job(conn, cur):
     lease_until = clock.now() + timedelta(seconds=LEASE_SECONDS)
 
-    # Test override: force claim a specific job id (ignores next_run_at gating)
+    # Test override: claim a specific job, BUT still obey correctness rules:
+    # - can claim if queued
+    # - can reclaim if running and lease expired
     if CLAIM_JOB_ID:
         cur.execute(
             """
             UPDATE jobs
-            SET
-                state = 'running',
-                lease_owner = %s,
-                lease_expires_at = %s,
-                fencing_token = fencing_token + 1,
-                updated_at = NOW()
-            WHERE id = %s
+            SET state='running',
+                lease_owner=%s,
+                lease_expires_at=%s,
+                fencing_token=fencing_token+1,
+                updated_at=NOW()
+            WHERE id=%s
+              AND (
+                    state='queued'
+                 OR (state='running' AND lease_expires_at < NOW())
+              )
             RETURNING id, fencing_token
             """,
             (WORKER_ID, lease_until, CLAIM_JOB_ID),
@@ -167,31 +177,30 @@ def claim_one_job(cur):
             job_id, token = row[0], int(row[1])
             log_event("lease_acquired", job_id=job_id, token=token, forced=True)
 
-            maybe_barrier(cur, "after_lease_acquire")
+            maybe_barrier(conn, cur, "after_lease_acquire")
             maybe_crash("after_lease_acquire")
 
             return job_id, token
 
         return None, None
 
-    # Normal behavior (production)
+    # Normal (production) claim path
     cur.execute(
         """
         UPDATE jobs
-        SET
-            state = 'running',
-            lease_owner = %s,
-            lease_expires_at = %s,
-            fencing_token = fencing_token + 1,
-            updated_at = NOW()
+        SET state='running',
+            lease_owner=%s,
+            lease_expires_at=%s,
+            fencing_token=fencing_token+1,
+            updated_at=NOW()
         WHERE id = (
             SELECT id
             FROM jobs
             WHERE (
-                    state = 'queued'
+                    state='queued'
                 AND (next_run_at IS NULL OR next_run_at <= NOW())
             )
-            OR (state = 'running' AND lease_expires_at < NOW())
+            OR (state='running' AND lease_expires_at < NOW())
             ORDER BY created_at
             FOR UPDATE SKIP LOCKED
             LIMIT 1
@@ -202,12 +211,11 @@ def claim_one_job(cur):
     )
 
     row = cur.fetchone()
-
     if row:
         job_id, token = row[0], int(row[1])
         log_event("lease_acquired", job_id=job_id, token=token)
 
-        maybe_barrier(cur, "after_lease_acquire")
+        maybe_barrier(conn, cur, "after_lease_acquire")
         maybe_crash("after_lease_acquire")
 
         return job_id, token
@@ -215,20 +223,27 @@ def claim_one_job(cur):
     return None, None
 
 
-# =============================
-# Fence Enforcement
-# =============================
+# ============================================================
+# Fence Enforcement (SQL-only lease check)
+# ============================================================
 
 def assert_fence(cur, job_id, token):
     cur.execute(
-        "SELECT fencing_token, lease_expires_at FROM jobs WHERE id = %s",
+        """
+        SELECT fencing_token,
+               (lease_expires_at IS NOT NULL AND lease_expires_at < NOW())
+        FROM jobs
+        WHERE id=%s
+        """,
         (job_id,),
     )
+
     row = cur.fetchone()
     if not row:
         raise RuntimeError("job_missing")
 
-    current_token, lease_expires_at = int(row[0]), row[1]
+    current_token = int(row[0])
+    lease_expired = bool(row[1])
 
     if token != current_token:
         log_event(
@@ -240,10 +255,7 @@ def assert_fence(cur, job_id, token):
         )
         raise RuntimeError("stale_token")
 
-    cur.execute("SELECT NOW()")
-    now_db = cur.fetchone()[0]
-
-    if lease_expires_at and lease_expires_at < now_db:
+    if lease_expired:
         log_event(
             "stale_write_blocked",
             job_id=job_id,
@@ -254,13 +266,13 @@ def assert_fence(cur, job_id, token):
         raise RuntimeError("lease_expired")
 
 
-# =============================
+# ============================================================
 # Apply Path
-# =============================
+# ============================================================
 
 def mark_succeeded(cur, job_id, token):
     cur.execute(
-        "SELECT fencing_token FROM jobs WHERE id = %s FOR UPDATE",
+        "SELECT fencing_token FROM jobs WHERE id=%s FOR UPDATE",
         (job_id,),
     )
     row = cur.fetchone()
@@ -312,9 +324,9 @@ def mark_succeeded(cur, job_id, token):
     maybe_crash("after_commit")
 
 
-# =============================
+# ============================================================
 # Main Loop
-# =============================
+# ============================================================
 
 if __name__ == "__main__":
     if METRICS_ENABLED:
@@ -328,14 +340,14 @@ if __name__ == "__main__":
         if MAX_LOOPS and loops >= MAX_LOOPS:
             log_event("worker_exit", reason="max_loops")
             break
-        loops += 1
 
+        loops += 1
         heartbeat.inc()
 
         try:
             with get_conn() as conn:
                 with conn.cursor() as cur:
-                    job_id, token = claim_one_job(cur)
+                    job_id, token = claim_one_job(conn, cur)
 
                     if not job_id:
                         time.sleep(0.2)
@@ -356,12 +368,12 @@ if __name__ == "__main__":
                         jobs_succeeded.inc()
 
                         if EXIT_ON_SUCCESS:
-                            log_event("worker_exit", reason="success", job_id=job_id, token=token)
+                            log_event("worker_exit", reason="success")
                             break
 
                     except Exception as e:
                         if str(e) in ("stale_token", "lease_expired") and EXIT_ON_STALE:
-                            log_event("worker_exit", reason="stale", error=str(e), job_id=job_id, token=token)
+                            log_event("worker_exit", reason="stale")
                             break
                         raise
 
