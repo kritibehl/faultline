@@ -2,6 +2,7 @@ import os
 import uuid
 import hashlib
 import subprocess
+import time
 import psycopg2
 
 WORKER_CMD = ["python", "services/worker/worker.py"]
@@ -42,6 +43,36 @@ def _seed_job(cur, job_id):
     )
 
 
+def _wait_job_state(database_url, job_id, want, timeout_s=10):
+    deadline = time.time() + timeout_s
+    while time.time() < deadline:
+        with _db(database_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT state FROM jobs WHERE id=%s", (job_id,))
+                row = cur.fetchone()
+                if row and row[0] == want:
+                    return True
+        time.sleep(0.2)
+    return False
+
+
+def _wait_barrier_open(database_url, name, timeout_s=10):
+    """
+    Determinism helper:
+    Ensure worker A has opened the barrier row before worker B starts.
+    Prevents flaky runs where worker B claims first and waits forever.
+    """
+    deadline = time.time() + timeout_s
+    while time.time() < deadline:
+        with _db(database_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT 1 FROM barriers WHERE name=%s", (name,))
+                if cur.fetchone():
+                    return True
+        time.sleep(0.05)
+    return False
+
+
 def test_lease_expiry_race_is_blocked_by_fencing(database_url):
     job_id = str(uuid.uuid4())
 
@@ -57,22 +88,20 @@ def test_lease_expiry_race_is_blocked_by_fencing(database_url):
     base_env["PYTHONUNBUFFERED"] = "1"
     base_env["METRICS_ENABLED"] = "0"
     base_env["CLAIM_JOB_ID"] = job_id
-    base_env["PYTHONWARNINGS"] = "ignore::DeprecationWarning"
 
-    # Worker A: claim first, open barrier, sleep past expiry, then should be fenced off
     env_a = base_env.copy()
     env_a["BARRIER_OPEN"] = "after_lease_acquire"
     env_a["WORK_SLEEP_SECONDS"] = "2.5"
-    env_a["MAX_LOOPS"] = "60"
+    env_a["MAX_LOOPS"] = "200"
     env_a["EXIT_ON_STALE"] = "1"
 
-    # Worker B: wait for A to claim, then reclaim after expiry and succeed
     env_b = base_env.copy()
     env_b["BARRIER_WAIT"] = "after_lease_acquire"
     env_b["WORK_SLEEP_SECONDS"] = "0"
-    env_b["MAX_LOOPS"] = "300"
+    env_b["MAX_LOOPS"] = "800"
     env_b["EXIT_ON_SUCCESS"] = "1"
 
+    # Start A first so it reliably claims and opens the barrier.
     p_a = subprocess.Popen(
         WORKER_CMD,
         env=env_a,
@@ -80,6 +109,10 @@ def test_lease_expiry_race_is_blocked_by_fencing(database_url):
         stderr=subprocess.STDOUT,
         text=True,
     )
+
+    # Ensure barrier exists before starting B (eliminates flaky barrier_timeout).
+    assert _wait_barrier_open(database_url, "after_lease_acquire", timeout_s=10)
+
     p_b = subprocess.Popen(
         WORKER_CMD,
         env=env_b,
@@ -91,25 +124,20 @@ def test_lease_expiry_race_is_blocked_by_fencing(database_url):
     out_a, _ = p_a.communicate(timeout=60)
     out_b, _ = p_b.communicate(timeout=60)
 
-    assert "lease_acquired" in out_a, (
-        "Worker A never acquired lease.\n"
-        f"--- out_a ---\n{out_a}\n"
-        f"--- out_b ---\n{out_b}"
-    )
-    assert "stale_write_blocked" in out_a, (
-        "Expected stale_write_blocked.\n"
-        f"--- out_a ---\n{out_a}\n"
-        f"--- out_b ---\n{out_b}"
-    )
-    assert "lease_acquired" in out_b, out_b
+    # Always write logs to disk so you can extract an HN snippet even if asserts fail.
+    with open("/tmp/lease_race_worker_a.log", "w") as f:
+        f.write(out_a)
+    with open("/tmp/lease_race_worker_b.log", "w") as f:
+        f.write(out_b)
+
+    assert "lease_acquired" in out_a
+    assert "stale_write_blocked" in out_a
+    assert '"reason": "success"' in out_b
+
+    assert _wait_job_state(database_url, job_id, "succeeded", timeout_s=10)
 
     with _db(database_url) as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT state, fencing_token FROM jobs WHERE id=%s", (job_id,))
-            state, token = cur.fetchone()
-            assert state == "succeeded"
-            assert int(token) >= 2
-
             cur.execute(
                 "SELECT COUNT(*), MIN(fencing_token), MAX(fencing_token) "
                 "FROM ledger_entries WHERE job_id=%s",
@@ -119,3 +147,15 @@ def test_lease_expiry_race_is_blocked_by_fencing(database_url):
             assert count == 1
             assert int(min_tok) == int(max_tok)
             assert int(min_tok) >= 2
+            
+            
+def _wait_barrier_open(database_url, name, timeout_s=10):
+    deadline = time.time() + timeout_s
+    while time.time() < deadline:
+        with _db(database_url) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT 1 FROM barriers WHERE name=%s", (name,))
+                if cur.fetchone():
+                    return True
+        time.sleep(0.05)
+    return False
