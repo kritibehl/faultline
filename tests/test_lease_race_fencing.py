@@ -56,26 +56,51 @@ def test_lease_expiry_race_is_blocked_by_fencing(database_url):
     base_env["BARRIER_TIMEOUT_S"] = "30"
     base_env["PYTHONUNBUFFERED"] = "1"
     base_env["METRICS_ENABLED"] = "0"
+    base_env["CLAIM_JOB_ID"] = job_id
+    base_env["PYTHONWARNINGS"] = "ignore::DeprecationWarning"
 
+    # Worker A: claim first, open barrier, sleep past expiry, then should be fenced off
     env_a = base_env.copy()
     env_a["BARRIER_OPEN"] = "after_lease_acquire"
     env_a["WORK_SLEEP_SECONDS"] = "2.5"
     env_a["MAX_LOOPS"] = "60"
     env_a["EXIT_ON_STALE"] = "1"
 
+    # Worker B: wait for A to claim, then reclaim after expiry and succeed
     env_b = base_env.copy()
     env_b["BARRIER_WAIT"] = "after_lease_acquire"
     env_b["WORK_SLEEP_SECONDS"] = "0"
     env_b["MAX_LOOPS"] = "300"
     env_b["EXIT_ON_SUCCESS"] = "1"
 
-    p_a = subprocess.Popen(WORKER_CMD, env=env_a, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-    p_b = subprocess.Popen(WORKER_CMD, env=env_b, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+    p_a = subprocess.Popen(
+        WORKER_CMD,
+        env=env_a,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+    p_b = subprocess.Popen(
+        WORKER_CMD,
+        env=env_b,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
 
     out_a, _ = p_a.communicate(timeout=60)
     out_b, _ = p_b.communicate(timeout=60)
 
-    assert "stale_write_blocked" in out_a, out_a
+    assert "lease_acquired" in out_a, (
+        "Worker A never acquired lease.\n"
+        f"--- out_a ---\n{out_a}\n"
+        f"--- out_b ---\n{out_b}"
+    )
+    assert "stale_write_blocked" in out_a, (
+        "Expected stale_write_blocked.\n"
+        f"--- out_a ---\n{out_a}\n"
+        f"--- out_b ---\n{out_b}"
+    )
     assert "lease_acquired" in out_b, out_b
 
     with _db(database_url) as conn:
