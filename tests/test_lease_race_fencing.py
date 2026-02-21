@@ -10,17 +10,29 @@ def _db(url):
     return psycopg2.connect(url)
 
 
+def _ensure_barriers(cur):
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS barriers (
+          name TEXT PRIMARY KEY,
+          opened_at TIMESTAMP NOT NULL DEFAULT NOW()
+        );
+        """
+    )
+
+
 def _reset_barriers(cur):
+    _ensure_barriers(cur)
     cur.execute("TRUNCATE TABLE barriers")
 
 
 def _seed_job(cur, job_id):
     cur.execute(
         """
-        INSERT INTO jobs (id, state, attempts, max_attempts)
-        VALUES (%s, 'queued', 0, 5)
+        INSERT INTO jobs (id, payload, state, attempts, max_attempts)
+        VALUES (%s, %s, 'queued', 0, 5)
         """,
-        (job_id,),
+        (job_id, "{}"),
     )
 
 
@@ -38,14 +50,14 @@ def test_lease_expiry_race_is_blocked_by_fencing(database_url):
     base_env["BARRIER_TIMEOUT_S"] = "30"
     base_env["PYTHONUNBUFFERED"] = "1"
 
-    # Worker A: claims first (token=1), opens barrier, sleeps past expiry, then should be fenced off
+    # Worker A: claim first, open barrier, sleep past expiry, then should be fenced off
     env_a = base_env.copy()
     env_a["BARRIER_OPEN"] = "after_lease_acquire"
     env_a["WORK_SLEEP_SECONDS"] = "2.5"
-    env_a["MAX_LOOPS"] = "20"
+    env_a["MAX_LOOPS"] = "40"
     env_a["EXIT_ON_STALE"] = "1"
 
-    # Worker B: waits for A to claim, then reclaims after expiry (token=2) and succeeds
+    # Worker B: wait for A to claim, then reclaim after expiry and succeed
     env_b = base_env.copy()
     env_b["BARRIER_WAIT"] = "after_lease_acquire"
     env_b["WORK_SLEEP_SECONDS"] = "0"

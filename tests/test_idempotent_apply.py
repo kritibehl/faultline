@@ -7,16 +7,16 @@ def test_idempotent_apply(database_url):
 
     with psycopg2.connect(database_url) as conn:
         with conn.cursor() as cur:
-            # Seed job (keep minimal; assumes defaults exist for other cols)
+            # payload is NOT NULL in your schema
             cur.execute(
                 """
-                INSERT INTO jobs (id, state)
-                VALUES (%s, 'running')
+                INSERT INTO jobs (id, payload, state, attempts, max_attempts)
+                VALUES (%s, %s, 'running', 0, 5)
                 """,
-                (job_id,),
+                (job_id, "{}"),
             )
 
-            # First apply
+            # Apply twice for same (job_id, fencing_token) => single row
             cur.execute(
                 """
                 INSERT INTO ledger_entries (job_id, fencing_token, account_id, delta)
@@ -26,7 +26,6 @@ def test_idempotent_apply(database_url):
                 (job_id, 1),
             )
 
-            # Second apply (same token retry)
             cur.execute(
                 """
                 INSERT INTO ledger_entries (job_id, fencing_token, account_id, delta)
