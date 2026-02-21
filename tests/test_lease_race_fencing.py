@@ -55,6 +55,7 @@ def test_lease_expiry_race_is_blocked_by_fencing(database_url):
     base_env["LEASE_SECONDS"] = "1"
     base_env["BARRIER_TIMEOUT_S"] = "30"
     base_env["PYTHONUNBUFFERED"] = "1"
+    base_env["METRICS_ENABLED"] = "0"
 
     env_a = base_env.copy()
     env_a["BARRIER_OPEN"] = "after_lease_acquire"
