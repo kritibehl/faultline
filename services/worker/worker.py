@@ -30,6 +30,9 @@ EXIT_ON_STALE = os.getenv("EXIT_ON_STALE", "0") == "1"
 METRICS_ENABLED = os.getenv("METRICS_ENABLED", "1") == "1"
 METRICS_PORT = int(os.getenv("METRICS_PORT", "8000"))
 
+# Test-only override: force workers to claim a specific job id (bypasses next_run_at filter)
+CLAIM_JOB_ID = os.getenv("CLAIM_JOB_ID")
+
 
 # =============================
 # Clock Abstraction
@@ -143,6 +146,35 @@ def wait_for_schema(timeout_seconds=60):
 def claim_one_job(cur):
     lease_until = clock.now() + timedelta(seconds=LEASE_SECONDS)
 
+    # Test override: force claim a specific job id (ignores next_run_at gating)
+    if CLAIM_JOB_ID:
+        cur.execute(
+            """
+            UPDATE jobs
+            SET
+                state = 'running',
+                lease_owner = %s,
+                lease_expires_at = %s,
+                fencing_token = fencing_token + 1,
+                updated_at = NOW()
+            WHERE id = %s
+            RETURNING id, fencing_token
+            """,
+            (WORKER_ID, lease_until, CLAIM_JOB_ID),
+        )
+        row = cur.fetchone()
+        if row:
+            job_id, token = row[0], int(row[1])
+            log_event("lease_acquired", job_id=job_id, token=token, forced=True)
+
+            maybe_barrier(cur, "after_lease_acquire")
+            maybe_crash("after_lease_acquire")
+
+            return job_id, token
+
+        return None, None
+
+    # Normal behavior (production)
     cur.execute(
         """
         UPDATE jobs
