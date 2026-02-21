@@ -59,6 +59,10 @@ def wait_for_schema(timeout_seconds=60):
 
 
 def claim_one_job(cur):
+    """
+    Claim one available job and return (job_id, fencing_token).
+    Fencing token increments atomically on each successful claim.
+    """
     lease_until = datetime.utcnow() + timedelta(seconds=LEASE_SECONDS)
     cur.execute(
         """
@@ -67,6 +71,7 @@ def claim_one_job(cur):
             state = 'running',
             lease_owner = %s,
             lease_expires_at = %s,
+            fencing_token = fencing_token + 1,
             updated_at = NOW()
         WHERE id = (
             SELECT id
@@ -80,12 +85,40 @@ def claim_one_job(cur):
             FOR UPDATE SKIP LOCKED
             LIMIT 1
         )
-        RETURNING id
+        RETURNING id, fencing_token
         """,
         (WORKER_ID, lease_until),
     )
     row = cur.fetchone()
-    return row[0] if row else None
+    return (row[0], int(row[1])) if row else (None, None)
+
+
+def assert_fence(cur, job_id, token):
+    """
+    Write-gate: a worker may only mutate job state if it holds the current fencing token
+    and the lease is still valid (as measured by DB time).
+    """
+    cur.execute(
+        """
+        SELECT fencing_token, lease_expires_at
+        FROM jobs
+        WHERE id = %s
+        """,
+        (job_id,),
+    )
+    row = cur.fetchone()
+    if not row:
+        raise RuntimeError("job_missing")
+
+    current_token, lease_expires_at = int(row[0]), row[1]
+
+    if token != current_token:
+        raise RuntimeError(f"stale_token token={token} current={current_token}")
+
+    cur.execute("SELECT NOW()")
+    now_db = cur.fetchone()[0]
+    if lease_expires_at is not None and lease_expires_at < now_db:
+        raise RuntimeError("lease_expired")
 
 
 def get_fail_n_times(payload):
@@ -112,13 +145,13 @@ def get_job(cur, job_id):
     return row[0], int(row[1] or 0), int(row[2] or 5)
 
 
-def mark_succeeded(cur, job_id):
+def mark_succeeded(cur, job_id, token):
     """
     Payments-grade idempotent success:
-    - ledger_entries.job_id UNIQUE is the at-most-once boundary
+    - ledger_entries.job_id UNIQUE is the at-most-once boundary (will be upgraded to (job_id, token))
     - job is marked succeeded iff a ledger entry exists (inserted now or earlier)
+    - fencing token prevents stale workers from mutating job state
     """
-
     # Serialize state transition for this job
     cur.execute(
         """
@@ -129,6 +162,12 @@ def mark_succeeded(cur, job_id):
         """,
         (job_id,),
     )
+
+    # Fence check inside the transaction (stale worker can't commit)
+    cur.execute("SELECT fencing_token FROM jobs WHERE id = %s", (job_id,))
+    current = int(cur.fetchone()[0])
+    if token != current:
+        raise RuntimeError(f"stale_token token={token} current={current}")
 
     # Minimal ledger semantics for now (we’ll wire payload later)
     account_id = "default"
@@ -210,11 +249,14 @@ if __name__ == "__main__":
         try:
             with get_conn() as conn:
                 with conn.cursor() as cur:
-                    job_id = claim_one_job(cur)
+                    job_id, token = claim_one_job(cur)
                     if job_id:
                         jobs_claimed.inc()
 
                         payload, attempts, max_attempts = get_job(cur, job_id)
+
+                        # Gate execution: stale workers must not do work or write progress
+                        assert_fence(cur, job_id, token)
 
                         try:
                             # Deterministic failure simulation: fail first N times
@@ -226,7 +268,11 @@ if __name__ == "__main__":
 
                             # Simulated work
                             time.sleep(2)
-                            mark_succeeded(cur, job_id)
+
+                            # Gate again right before mutation/commit
+                            assert_fence(cur, job_id, token)
+
+                            mark_succeeded(cur, job_id, token)
                             jobs_succeeded.inc()
 
                         except Exception as e:
