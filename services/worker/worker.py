@@ -18,7 +18,6 @@ WORKER_ID = str(uuid.uuid4())
 
 LEASE_SECONDS = int(os.getenv("LEASE_SECONDS", "30"))
 CRASH_AT = os.getenv("CRASH_AT")
-CLOCK_SKEW_MS = int(os.getenv("CLOCK_SKEW_MS", "0"))
 
 BARRIER_WAIT = os.getenv("BARRIER_WAIT")
 BARRIER_OPEN = os.getenv("BARRIER_OPEN")
@@ -33,28 +32,8 @@ EXIT_ON_STALE = os.getenv("EXIT_ON_STALE", "0") == "1"
 METRICS_ENABLED = os.getenv("METRICS_ENABLED", "1") == "1"
 METRICS_PORT = int(os.getenv("METRICS_PORT", "8000"))
 
-# Test override: restrict claiming to one specific job id, but still obey lease rules.
+# Test harness override (still obeys lease rules)
 CLAIM_JOB_ID = os.getenv("CLAIM_JOB_ID")
-
-
-# ============================================================
-# Clock
-# ============================================================
-
-class Clock:
-    def now(self):
-        return datetime.utcnow()
-
-
-class SkewedClock(Clock):
-    def __init__(self, offset_ms):
-        self.offset = timedelta(milliseconds=offset_ms)
-
-    def now(self):
-        return datetime.utcnow() + self.offset
-
-
-clock = SkewedClock(CLOCK_SKEW_MS) if CLOCK_SKEW_MS else Clock()
 
 
 # ============================================================
@@ -78,7 +57,7 @@ def maybe_crash(point):
 
 
 # ============================================================
-# Barriers
+# Barrier helpers
 # ============================================================
 
 def open_barrier(conn, cur, name):
@@ -86,7 +65,6 @@ def open_barrier(conn, cur, name):
         "INSERT INTO barriers(name) VALUES (%s) ON CONFLICT DO NOTHING",
         (name,),
     )
-    # Ensure visibility across processes
     conn.commit()
 
 
@@ -119,8 +97,6 @@ def maybe_barrier(conn, cur, point):
 heartbeat = Counter("faultline_worker_heartbeat_total", "Worker heartbeat ticks")
 jobs_claimed = Counter("faultline_jobs_claimed_total", "Jobs claimed")
 jobs_succeeded = Counter("faultline_jobs_succeeded_total", "Jobs succeeded")
-jobs_failed = Counter("faultline_jobs_failed_total", "Jobs failed")
-retries_total = Counter("faultline_retries_total", "Retries")
 
 
 # ============================================================
@@ -145,15 +121,13 @@ def wait_for_schema(timeout_seconds=60):
 
 
 # ============================================================
-# Lease Claim
+# Lease claim
 # ============================================================
 
 def claim_one_job(conn, cur):
-    lease_until = clock.now() + timedelta(seconds=LEASE_SECONDS)
+    lease_until = datetime.utcnow() + timedelta(seconds=LEASE_SECONDS)
 
-    # Test override: claim a specific job, BUT still obey correctness rules:
-    # - can claim if queued
-    # - can reclaim if running and lease expired
+    # Test override: claim specific job but obey correctness rules
     if CLAIM_JOB_ID:
         cur.execute(
             """
@@ -184,7 +158,7 @@ def claim_one_job(conn, cur):
 
         return None, None
 
-    # Normal (production) claim path
+    # Production path
     cur.execute(
         """
         UPDATE jobs
@@ -214,17 +188,13 @@ def claim_one_job(conn, cur):
     if row:
         job_id, token = row[0], int(row[1])
         log_event("lease_acquired", job_id=job_id, token=token)
-
-        maybe_barrier(conn, cur, "after_lease_acquire")
-        maybe_crash("after_lease_acquire")
-
         return job_id, token
 
     return None, None
 
 
 # ============================================================
-# Fence Enforcement (SQL-only lease check)
+# Fence enforcement
 # ============================================================
 
 def assert_fence(cur, job_id, token):
@@ -237,7 +207,6 @@ def assert_fence(cur, job_id, token):
         """,
         (job_id,),
     )
-
     row = cur.fetchone()
     if not row:
         raise RuntimeError("job_missing")
@@ -267,7 +236,7 @@ def assert_fence(cur, job_id, token):
 
 
 # ============================================================
-# Apply Path
+# Apply
 # ============================================================
 
 def mark_succeeded(cur, job_id, token):
@@ -281,27 +250,15 @@ def mark_succeeded(cur, job_id, token):
 
     current_token = int(row[0])
     if token != current_token:
-        log_event(
-            "stale_write_blocked",
-            job_id=job_id,
-            stale_token=token,
-            current_token=current_token,
-            reason="token_mismatch_precommit",
-        )
         raise RuntimeError("stale_token")
-
-    account_id = "default"
-    delta = 1
-
-    maybe_crash("before_commit")
 
     cur.execute(
         """
         INSERT INTO ledger_entries (job_id, fencing_token, account_id, delta)
-        VALUES (%s, %s, %s, %s)
+        VALUES (%s, %s, 'default', 1)
         ON CONFLICT (job_id, fencing_token) DO NOTHING
         """,
-        (job_id, token, account_id, delta),
+        (job_id, token),
     )
 
     cur.execute(
@@ -321,11 +278,9 @@ def mark_succeeded(cur, job_id, token):
         (job_id, job_id, token),
     )
 
-    maybe_crash("after_commit")
-
 
 # ============================================================
-# Main Loop
+# Main loop
 # ============================================================
 
 if __name__ == "__main__":
@@ -358,10 +313,7 @@ if __name__ == "__main__":
 
                     try:
                         assert_fence(cur, job_id, token)
-
-                        maybe_crash("mid_execute")
                         time.sleep(WORK_SLEEP_SECONDS)
-
                         assert_fence(cur, job_id, token)
 
                         mark_succeeded(cur, job_id, token)
