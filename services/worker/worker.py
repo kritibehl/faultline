@@ -1,6 +1,7 @@
 import os
 import time
 import uuid
+import json
 from datetime import datetime, timedelta
 
 import psycopg2
@@ -10,6 +11,54 @@ from prometheus_client import Counter, start_http_server
 DATABASE_URL = os.environ["DATABASE_URL"]
 WORKER_ID = str(uuid.uuid4())
 LEASE_SECONDS = 30
+
+CRASH_AT = os.getenv("CRASH_AT")  # after_lease_acquire | mid_execute | before_commit | after_commit
+CLOCK_SKEW_MS = int(os.getenv("CLOCK_SKEW_MS", "0"))
+
+
+# -------------------------
+# Clock Abstraction
+# -------------------------
+
+class Clock:
+    def now(self):
+        return datetime.utcnow()
+
+
+class SkewedClock(Clock):
+    def __init__(self, offset_ms):
+        self.offset = timedelta(milliseconds=offset_ms)
+
+    def now(self):
+        return datetime.utcnow() + self.offset
+
+
+clock = SkewedClock(CLOCK_SKEW_MS) if CLOCK_SKEW_MS else Clock()
+
+
+# -------------------------
+# Logging
+# -------------------------
+
+def log_event(event, **fields):
+    payload = {
+        "event": event,
+        "worker_id": WORKER_ID,
+        "ts": datetime.utcnow().isoformat(),
+        **fields,
+    }
+    print(json.dumps(payload), flush=True)
+
+
+def maybe_crash(point):
+    if CRASH_AT == point:
+        log_event("crash_injected", point=point)
+        os._exit(137)
+
+
+# -------------------------
+# Metrics
+# -------------------------
 
 heartbeat = Counter(
     "faultline_worker_heartbeat_total",
@@ -42,10 +91,6 @@ def get_conn():
 
 
 def wait_for_schema(timeout_seconds=60):
-    """
-    Block worker startup until the jobs table exists.
-    Prevents crash loops on cold start before migrations run.
-    """
     deadline = time.time() + timeout_seconds
     while time.time() < deadline:
         try:
@@ -59,11 +104,7 @@ def wait_for_schema(timeout_seconds=60):
 
 
 def claim_one_job(cur):
-    """
-    Claim one available job and return (job_id, fencing_token).
-    Fencing token increments atomically on each successful claim.
-    """
-    lease_until = datetime.utcnow() + timedelta(seconds=LEASE_SECONDS)
+    lease_until = clock.now() + timedelta(seconds=LEASE_SECONDS)
 
     cur.execute(
         """
@@ -92,14 +133,17 @@ def claim_one_job(cur):
     )
 
     row = cur.fetchone()
-    return (row[0], int(row[1])) if row else (None, None)
+
+    if row:
+        job_id, token = row[0], int(row[1])
+        log_event("lease_acquired", job_id=job_id, token=token)
+        maybe_crash("after_lease_acquire")
+        return job_id, token
+
+    return None, None
 
 
 def assert_fence(cur, job_id, token):
-    """
-    Write-gate: only the worker holding the current fencing token
-    and a valid lease may mutate job state.
-    """
     cur.execute(
         """
         SELECT fencing_token, lease_expires_at
@@ -115,13 +159,14 @@ def assert_fence(cur, job_id, token):
     current_token, lease_expires_at = int(row[0]), row[1]
 
     if token != current_token:
-        raise RuntimeError(f"stale_token token={token} current={current_token}")
+        log_event("stale_write_blocked", job_id=job_id, stale_token=token, current_token=current_token)
+        raise RuntimeError("stale_token")
 
-    # Validate lease using DB time (prevents clock skew issues)
     cur.execute("SELECT NOW()")
     now_db = cur.fetchone()[0]
 
-    if lease_expires_at is not None and lease_expires_at < now_db:
+    if lease_expires_at and lease_expires_at < now_db:
+        log_event("stale_write_blocked", job_id=job_id, stale_token=token, reason="lease_expired")
         raise RuntimeError("lease_expired")
 
 
@@ -150,18 +195,9 @@ def get_job(cur, job_id):
 
 
 def mark_succeeded(cur, job_id, token):
-    """
-    Payments-grade idempotent success with fencing:
-
-    - Side effects bound to (job_id, fencing_token)
-    - Stale workers cannot commit
-    - Job only succeeds if ledger entry exists for current token
-    """
-
-    # Lock job row
     cur.execute(
         """
-        SELECT id, fencing_token
+        SELECT fencing_token
         FROM jobs
         WHERE id = %s
         FOR UPDATE
@@ -172,16 +208,15 @@ def mark_succeeded(cur, job_id, token):
     if not row:
         raise RuntimeError("job_missing")
 
-    current_token = int(row[1])
-
+    current_token = int(row[0])
     if token != current_token:
-        raise RuntimeError(f"stale_token token={token} current={current_token}")
+        raise RuntimeError("stale_token")
 
-    # Minimal ledger semantics
     account_id = "default"
     delta = 1
 
-    # Idempotent apply bound to fencing token
+    maybe_crash("before_commit")
+
     cur.execute(
         """
         INSERT INTO ledger_entries (job_id, fencing_token, account_id, delta)
@@ -191,7 +226,6 @@ def mark_succeeded(cur, job_id, token):
         (job_id, token, account_id, delta),
     )
 
-    # Converge job state only if ledger entry for this token exists
     cur.execute(
         """
         UPDATE jobs
@@ -211,9 +245,11 @@ def mark_succeeded(cur, job_id, token):
         (job_id, job_id, token),
     )
 
+    maybe_crash("after_commit")
+
 
 def schedule_retry(cur, job_id, attempts, delay_seconds, error_msg):
-    next_run = datetime.utcnow() + timedelta(seconds=delay_seconds)
+    next_run = clock.now() + timedelta(seconds=delay_seconds)
 
     cur.execute(
         """
@@ -252,7 +288,6 @@ def mark_failed(cur, job_id, attempts, error_msg):
 
 if __name__ == "__main__":
     start_http_server(8000)
-
     wait_for_schema()
 
     while True:
@@ -269,21 +304,18 @@ if __name__ == "__main__":
 
                         payload, attempts, max_attempts = get_job(cur, job_id)
 
-                        # Fence before doing work
                         assert_fence(cur, job_id, token)
 
                         try:
-                            # Deterministic failure simulation
                             fail_n = get_fail_n_times(payload)
                             if attempts < fail_n:
-                                raise RuntimeError(
-                                    f"simulated failure (attempt {attempts + 1}/{fail_n})"
-                                )
+                                raise RuntimeError("simulated_failure")
 
-                            # Simulated work
+                            log_event("execution_started", job_id=job_id, token=token)
+
+                            maybe_crash("mid_execute")
                             time.sleep(2)
 
-                            # Fence again before commit
                             assert_fence(cur, job_id, token)
 
                             mark_succeeded(cur, job_id, token)
