@@ -11,7 +11,6 @@ from prometheus_client import Counter, start_http_server
 DATABASE_URL = os.environ["DATABASE_URL"]
 WORKER_ID = str(uuid.uuid4())
 
-# Allow test to force short leases
 LEASE_SECONDS = int(os.getenv("LEASE_SECONDS", "30"))
 
 CRASH_AT = os.getenv("CRASH_AT")  # after_lease_acquire | mid_execute | before_commit | after_commit
@@ -21,13 +20,15 @@ BARRIER_WAIT = os.getenv("BARRIER_WAIT")
 BARRIER_OPEN = os.getenv("BARRIER_OPEN")
 BARRIER_TIMEOUT_S = int(os.getenv("BARRIER_TIMEOUT_S", "30"))
 
-# Allow deterministic timing in tests
 WORK_SLEEP_SECONDS = float(os.getenv("WORK_SLEEP_SECONDS", "2"))
 
-# Allow subprocess workers to exit in CI
 MAX_LOOPS = int(os.getenv("MAX_LOOPS", "0"))  # 0 = infinite
 EXIT_ON_SUCCESS = os.getenv("EXIT_ON_SUCCESS", "0") == "1"
 EXIT_ON_STALE = os.getenv("EXIT_ON_STALE", "0") == "1"
+
+# Metrics server controls (avoid port collisions in tests)
+METRICS_ENABLED = os.getenv("METRICS_ENABLED", "1") == "1"
+METRICS_PORT = int(os.getenv("METRICS_PORT", "8000"))
 
 
 # =============================
@@ -207,7 +208,6 @@ def assert_fence(cur, job_id, token):
         )
         raise RuntimeError("stale_token")
 
-    # Validate lease using DB time
     cur.execute("SELECT NOW()")
     now_db = cur.fetchone()[0]
 
@@ -285,7 +285,9 @@ def mark_succeeded(cur, job_id, token):
 # =============================
 
 if __name__ == "__main__":
-    start_http_server(8000)
+    if METRICS_ENABLED:
+        start_http_server(METRICS_PORT)
+
     wait_for_schema()
 
     loops = 0
@@ -311,13 +313,11 @@ if __name__ == "__main__":
                     log_event("execution_started", job_id=job_id, token=token)
 
                     try:
-                        # Gate before doing work
                         assert_fence(cur, job_id, token)
 
                         maybe_crash("mid_execute")
                         time.sleep(WORK_SLEEP_SECONDS)
 
-                        # Gate again before commit/apply
                         assert_fence(cur, job_id, token)
 
                         mark_succeeded(cur, job_id, token)
@@ -328,11 +328,9 @@ if __name__ == "__main__":
                             break
 
                     except Exception as e:
-                        # For the lease-race CI test, we want stale workers to exit cleanly
                         if str(e) in ("stale_token", "lease_expired") and EXIT_ON_STALE:
                             log_event("worker_exit", reason="stale", error=str(e), job_id=job_id, token=token)
                             break
-                        # Otherwise, surface error (keeps behavior loud during development)
                         raise
 
         except OperationalError:
