@@ -64,6 +64,7 @@ def claim_one_job(cur):
     Fencing token increments atomically on each successful claim.
     """
     lease_until = datetime.utcnow() + timedelta(seconds=LEASE_SECONDS)
+
     cur.execute(
         """
         UPDATE jobs
@@ -89,14 +90,15 @@ def claim_one_job(cur):
         """,
         (WORKER_ID, lease_until),
     )
+
     row = cur.fetchone()
     return (row[0], int(row[1])) if row else (None, None)
 
 
 def assert_fence(cur, job_id, token):
     """
-    Write-gate: a worker may only mutate job state if it holds the current fencing token
-    and the lease is still valid (as measured by DB time).
+    Write-gate: only the worker holding the current fencing token
+    and a valid lease may mutate job state.
     """
     cur.execute(
         """
@@ -115,8 +117,10 @@ def assert_fence(cur, job_id, token):
     if token != current_token:
         raise RuntimeError(f"stale_token token={token} current={current_token}")
 
+    # Validate lease using DB time (prevents clock skew issues)
     cur.execute("SELECT NOW()")
     now_db = cur.fetchone()[0]
+
     if lease_expires_at is not None and lease_expires_at < now_db:
         raise RuntimeError("lease_expired")
 
@@ -147,43 +151,47 @@ def get_job(cur, job_id):
 
 def mark_succeeded(cur, job_id, token):
     """
-    Payments-grade idempotent success:
-    - ledger_entries.job_id UNIQUE is the at-most-once boundary (will be upgraded to (job_id, token))
-    - job is marked succeeded iff a ledger entry exists (inserted now or earlier)
-    - fencing token prevents stale workers from mutating job state
+    Payments-grade idempotent success with fencing:
+
+    - Side effects bound to (job_id, fencing_token)
+    - Stale workers cannot commit
+    - Job only succeeds if ledger entry exists for current token
     """
-    # Serialize state transition for this job
+
+    # Lock job row
     cur.execute(
         """
-        SELECT id, state
+        SELECT id, fencing_token
         FROM jobs
         WHERE id = %s
         FOR UPDATE
         """,
         (job_id,),
     )
+    row = cur.fetchone()
+    if not row:
+        raise RuntimeError("job_missing")
 
-    # Fence check inside the transaction (stale worker can't commit)
-    cur.execute("SELECT fencing_token FROM jobs WHERE id = %s", (job_id,))
-    current = int(cur.fetchone()[0])
-    if token != current:
-        raise RuntimeError(f"stale_token token={token} current={current}")
+    current_token = int(row[1])
 
-    # Minimal ledger semantics for now (we’ll wire payload later)
+    if token != current_token:
+        raise RuntimeError(f"stale_token token={token} current={current_token}")
+
+    # Minimal ledger semantics
     account_id = "default"
     delta = 1
 
-    # Idempotent apply (at-most-once)
+    # Idempotent apply bound to fencing token
     cur.execute(
         """
-        INSERT INTO ledger_entries (job_id, account_id, delta)
-        VALUES (%s, %s, %s)
-        ON CONFLICT (job_id) DO NOTHING
+        INSERT INTO ledger_entries (job_id, fencing_token, account_id, delta)
+        VALUES (%s, %s, %s, %s)
+        ON CONFLICT (job_id, fencing_token) DO NOTHING
         """,
-        (job_id, account_id, delta),
+        (job_id, token, account_id, delta),
     )
 
-    # Converge state: succeed if ledger exists (inserted now or earlier)
+    # Converge job state only if ledger entry for this token exists
     cur.execute(
         """
         UPDATE jobs
@@ -194,14 +202,19 @@ def mark_succeeded(cur, job_id, token):
             next_run_at = NULL,
             updated_at = NOW()
         WHERE id = %s
-          AND EXISTS (SELECT 1 FROM ledger_entries WHERE job_id = %s)
+          AND EXISTS (
+            SELECT 1 FROM ledger_entries
+            WHERE job_id = %s
+              AND fencing_token = %s
+          )
         """,
-        (job_id, job_id),
+        (job_id, job_id, token),
     )
 
 
 def schedule_retry(cur, job_id, attempts, delay_seconds, error_msg):
     next_run = datetime.utcnow() + timedelta(seconds=delay_seconds)
+
     cur.execute(
         """
         UPDATE jobs
@@ -240,7 +253,6 @@ def mark_failed(cur, job_id, attempts, error_msg):
 if __name__ == "__main__":
     start_http_server(8000)
 
-    # Ensure schema exists before processing jobs
     wait_for_schema()
 
     while True:
@@ -249,17 +261,19 @@ if __name__ == "__main__":
         try:
             with get_conn() as conn:
                 with conn.cursor() as cur:
+
                     job_id, token = claim_one_job(cur)
+
                     if job_id:
                         jobs_claimed.inc()
 
                         payload, attempts, max_attempts = get_job(cur, job_id)
 
-                        # Gate execution: stale workers must not do work or write progress
+                        # Fence before doing work
                         assert_fence(cur, job_id, token)
 
                         try:
-                            # Deterministic failure simulation: fail first N times
+                            # Deterministic failure simulation
                             fail_n = get_fail_n_times(payload)
                             if attempts < fail_n:
                                 raise RuntimeError(
@@ -269,7 +283,7 @@ if __name__ == "__main__":
                             # Simulated work
                             time.sleep(2)
 
-                            # Gate again right before mutation/commit
+                            # Fence again before commit
                             assert_fence(cur, job_id, token)
 
                             mark_succeeded(cur, job_id, token)
@@ -288,8 +302,6 @@ if __name__ == "__main__":
                                 jobs_failed.inc()
 
         except OperationalError:
-            # DB down / DNS hiccup / transient network failure.
-            # Don't crash the worker; back off and retry.
             time.sleep(2)
 
         time.sleep(2)
