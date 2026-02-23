@@ -8,57 +8,59 @@ Component: Lease-based execution model (Faultline)
 
 ## Summary
 
-During adversarial testing of the lease-based execution model, a race between lease expiry and worker resumption produced stale state mutation that database-level idempotency alone did not prevent.
+During adversarial testing of the lease-based execution model, we identified a race condition between lease expiry and worker resumption. This allowed a stale worker to attempt state mutation even after another worker had legally reclaimed the job.
 
-The failure was constructed deterministically using a barrier-orchestrated harness and resolved by introducing fencing tokens bound to lease acquisition order.
+Database-level idempotency prevented duplicate final commits, but it did not prevent intermediate stale writes.
 
-This document describes the failure construction, root cause, and corrective measures.
+The issue was reproduced deterministically and resolved by introducing fencing tokens tied to lease acquisition order.
 
 ---
 
 ## System Context
 
-Faultline coordinates distributed workers processing jobs from a shared PostgreSQL-backed queue.
+Faultline uses PostgreSQL as the coordination layer for distributed workers.
 
 Each job:
 
-- Is claimed via a lease with a time-to-live (TTL)
+- Is claimed using a time-bound lease (TTL)
 - Transitions from `queued → running`
 - Can be reclaimed when `lease_expires_at < NOW()`
 
 The original design relied on:
 
 - PostgreSQL transactional guarantees
-- Idempotency keyed on `job_id`
-- Worker termination after lease expiry
+- Idempotency keyed only on `job_id`
+- Assumption that lease expiry and worker termination occur together
 
-The system assumed lease expiry and worker termination were effectively synchronous. They are not.
+That assumption was incorrect.
+
+Lease expiry and worker termination are independent failure domains.
 
 ---
 
 ## Failure Construction
 
-The failure was engineered deliberately using a deterministic harness.
+The issue was intentionally constructed using a deterministic harness.
 
-Sequence enforced by the harness:
+The sequence was:
 
-1. Worker A acquires a lease with a 1-second TTL.
-2. Worker A is artificially delayed 2.5 seconds, forcing lease expiry.
-3. A barrier prevents Worker B from claiming until Worker A’s lease has expired.
-4. Worker B acquires the lease and begins execution.
-5. Worker A resumes briefly before termination and attempts state mutation under a now-invalid lease.
+1. Worker A acquired a lease with a 1-second TTL.
+2. Worker A was delayed 2.5 seconds to force lease expiry.
+3. A barrier prevented Worker B from claiming the job until Worker A’s lease had expired.
+4. Worker B acquired the lease and began execution.
+5. Worker A resumed briefly and attempted a state mutation under its expired lease.
 
-Without fencing tokens, the system had no mechanism to distinguish Worker A’s stale lease from Worker B’s valid one.
+Without additional safeguards, the system could not distinguish Worker A’s stale claim from Worker B’s valid one.
 
-PostgreSQL prevented duplicate final commits, but it did not prevent intermediate state mutation before Worker A was terminated.
+PostgreSQL prevented duplicate final commits. However, it did not prevent stale intermediate writes before Worker A was terminated.
 
-Structured trace captured during reproduction:
+Structured trace during reproduction:
 
 
 stale_write_blocked | stale_token: 1 | current_token: 2 | reason: token_mismatch
 
 
-This confirmed the failure was deterministic and reproducible.
+This confirmed the issue was deterministic and reproducible.
 
 ---
 
@@ -66,25 +68,25 @@ This confirmed the failure was deterministic and reproducible.
 
 Idempotency was keyed only on `job_id`.
 
-This prevented duplicate rows but did not encode lease epoch ownership.
+This prevented duplicate ledger entries but did not encode lease ownership over time.
 
-When a lease expires and a new worker claims the job:
+When a lease expires and a new worker reclaims the job:
 
 - The previous worker receives no database-level signal that its lease is invalid.
-- Lease expiry and worker termination operate in separate failure domains.
-- Transactional integrity alone does not enforce temporal ownership.
+- Transactional integrity does not enforce temporal ownership.
+- Lease expiry does not automatically invalidate in-flight logic.
 
-The system lacked a monotonic ownership primitive.
+The system lacked a monotonic ownership mechanism.
 
 ---
 
 ## Contributing Factors
 
-- No fencing token in the original lease design.
-- Idempotency testing covered sequential retries but not overlapping lease claims.
-- Clock skew during crash injection exceeded assumed tolerance (<1s), reaching ~2s.
+- No fencing token in the initial lease design.
+- Tests covered sequential retries but not overlapping lease claims.
+- Clock skew during crash injection exceeded expected tolerance.
 - Retry logic assumed monotonic attempt ordering without enforcing it.
-- Invariant checks validated final state but did not gate intermediate mutation paths.
+- Invariants validated final state but did not gate intermediate writes.
 
 ---
 
@@ -94,9 +96,9 @@ Three changes resolved the issue.
 
 ### 1. Introduced Fencing Tokens
 
-A `fencing_token` increments atomically on every lease acquisition.
+A `fencing_token` is incremented atomically each time a lease is acquired.
 
-This establishes monotonic ownership of a job.
+This establishes monotonic ownership of the job.
 
 ### 2. Rebound Idempotency Keys
 
@@ -112,11 +114,11 @@ to:
 (job_id, fencing_token)
 
 
-Writes are now bound to a specific lease epoch.
+This binds writes to a specific lease epoch.
 
-### 3. Added Write Gate
+### 3. Added a Write Gate
 
-A mandatory `assert_fence()` check was introduced before every state mutation.
+A required `assert_fence()` check was added before all state mutations.
 
 Writes are rejected when:
 
@@ -124,7 +126,7 @@ Writes are rejected when:
 worker_token != current_fencing_token
 
 
-Claim SQL:
+Lease claim SQL:
 
 ```sql
 UPDATE jobs
@@ -138,9 +140,9 @@ WHERE id = $1
 RETURNING fencing_token;
 Validation
 
-The adversarial harness was rerun under identical conditions:
+The deterministic harness was rerun under identical conditions:
 
-500 deterministic runs
+500 runs
 
 Forced lease expiry
 
@@ -152,46 +154,243 @@ Results:
 
 Zero stale mutations
 
-All intermediate invalid writes rejected
+All invalid writes correctly rejected
 
 Transitional invariants preserved
 
-What Worked
-
-Deterministic replay tooling reconstructed exact event ordering.
-
-Invariant checks surfaced inconsistencies immediately.
-
-The failure remained contained within development infrastructure.
-
-The harness made the fix measurable and verifiable.
-
 Preventative Measures
 
-Fencing token enforcement is mandatory for all lease-based coordination.
+Fencing token enforcement is now mandatory for all lease-based paths.
 
-Crash injection and forced lease expiry run automatically in CI.
+Crash injection and forced lease expiry are part of CI.
 
-Lease overlap anomaly detection integrated into monitoring.
+Lease overlap detection added to monitoring.
 
-Deterministic replay enabled for concurrency-critical paths.
+Deterministic replay enabled for concurrency-critical code paths.
 
 Lessons
 
-Lease mechanisms without fencing tokens are incomplete in multi-worker systems.
+Lease-based systems require fencing tokens in multi-worker environments.
 
 Database idempotency does not eliminate intermediate mutation risk.
 
-Lease expiry and worker termination must be treated as independent failure domains.
+Lease expiry and worker termination must be treated separately.
 
-Clock skew is an expected condition, not an edge case.
+Clock skew should be assumed, not ignored.
 
-Transitional invariants must be validated, not only final state correctness.
-
-Deterministic adversarial testing exposes concurrency paths that unit tests miss.
+Transitional invariants are as important as final state checks.
 
 Closing Note
 
-This failure was intentionally constructed under adversarial timing conditions to validate coordination guarantees. No production systems were impacted.
+This failure was intentionally constructed under adversarial timing conditions to validate correctness guarantees. No production systems were impacted.
 
-The fencing-token enforcement model is now required for all lease-based execution paths.
+The fencing-token model is now required for all lease-based coordination in Faultline.
+
+
+---
+
+This version:
+
+- Reads natural
+- Feels written by an engineer
+- Avoids buzzwords
+- Is technically solid
+- Is safe for FAANG review
+- Is interview defensible
+
+If you want, next we can:
+- Add a small ASCII sequence diagram (very high signal)
+- Or tighten it even more for Apple-level infra review.
+all sections is one file 
+
+Yes — everything below is one complete file.
+No fragments. No sections missing.
+Copy from the first # to the end and paste directly into:
+
+docs/design/lease-expiry-postmortem.md
+
+# Designing Against Lease Expiry Races: A Deterministic Failure Analysis
+
+Status: Development adversarial test failure (no production impact)  
+Environment: Local + CI deterministic harness  
+Component: Lease-based execution model (Faultline)
+
+---
+
+## Summary
+
+During adversarial testing of the lease-based execution model, we identified a race condition between lease expiry and worker resumption. This allowed a stale worker to attempt state mutation even after another worker had legally reclaimed the job.
+
+Database-level idempotency prevented duplicate final commits, but it did not prevent intermediate stale writes.
+
+The issue was reproduced deterministically and resolved by introducing fencing tokens tied to lease acquisition order.
+
+---
+
+## System Context
+
+Faultline uses PostgreSQL as the coordination layer for distributed workers.
+
+Each job:
+
+- Is claimed using a time-bound lease (TTL)
+- Transitions from `queued → running`
+- Can be reclaimed when `lease_expires_at < NOW()`
+
+The original design relied on:
+
+- PostgreSQL transactional guarantees
+- Idempotency keyed only on `job_id`
+- The assumption that lease expiry and worker termination occur together
+
+That assumption was incorrect.
+
+Lease expiry and worker termination are independent failure domains.
+
+---
+
+## Failure Construction
+
+The issue was intentionally constructed using a deterministic harness.
+
+The sequence was:
+
+1. Worker A acquired a lease with a 1-second TTL.
+2. Worker A was delayed 2.5 seconds to force lease expiry.
+3. A barrier prevented Worker B from claiming the job until Worker A’s lease had expired.
+4. Worker B acquired the lease and began execution.
+5. Worker A resumed briefly and attempted a state mutation under its expired lease.
+
+Without additional safeguards, the system could not distinguish Worker A’s stale claim from Worker B’s valid one.
+
+PostgreSQL prevented duplicate final commits. However, it did not prevent stale intermediate writes before Worker A was terminated.
+
+Structured trace during reproduction:
+
+
+stale_write_blocked | stale_token: 1 | current_token: 2 | reason: token_mismatch
+
+
+This confirmed the issue was deterministic and reproducible.
+
+---
+
+## Root Cause
+
+Idempotency was keyed only on `job_id`.
+
+This prevented duplicate ledger entries but did not encode lease ownership over time.
+
+When a lease expires and a new worker reclaims the job:
+
+- The previous worker receives no database-level signal that its lease is invalid.
+- Transactional integrity does not enforce temporal ownership.
+- Lease expiry does not automatically invalidate in-flight execution.
+
+The system lacked a monotonic ownership mechanism.
+
+---
+
+## Contributing Factors
+
+- No fencing token in the initial lease design.
+- Tests covered sequential retries but not overlapping lease claims.
+- Clock skew during crash injection exceeded expected tolerance.
+- Retry logic assumed monotonic attempt ordering without enforcing it.
+- Invariants validated final state but did not gate intermediate writes.
+
+---
+
+## Corrective Actions
+
+Three changes resolved the issue.
+
+### 1. Introduced Fencing Tokens
+
+A `fencing_token` is incremented atomically each time a lease is acquired.
+
+This establishes monotonic ownership of the job.
+
+### 2. Rebound Idempotency Keys
+
+Idempotency keys changed from:
+
+
+(job_id)
+
+
+to:
+
+
+(job_id, fencing_token)
+
+
+This binds writes to a specific lease epoch.
+
+### 3. Added a Write Gate
+
+A required `assert_fence()` check was added before all state mutations.
+
+Writes are rejected when:
+
+
+worker_token != current_fencing_token
+
+
+Lease claim SQL:
+
+```sql
+UPDATE jobs
+SET state = 'running',
+    fencing_token = fencing_token + 1
+WHERE id = $1
+  AND (
+        state = 'queued'
+        OR (state = 'running' AND lease_expires_at < NOW())
+      )
+RETURNING fencing_token;
+Validation
+
+The deterministic harness was rerun under identical conditions:
+
+500 runs
+
+Forced lease expiry
+
+Crash injection
+
+Artificial clock skew
+
+Results:
+
+Zero stale mutations
+
+All invalid writes correctly rejected
+
+Transitional invariants preserved
+
+Preventative Measures
+
+Fencing token enforcement is now mandatory for all lease-based paths.
+
+Crash injection and forced lease expiry are part of CI.
+
+Lease overlap detection added to monitoring.
+
+Deterministic replay enabled for concurrency-critical code paths.
+
+Lessons
+
+Lease-based systems require fencing tokens in multi-worker environments.
+
+Database idempotency does not eliminate intermediate mutation risk.
+
+Lease expiry and worker termination must be treated separately.
+
+Clock skew should be assumed, not ignored.
+
+Transitional invariants are as important as final state checks.
+
+Closing Note
+
+This failure was intentionally constructed under adversarial timing conditions to validate correctness guarantees. No production systems were impacted.
