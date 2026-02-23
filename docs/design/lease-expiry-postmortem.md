@@ -138,6 +138,7 @@ WHERE id = $1
         OR (state = 'running' AND lease_expires_at < NOW())
       )
 RETURNING fencing_token;
+```
 
 ## Validation
 
