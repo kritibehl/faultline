@@ -153,7 +153,7 @@ The deterministic harness was rerun under identical conditions:
 - Zero stale mutations
 - All invalid writes correctly rejected
 - Transitional invariants preserved
-- No race window was observed after fencing enforcement.
+- No race window was observed after fencing enforcement
 
 ---
 
