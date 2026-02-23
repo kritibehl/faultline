@@ -52,7 +52,7 @@ The sequence was:
 
 Without additional safeguards, the system could not distinguish Worker A’s stale claim from Worker B’s valid one.
 
-PostgreSQL prevented duplicate final commits. However, it did not prevent stale intermediate writes before Worker A was terminated.
+PostgreSQL prevented duplicate terminal state transitions but did not prevent stale intermediate updates under an expired lease.However, it did not prevent stale intermediate writes before Worker A was terminated.
 
 Structured trace during reproduction:
 
@@ -348,7 +348,7 @@ WHERE id = $1
         state = 'queued'
         OR (state = 'running' AND lease_expires_at < NOW())
       )
-RETURNING fencing_token;
+RETURNING fencing_token; ```
 Validation
 
 The deterministic harness was rerun under identical conditions:
@@ -361,7 +361,7 @@ Crash injection
 
 Artificial clock skew
 
-Results:
+### Results:
 
 Zero stale mutations
 
@@ -379,7 +379,7 @@ Lease overlap detection added to monitoring.
 
 Deterministic replay enabled for concurrency-critical code paths.
 
-Lessons
+### Lessons
 
 Lease-based systems require fencing tokens in multi-worker environments.
 
@@ -391,6 +391,6 @@ Clock skew should be assumed, not ignored.
 
 Transitional invariants are as important as final state checks.
 
-Closing Note
+### Closing Note
 
 This failure was intentionally constructed under adversarial timing conditions to validate correctness guarantees. No production systems were impacted.
