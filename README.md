@@ -1,31 +1,32 @@
-# Faultline — Production-Grade Distributed Job Processing System
+# Faultline
 
-Faultline is a PostgreSQL-backed distributed job processing system designed for **correctness under failure** and adversarial timing.
+**Crash-safe distributed job processing using PostgreSQL lease coordination and fencing tokens.**
 
-It uses PostgreSQL as the **source of truth and coordination layer**, combining:
+Faultline is a PostgreSQL-backed job queue designed around one question: what happens when a worker crashes mid-execution, a second worker reclaims the job, and the first worker comes back?
 
-- **Lease-based execution**
-- **Row-level locking** (`FOR UPDATE SKIP LOCKED`)
-- **Fencing tokens for stale-writer protection**
-- **Database-enforced idempotency**
-
-to provide crash-safe recovery and deterministic execution semantics.
+Most job queues don't have a good answer. Faultline does.
 
 ---
 
-## Why This Exists
+## The Failure It's Built to Handle
 
-Many job queues demonstrate that jobs can run once.
+Worker A claims a job. Its lease expires while it's still running (slow work, network pause, preemption). Worker B reclaims the job and starts executing. Worker A finishes its work and attempts to commit.
 
-Faultline is designed to demonstrate that jobs remain **correct, recoverable, race-safe, and observable** under real failure conditions, including:
+Without coordination, both workers write. One job executes twice.
 
-- Worker crashes during execution  
-- Lease-expiry races between concurrent workers  
-- Duplicate job submissions (idempotency)  
-- Database outages followed by recovery  
-- Overlapping retries under contention  
+Here's what Faultline does instead:
 
-The goal is not just execution — but **deterministic correctness under failure.**
+```
+{"event":"lease_acquired",    "job_id":"05bcdb10...", "token":1}
+{"event":"execution_started", "job_id":"05bcdb10...", "token":1}
+{"event":"lease_acquired",    "job_id":"05bcdb10...", "token":2}   ← Worker B reclaims
+{"event":"execution_started", "job_id":"05bcdb10...", "token":2}
+{"event":"stale_write_blocked","stale_token":1,"current_token":2,"reason":"token_mismatch"}
+{"event":"worker_exit",       "reason":"stale"}                    ← Worker A aborts
+{"event":"worker_exit",       "reason":"success"}                  ← Worker B commits
+```
+
+One ledger entry. One `succeeded` state. Zero duplicate executions.
 
 ---
 
@@ -33,142 +34,146 @@ The goal is not just execution — but **deterministic correctness under failure
 
 ![Architecture](docs/architecture.png)
 
-Faultline uses PostgreSQL as the coordination layer and source of truth.
-
-Workers atomically claim jobs by acquiring **time-bound leases** on job rows.
-Each successful lease acquisition increments a monotonically increasing `fencing_token`.
-
-If a worker crashes mid-execution, the lease expires and another worker safely recovers the job.
-If a stale worker later attempts to write, it is rejected at the database boundary via fencing validation.
+Faultline uses PostgreSQL as the coordination layer and single source of truth. Workers atomically claim jobs by acquiring time-bound leases on job rows. Each successful lease acquisition increments a monotonically increasing `fencing_token`. If a worker crashes, the lease expires and another worker safely recovers the job. If the first worker comes back, it is rejected at the database boundary.
 
 ---
 
-## Core Design & Guarantees
+## How It Works
 
-Faultline provides the following guarantees:
+### Lease-based claiming with `FOR UPDATE SKIP LOCKED`
 
-- **Durable job state machine**  
-  Jobs transition through explicit states: `queued → running → succeeded | failed`.  
-  Illegal transitions are rejected at the database layer.
+Workers claim jobs atomically. If a row is already locked by another worker, it's skipped — no blocking, no thundering herd.
 
-- **Lease-based execution**  
-  Workers must hold a valid lease (`lease_owner`, `lease_expires_at`) to execute a job.
+```sql
+SELECT id FROM jobs
+WHERE state = 'queued'
+  AND next_run_at <= NOW()
+ORDER BY next_run_at
+LIMIT 1
+FOR UPDATE SKIP LOCKED;
+```
 
-- **Fencing-token stale-write protection**  
-  Each lease increments a `fencing_token`.  
-  Side effects are bound to `(job_id, fencing_token)` to prevent stale workers from committing after losing ownership.
+### Fencing tokens prevent stale writes
 
-- **Crash-safe recovery**  
-  Jobs with expired leases automatically become eligible for safe reprocessing.
+Every claim increments a monotonic counter on the job row:
 
-- **Database-enforced idempotency**  
-  Side effects are protected by database uniqueness constraints to ensure at-most-once application per lease epoch.
+```sql
+UPDATE jobs
+SET lease_owner    = %(worker_id)s,
+    lease_expires_at = %(lease_until)s,
+    fencing_token  = fencing_token + 1,
+    state          = 'running'
+WHERE id = %(job_id)s
+  AND (state = 'queued'
+       OR (state = 'running' AND lease_expires_at < NOW()))
+RETURNING fencing_token;
+```
 
-- **Bounded retries with backoff**  
-  Jobs retry using exponential backoff (`next_run_at`) and transition to a terminal failed state after `max_attempts`.
+The worker receives its token in the same round-trip that claims the job. Before every critical write, it validates:
 
-- **Explicit failure visibility**  
-  Failures are surfaced through metrics rather than hidden retries.
+```python
+def assert_fence(cur, job_id, token):
+    cur.execute("""
+        SELECT fencing_token, lease_expires_at < NOW() AS lease_expired
+        FROM jobs WHERE id = %s
+    """, (job_id,))
+    row = cur.fetchone()
+    if row["fencing_token"] != token:
+        raise StaleLease("token_mismatch")
+    if row["lease_expired"]:
+        raise StaleLease("lease_expired")
+```
 
----
+If the token has been superseded, the stale worker raises and exits without committing.
 
-## Deterministic Failure Validation
+### Database-enforced idempotency
 
-Faultline includes scripted failure drills that validate system behavior under:
+Even if `assert_fence()` were bypassed, the database rejects duplicate writes:
 
-- Worker termination during job execution  
-- Lease expiration and recovery by another worker  
-- Repeated job failures triggering retries  
-- Stale-worker write attempts  
-
-### Example Lease-Expiry Race
-
-1. Worker A acquires lease (`token=1`)  
-2. Lease expires  
-3. Worker B reclaims job (`token=2`)  
-4. Worker A attempts stale commit → rejected  
-5. Worker B commits successfully  
-
-This validates:
-
-- Deterministic epoch advancement  
-- Correct owner progression  
-- Stale-write rejection  
-- Exactly one successful side effect  
-
----
-
-## Correctness Guarantees (Retry-Safe Ledger Semantics)
-
-**Schema-backed invariant:** Each job may produce at most one ledger entry per lease epoch:
-
-
+```sql
 UNIQUE(job_id, fencing_token)
+```
 
-
-This binds side effects to the lease epoch, not just the job identifier.
-
-Faultline enforces correctness at the database boundary so retries and crashes cannot violate invariants.
-
-### Guarantees
-
-- **Idempotent effects per lease epoch**  
-  Each job is applied at most once per fencing token.
-
-- **Atomic visibility**  
-  Applying an effect and recording its ledger entry happens in a **single database transaction**, preventing partial state from becoming visible.
-
-- **Stale-write rejection**  
-  A worker holding an outdated fencing token cannot commit state.
-
-- **Ordered state transitions**  
-  Jobs follow a strict lifecycle. Illegal transitions are rejected.
-
-- **Crash-safe reconciliation**  
-  A reconciliation job repairs incomplete state after crashes by ensuring ledger state and job state converge.
+A stale worker with token=1 cannot insert a ledger entry when token=2 already exists. Two layers of protection at different points in the stack.
 
 ---
 
-### Supported Failure Scenarios
+## Invariants
 
-- Worker crash mid-execution  
-- Worker crash mid-apply  
-- Duplicate retries / duplicate submissions  
-- Lease-expiry races  
-- Partial writes (repaired by reconciliation)  
-- Database restart and recovery  
+These must hold at all times:
+
+| Invariant | Mechanism |
+|-----------|-----------|
+| No duplicate ledger entries for the same `(job_id, fencing_token)` | `UNIQUE` constraint |
+| A `succeeded` job has exactly one ledger entry | `UNIQUE` constraint + state machine |
+| A stale token cannot produce a successful state transition | `assert_fence()` + constraint |
+| Crashed jobs converge to a correct terminal state | Reconciliation worker scans `running` jobs with expired leases and requeues them |
 
 ---
 
-### Invariants (informal)
+## Deterministic Failure Testing
 
-- No duplicate ledger entries for the same `(job_id, fencing_token)`  
-- A succeeded job must have exactly one corresponding ledger entry  
-- A stale fencing token can never produce a successful state transition  
-- Reconciliation eventually converges incomplete jobs to the correct terminal state  
+The test harness in `tests/test_lease_race_fencing.py` forces the race condition every time — not probabilistically, but through deterministic orchestration:
+
+1. Worker A claims the job and opens a database barrier
+2. Worker B waits on the barrier (guaranteeing A claims first)
+3. Worker A sleeps 2.5s with a 1s TTL — its lease expires
+4. Worker B waits for expiry, reclaims, executes, succeeds
+5. Worker A wakes, calls `assert_fence()`, finds token mismatch, exits
+
+Post-run assertions:
+```python
+assert count == 1           # exactly one ledger entry
+assert min_tok == max_tok   # no split-brain
+assert int(min_tok) >= 2    # reclaim cycle actually occurred
+assert state == "succeeded" # correct terminal state
+```
+
+The `>= 2` token check is important — it proves the test exercised a reclaim, not a clean first-claim success.
+
+---
+
+## Supported Failure Scenarios
+
+| Scenario | Behavior |
+|----------|----------|
+| Worker crash during execution | Lease expires, job requeued, recovered by next worker |
+| Stale worker attempts write after losing lease | Blocked by `assert_fence()` and `UNIQUE` constraint |
+| Duplicate job submission | Rejected by idempotency key |
+| Worker crash mid-apply (partial write) | Reconciliation worker converges to correct state |
+| Database restart | Jobs in `running` state with expired leases are recovered |
+
+---
+
+## Known Limitations
+
+**Clock skew in lease computation.** Lease expiry is written using the worker's local clock but checked using database time (`NOW()`). Worker clock skew can produce leases that are longer or shorter than intended. The correct fix is computing expiry entirely in the database: `lease_expires_at = NOW() + INTERVAL '5 seconds'`.
+
+**No lease heartbeating.** Long-running jobs must either use a large TTL (slower crash recovery) or risk false failover. A heartbeat loop extending `lease_expires_at` during execution would solve this.
+
+**At-least-once, not exactly-once.** Faultline enforces correctness at the database boundary. External side effects (API calls, emails) must be independently idempotent — the fence cannot protect them.
 
 ---
 
 ## Observability
 
-Faultline exposes Prometheus metrics for both the API and worker processes, including:
+Prometheus metrics exposed for both API and worker processes:
 
-- Job throughput and execution latency  
-- Retry counts and failure rates  
-- Lease acquisitions, expirations, and recovery events  
-- Stale-write rejections  
-- Queue depth and backlog growth  
+- Job throughput and execution latency
+- Lease acquisitions, expirations, and recovery events
+- Stale-write rejections (surfaced as a named metric)
+- Retry counts, failure rates, queue depth
 
-Failure modes and performance bottlenecks are measurable and visible rather than implicit.
+Failure modes are measurable and visible, not hidden inside retries.
 
 ---
 
-## Tech Stack
+## Stack
 
-- Python  
-- PostgreSQL  
-- Docker  
-- Prometheus  
+- Python
+- PostgreSQL
+- Docker
+- Prometheus
 
 ---
 
@@ -178,3 +183,16 @@ Failure modes and performance bottlenecks are measurable and visible rather than
 docker compose up -d --build
 make migrate
 curl http://localhost:8000/health
+```
+
+Run the failure drills:
+```bash
+make lease-race        # deterministic two-worker race
+make lease-race-log    # same, with structured log output
+```
+
+---
+
+## Why PostgreSQL and Not a Message Queue
+
+The fencing token is bound to the same row as the job state, enforced in a single transaction. `UNIQUE(job_id, fencing_token)` is one migration. With a message queue, enforcing this constraint requires an external store, a distributed transaction, and a separate lease mechanism. For proving the correctness model, a relational database makes the invariants visible and directly testable.
