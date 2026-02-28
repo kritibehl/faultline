@@ -32,7 +32,7 @@ One ledger entry. One `succeeded` state. Zero duplicate executions.
 
 ## Architecture
 
-![Architecture](docs/architecture.png)
+![Architecture](docs/architecture.svg)
 
 Faultline uses PostgreSQL as the coordination layer and single source of truth. Workers atomically claim jobs by acquiring time-bound leases on job rows. Each successful lease acquisition increments a monotonically increasing `fencing_token`. If a worker crashes, the lease expires and another worker safely recovers the job. If the first worker comes back, it is rejected at the database boundary.
 

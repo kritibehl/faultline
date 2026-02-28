@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 420" width="780" height="420" font-family="'Courier New', monospace">
+  <!-- Background -->
+  <rect width="780" height="420" fill="#0f1117" rx="12"/>
+
+  <!-- Grid lines (subtle) -->
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1a1f2e" stroke-width="0.5"/>
+    </pattern>
+  </defs>
+  <rect width="780" height="420" fill="url(#grid)" rx="12"/>
+
+  <!-- Title -->
+  <text x="390" y="36" text-anchor="middle" font-size="13" fill="#4a5568" letter-spacing="3" font-family="'Courier New', monospace">FAULTLINE — ARCHITECTURE</text>
+
+  <!-- ── CLIENT ── -->
+  <rect x="40" y="170" width="120" height="56" rx="6" fill="none" stroke="#334155" stroke-width="1.5"/>
+  <text x="100" y="201" text-anchor="middle" font-size="13" fill="#94a3b8" letter-spacing="1">Client</text>
+  <text x="100" y="216" text-anchor="middle" font-size="9" fill="#475569">HTTP</text>
+
+  <!-- ── API ── -->
+  <rect x="240" y="170" width="120" height="56" rx="6" fill="none" stroke="#334155" stroke-width="1.5"/>
+  <text x="300" y="201" text-anchor="middle" font-size="13" fill="#94a3b8" letter-spacing="1">API</text>
+  <text x="300" y="216" text-anchor="middle" font-size="9" fill="#475569">FastAPI</text>
+
+  <!-- ── WORKER ── -->
+  <rect x="240" y="290" width="120" height="56" rx="6" fill="none" stroke="#1d4ed8" stroke-width="1.5"/>
+  <text x="300" y="321" text-anchor="middle" font-size="13" fill="#93c5fd" letter-spacing="1">Worker</text>
+  <text x="300" y="336" text-anchor="middle" font-size="9" fill="#3b82f6">lease · fence · exec</text>
+
+  <!-- ── POSTGRES ── -->
+  <rect x="490" y="190" width="140" height="72" rx="6" fill="none" stroke="#065f46" stroke-width="1.5"/>
+  <rect x="490" y="190" width="140" height="72" rx="6" fill="#052e16" fill-opacity="0.6"/>
+  <text x="560" y="222" text-anchor="middle" font-size="13" fill="#6ee7b7" letter-spacing="1">PostgreSQL</text>
+  <text x="560" y="238" text-anchor="middle" font-size="9" fill="#34d399">source of truth</text>
+  <text x="560" y="252" text-anchor="middle" font-size="8" fill="#059669">jobs · leases · ledger</text>
+
+  <!-- ── PROMETHEUS ── -->
+  <rect x="490" y="310" width="140" height="56" rx="6" fill="none" stroke="#7c3aed" stroke-width="1.5"/>
+  <rect x="490" y="310" width="140" height="56" rx="6" fill="#1e0038" fill-opacity="0.4"/>
+  <text x="560" y="341" text-anchor="middle" font-size="13" fill="#c4b5fd" letter-spacing="1">Prometheus</text>
+  <text x="560" y="356" text-anchor="middle" font-size="9" fill="#8b5cf6">metrics</text>
+
+  <!-- ── ARROWS ── -->
+  <!-- Client → API -->
+  <line x1="160" y1="198" x2="238" y2="198" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
+  <text x="199" y="192" text-anchor="middle" font-size="9" fill="#64748b">enqueue</text>
+
+  <!-- API → Postgres (enqueue) -->
+  <line x1="360" y1="190" x2="488" y2="218" stroke="#475569" stroke-width="1.5" marker-end="url(#arrow-gray)"/>
+  <text x="428" y="196" text-anchor="middle" font-size="9" fill="#64748b">INSERT job</text>
+
+  <!-- Worker → Postgres (claim/coordinate) -->
+  <line x1="360" y1="308" x2="488" y2="248" stroke="#1d4ed8" stroke-width="2" marker-end="url(#arrow-blue)" stroke-dasharray="none"/>
+  <text x="440" y="288" text-anchor="middle" font-size="9" fill="#3b82f6">claim · fence · write</text>
+
+  <!-- Worker → Prometheus -->
+  <line x1="360" y1="338" x2="488" y2="338" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arrow-purple)"/>
+  <text x="424" y="330" text-anchor="middle" font-size="9" fill="#8b5cf6">metrics</text>
+
+  <!-- API → Prometheus -->
+  <line x1="360" y1="216" x2="488" y2="328" stroke="#7c3aed" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-purple)"/>
+
+  <!-- Fencing token annotation -->
+  <rect x="490" y="130" width="220" height="44" rx="4" fill="#1e2535" stroke="#1d4ed8" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="600" y="149" text-anchor="middle" font-size="9" fill="#93c5fd">fencing_token increments on every claim</text>
+  <text x="600" y="164" text-anchor="middle" font-size="9" fill="#3b82f6">UNIQUE(job_id, fencing_token)</text>
+
+  <!-- Arrow from annotation to Postgres -->
+  <line x1="600" y1="174" x2="560" y2="189" stroke="#1d4ed8" stroke-width="1" stroke-dasharray="2,2" marker-end="url(#arrow-blue)"/>
+
+  <!-- ── ARROWHEAD MARKERS ── -->
+  <defs>
+    <marker id="arrow-gray" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#475569"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#1d4ed8"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#7c3aed"/>
+    </marker>
+  </defs>
+
+  <!-- ── LEGEND ── -->
+  <line x1="40" y1="392" x2="60" y2="392" stroke="#1d4ed8" stroke-width="2"/>
+  <text x="65" y="396" font-size="9" fill="#64748b">coordination path (fenced)</text>
+  <line x1="220" y1="392" x2="240" y2="392" stroke="#475569" stroke-width="1.5"/>
+  <text x="245" y="396" font-size="9" fill="#64748b">data path</text>
+  <line x1="340" y1="392" x2="360" y2="392" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="4,2"/>
+  <text x="365" y="396" font-size="9" fill="#64748b">metrics</text>
+</svg>
