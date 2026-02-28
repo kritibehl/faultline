@@ -125,7 +125,6 @@ def wait_for_schema(timeout_seconds=60):
 # ============================================================
 
 def claim_one_job(conn, cur):
-    lease_until = datetime.utcnow() + timedelta(seconds=LEASE_SECONDS)
 
     # Test override: claim specific job but obey correctness rules
     if CLAIM_JOB_ID:
@@ -134,7 +133,7 @@ def claim_one_job(conn, cur):
             UPDATE jobs
             SET state='running',
                 lease_owner=%s,
-                lease_expires_at=%s,
+                lease_expires_at = NOW() + make_interval(secs => %s),
                 fencing_token=fencing_token+1,
                 updated_at=NOW()
             WHERE id=%s
@@ -144,7 +143,7 @@ def claim_one_job(conn, cur):
               )
             RETURNING id, fencing_token
             """,
-            (WORKER_ID, lease_until, CLAIM_JOB_ID),
+            (WORKER_ID, LEASE_SECONDS, CLAIM_JOB_ID),
         )
         row = cur.fetchone()
         if row:
@@ -164,7 +163,7 @@ def claim_one_job(conn, cur):
         UPDATE jobs
         SET state='running',
             lease_owner=%s,
-            lease_expires_at=%s,
+            lease_expires_at = NOW() + make_interval(secs => %s),
             fencing_token=fencing_token+1,
             updated_at=NOW()
         WHERE id = (
@@ -181,7 +180,7 @@ def claim_one_job(conn, cur):
         )
         RETURNING id, fencing_token
         """,
-        (WORKER_ID, lease_until),
+        (WORKER_ID, LEASE_SECONDS),
     )
 
     row = cur.fetchone()
