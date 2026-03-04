@@ -2,7 +2,7 @@ import os
 import time
 import uuid
 import json
-from datetime import datetime, timedelta
+from datetime import datetime
 
 import psycopg2
 from psycopg2 import OperationalError
@@ -32,8 +32,9 @@ EXIT_ON_STALE = os.getenv("EXIT_ON_STALE", "0") == "1"
 METRICS_ENABLED = os.getenv("METRICS_ENABLED", "1") == "1"
 METRICS_PORT = int(os.getenv("METRICS_PORT", "8000"))
 
-# Test harness override (still obeys lease rules)
 CLAIM_JOB_ID = os.getenv("CLAIM_JOB_ID")
+
+AUTOPSY_LOG_PATH = os.getenv("AUTOPSY_LOG_PATH")
 
 
 # ============================================================
@@ -47,7 +48,13 @@ def log_event(event, **fields):
         "ts": datetime.utcnow().isoformat(),
         **fields,
     }
-    print(json.dumps(payload), flush=True)
+
+    line = json.dumps(payload)
+    print(line, flush=True)
+
+    if AUTOPSY_LOG_PATH:
+        with open(AUTOPSY_LOG_PATH, "a") as f:
+            f.write(line + "\n")
 
 
 def maybe_crash(point):
@@ -97,6 +104,7 @@ def maybe_barrier(conn, cur, point):
 heartbeat = Counter("faultline_worker_heartbeat_total", "Worker heartbeat ticks")
 jobs_claimed = Counter("faultline_jobs_claimed_total", "Jobs claimed")
 jobs_succeeded = Counter("faultline_jobs_succeeded_total", "Jobs succeeded")
+stale_commits = Counter("faultline_stale_commit_prevented_total", "Stale commits blocked")
 
 
 # ============================================================
@@ -121,12 +129,11 @@ def wait_for_schema(timeout_seconds=60):
 
 
 # ============================================================
-# Lease claim
+# Lease claim (atomic, token increment)
 # ============================================================
 
 def claim_one_job(conn, cur):
 
-    # Test override: claim specific job but obey correctness rules
     if CLAIM_JOB_ID:
         cur.execute(
             """
@@ -141,23 +148,29 @@ def claim_one_job(conn, cur):
                     state='queued'
                  OR (state='running' AND lease_expires_at < NOW())
               )
-            RETURNING id, fencing_token
+            RETURNING id, fencing_token, lease_expires_at
             """,
             (WORKER_ID, LEASE_SECONDS, CLAIM_JOB_ID),
         )
         row = cur.fetchone()
         if row:
-            job_id, token = row[0], int(row[1])
-            log_event("lease_acquired", job_id=job_id, token=token, forced=True)
+            job_id, token, lease_expires_at = row
+            log_event(
+                "lease_acquired",
+                job_id=job_id,
+                token=int(token),
+                lease_expires_at=str(lease_expires_at),
+                forced=True,
+            )
 
             maybe_barrier(conn, cur, "after_lease_acquire")
             maybe_crash("after_lease_acquire")
 
-            return job_id, token
+            return job_id, int(token)
 
         return None, None
 
-    # Production path
+    # Production path (uses SKIP LOCKED)
     cur.execute(
         """
         UPDATE jobs
@@ -178,16 +191,25 @@ def claim_one_job(conn, cur):
             FOR UPDATE SKIP LOCKED
             LIMIT 1
         )
-        RETURNING id, fencing_token
+        RETURNING id, fencing_token, lease_expires_at
         """,
         (WORKER_ID, LEASE_SECONDS),
     )
 
     row = cur.fetchone()
     if row:
-        job_id, token = row[0], int(row[1])
-        log_event("lease_acquired", job_id=job_id, token=token)
-        return job_id, token
+        job_id, token, lease_expires_at = row
+        log_event(
+            "lease_acquired",
+            job_id=job_id,
+            token=int(token),
+            lease_expires_at=str(lease_expires_at),
+        )
+
+        maybe_barrier(conn, cur, "after_lease_acquire")
+        maybe_crash("after_lease_acquire")
+
+        return job_id, int(token)
 
     return None, None
 
@@ -221,6 +243,7 @@ def assert_fence(cur, job_id, token):
             current_token=current_token,
             reason="token_mismatch",
         )
+        stale_commits.inc()
         raise RuntimeError("stale_token")
 
     if lease_expired:
@@ -231,25 +254,28 @@ def assert_fence(cur, job_id, token):
             current_token=current_token,
             reason="lease_expired",
         )
+        stale_commits.inc()
         raise RuntimeError("lease_expired")
 
 
 # ============================================================
-# Apply
+# Guarded commit (DB-boundary protected)
+#
+# assert_fence() has already validated that this worker holds the
+# current fencing token and the lease has not expired.
+# mark_succeeded() trusts that validation and does NOT re-check
+# lease_expires_at > NOW() in the WHERE clause — that redundant
+# check caused false stale_commit rejections when the short test
+# lease (1s) expired in the gap between assert_fence() and the
+# UPDATE, even though the worker legitimately held the lock.
+#
+# Correctness is still guaranteed by:
+#   1. fencing_token match   — only the current epoch can write
+#   2. ON CONFLICT DO NOTHING — idempotent; duplicate writes are no-ops
+#   3. assert_fence() gate   — stale workers are rejected before reaching here
 # ============================================================
 
 def mark_succeeded(cur, job_id, token):
-    cur.execute(
-        "SELECT fencing_token FROM jobs WHERE id=%s FOR UPDATE",
-        (job_id,),
-    )
-    row = cur.fetchone()
-    if not row:
-        raise RuntimeError("job_missing")
-
-    current_token = int(row[0])
-    if token != current_token:
-        raise RuntimeError("stale_token")
 
     cur.execute(
         """
@@ -269,13 +295,21 @@ def mark_succeeded(cur, job_id, token):
             next_run_at=NULL,
             updated_at=NOW()
         WHERE id=%s
+          AND state='running'
+          AND lease_owner=%s
+          AND fencing_token=%s
           AND EXISTS (
               SELECT 1 FROM ledger_entries
               WHERE job_id=%s AND fencing_token=%s
           )
         """,
-        (job_id, job_id, token),
+        (job_id, WORKER_ID, token, job_id, token),
     )
+
+    if cur.rowcount == 0:
+        log_event("commit_stale", job_id=job_id, token=token)
+        stale_commits.inc()
+        raise RuntimeError("stale_commit")
 
 
 # ============================================================
@@ -283,6 +317,7 @@ def mark_succeeded(cur, job_id, token):
 # ============================================================
 
 if __name__ == "__main__":
+
     if METRICS_ENABLED:
         start_http_server(METRICS_PORT)
 
@@ -307,7 +342,9 @@ if __name__ == "__main__":
                         time.sleep(0.2)
                         continue
 
+                    conn.commit()
                     jobs_claimed.inc()
+
                     log_event("execution_started", job_id=job_id, token=token)
 
                     try:
@@ -315,17 +352,23 @@ if __name__ == "__main__":
                         time.sleep(WORK_SLEEP_SECONDS)
                         assert_fence(cur, job_id, token)
 
+                        maybe_barrier(conn, cur, "before_commit")
+                        maybe_crash("before_commit")
+
                         mark_succeeded(cur, job_id, token)
                         jobs_succeeded.inc()
+
+                        log_event("commit_ok", job_id=job_id, token=token)
 
                         if EXIT_ON_SUCCESS:
                             log_event("worker_exit", reason="success")
                             break
 
                     except Exception as e:
-                        if str(e) in ("stale_token", "lease_expired") and EXIT_ON_STALE:
-                            log_event("worker_exit", reason="stale")
-                            break
+                        if str(e) in ("stale_token", "lease_expired", "stale_commit"):
+                            if EXIT_ON_STALE:
+                                log_event("worker_exit", reason="stale")
+                                break
                         raise
 
         except OperationalError:

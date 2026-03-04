@@ -1,40 +1,110 @@
-# Postmortem: Worker killed mid-apply (Crash Window)
+# Postmortem: Worker Crash Mid-Apply — Reconciler Recovery
 
-**Date:** 2026-01-31  
-**System:** Faultline  
-**Scenario:** Worker terminated while processing a job (mid-apply)
+**Scenario:** Worker commits ledger entry, crashes before updating `jobs.state`  
+**Severity:** Would be P1 in production (job stuck in `running` forever without reconciler)  
+**Status:** Invariant holds — reconciler converges state within `RECONCILE_SLEEP_SECONDS`
 
-## Summary
-We simulated a worker crash during job execution to validate that Faultline preserves correctness under failure. The system must not duplicate effects and must converge job state correctly after recovery.
+---
 
-## Impact
-- No user-visible data loss expected (jobs persisted in DB).
-- Risk being tested: inconsistent state where an effect is applied but job state is not updated.
+## The Crash Window
 
-## What Happened (Timeline)
-- Seeded a queued job into Postgres.
-- Worker claimed the job (state transitioned to `running` with a lease).
-- Worker was killed before it could complete normally.
-- Reconciler ran and repaired incomplete state by converging job state based on ledger presence.
+`mark_succeeded()` performs two sequential writes:
 
-## Root Cause (of the risk)
-A crash can occur in the window between:
-1) effect application (ledger entry creation)
-2) job state update (`running → succeeded`)
+```sql
+-- Write 1: ledger entry (idempotency boundary)
+INSERT INTO ledger_entries (job_id, fencing_token, ...) VALUES (...)
+ON CONFLICT (job_id, fencing_token) DO NOTHING;
 
-## Detection
-- Verified job and ledger state via Postgres queries.
-- Metrics available: jobs succeeded, retries, worker heartbeats.
+-- Write 2: state transition
+UPDATE jobs SET state='succeeded' WHERE id=... AND fencing_token=...;
+```
 
-## Resolution
-- Enforced idempotency at the DB boundary (`ledger_entries.job_id UNIQUE`).
-- Added reconciler to converge job state to `succeeded` when a ledger entry exists.
+If the worker process is killed between Write 1 committing and Write 2 executing,
+the job is permanently in an inconsistent state:
 
-## Correctness Guarantees Validated
-- At-most-once effect application (idempotent ledger insert).
-- Crash-safe recovery through reconciliation convergence.
-- No duplicate ledger entries after retries/restarts.
+```
+ledger_entries: (job_id=X, fencing_token=2)  ← exists
+jobs:           state='running'               ← stuck
+```
 
-## Follow-ups
-- Add CI hook to run reconciliation tests.
-- Add one more drill for DB outage during job processing (future).
+Without intervention, this job will be reaped by the lease expiry logic and
+retried — but `ON CONFLICT DO NOTHING` will silently skip the duplicate ledger
+write. The retry will succeed the second time, producing correct final state.
+
+**However:** this means the job's side effect runs twice at the application layer,
+even though the ledger only records it once. For true exactly-once semantics at
+the application layer, the reconciler provides a faster path.
+
+---
+
+## Reconciler Recovery
+
+`services/worker/reconciler.py::reconcile_once()` detects this condition:
+
+```sql
+SELECT j.id
+FROM jobs j
+JOIN ledger_entries l ON l.job_id = j.id
+WHERE j.state <> 'succeeded'
+```
+
+Any job with a committed ledger entry that hasn't reached `succeeded` is
+converged immediately, without re-executing the job. This is the fast path.
+
+---
+
+## Timeline
+
+```
+T0  Worker claims job → fencing_token=2
+T1  assert_fence() passes
+T2  Job executes
+T3  assert_fence() passes
+T4  INSERT INTO ledger_entries (job_id=X, token=2) → COMMITTED ✓
+T5  CRASH (os._exit, OOM kill, network loss, etc.)
+    UPDATE jobs SET state='succeeded' → NEVER RUNS
+
+    --- time passes ---
+
+T6  Reconciler wakes (every RECONCILE_SLEEP_SECONDS=5s)
+T7  Finds (job_id=X, state='running', ledger entry exists)
+T8  UPDATE jobs SET state='succeeded' WHERE id=X → COMMITTED ✓
+
+    Result: job converged to succeeded. No re-execution.
+```
+
+---
+
+## Drill Validation
+
+Drill `drills/drill_kill_worker_mid_apply.sh` validates this scenario:
+
+1. Start worker with `CRASH_AT=before_commit`
+2. Worker commits ledger entry, then `os._exit(137)`
+3. Assert job is stuck in `running` with committed ledger entry
+4. Start reconciler
+5. Assert job transitions to `succeeded` within `RECONCILE_SLEEP_SECONDS * 2`
+6. Assert exactly one ledger entry
+
+---
+
+## Invariants Confirmed
+
+| Invariant | Mechanism | Status |
+|-----------|-----------|--------|
+| No job permanently stuck after crash | Reconciler JOIN on ledger_entries | ✅ |
+| No duplicate ledger entries on retry | `ON CONFLICT DO NOTHING` | ✅ |
+| State convergence within bounded time | `RECONCILE_SLEEP_SECONDS` TTL | ✅ |
+| Reconciler is idempotent | FOR UPDATE SKIP LOCKED + WHERE clause | ✅ |
+
+---
+
+## Key Insight
+
+The ledger entry is the durable proof of work. Once it exists for a given
+`(job_id, fencing_token)`, the job's result is committed regardless of whether
+`jobs.state` reflects it yet. The reconciler simply observes this proof and
+updates the view.
+
+This separates durability (ledger) from visibility (jobs.state) — and the
+reconciler bridges the gap when the worker can't.
