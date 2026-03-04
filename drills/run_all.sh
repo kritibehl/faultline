@@ -21,15 +21,27 @@ log()  { echo -e "${YELLOW}[drill]${NC} $*"; }
 pass() { echo -e "${GREEN}  ✅ PASS${NC}: $*"; PASS=$((PASS+1)); }
 fail() { echo -e "${RED}  ❌ FAIL${NC}: $*"; FAIL=$((FAIL+1)); ERRORS+=("$*"); }
 
-db() {
+db_job() {
     python3 -c "
-import psycopg2, sys
+import psycopg2
 conn = psycopg2.connect('$DATABASE_URL')
 cur = conn.cursor()
-cur.execute(sys.argv[1])
+cur.execute('SELECT $2 FROM jobs WHERE id=%s', ('$1',))
+row = cur.fetchone()
+print(row[0] if row else 'NOT_FOUND')
+conn.close()
+"
+}
+
+db_ledger_count() {
+    python3 -c "
+import psycopg2
+conn = psycopg2.connect('$DATABASE_URL')
+cur = conn.cursor()
+cur.execute('SELECT COUNT(*) FROM ledger_entries WHERE job_id=%s', ('$1',))
 print(cur.fetchone()[0])
 conn.close()
-" "$1"
+"
 }
 
 cleanup_key() {
@@ -40,7 +52,26 @@ cur = conn.cursor()
 cur.execute(\"DELETE FROM ledger_entries WHERE job_id IN (SELECT id FROM jobs WHERE idempotency_key='$1')\")
 cur.execute(\"DELETE FROM jobs WHERE idempotency_key='$1'\")
 conn.commit()
+conn.close()
 " 2>/dev/null || true
+}
+
+seed_job() {
+    python3 -c "
+import psycopg2, uuid, hashlib
+conn = psycopg2.connect('$DATABASE_URL')
+cur = conn.cursor()
+jid = str(uuid.uuid4())
+payload = '{}'
+h = hashlib.sha256(payload.encode()).hexdigest()
+cur.execute(\"\"\"INSERT INTO jobs (id, payload, payload_hash, state, attempts,
+    max_attempts, idempotency_key, next_run_at)
+    VALUES (%s,%s,%s,'queued',0,5,%s,NOW())\"\"\",
+    (jid, payload, h, '$1'))
+conn.commit()
+conn.close()
+print(jid)
+"
 }
 
 echo ""
@@ -54,49 +85,27 @@ echo ""
 # ─────────────────────────────────────────────
 log "Drill 01: Worker crash mid-execution"
 cleanup_key "drill-01-crash"
+JOB_ID=$(seed_job "drill-01-crash")
 
-# Seed a job
-JOB_ID=$(python3 -c "
-import psycopg2, uuid, hashlib
-conn = psycopg2.connect('$DATABASE_URL')
-cur = conn.cursor()
-jid = str(uuid.uuid4())
-payload = '{}'
-h = hashlib.sha256(payload.encode()).hexdigest()
-cur.execute(\"INSERT INTO jobs (id, payload, payload_hash, state, attempts, max_attempts, idempotency_key, next_run_at) VALUES (%s,%s,%s,'queued',0,5,%s,NOW())\", (jid, payload, h, 'drill-01-crash'))
-conn.commit()
-print(jid)
-")
-
-# Worker A: crash after lease acquire
-DATABASE_URL="$DATABASE_URL" \
-CLAIM_JOB_ID="$JOB_ID" \
-CRASH_AT=after_lease_acquire \
-LEASE_SECONDS=2 \
-METRICS_ENABLED=0 \
-MAX_LOOPS=10 \
+DATABASE_URL="$DATABASE_URL" CLAIM_JOB_ID="$JOB_ID" CRASH_AT=before_commit \
+LEASE_SECONDS=2 METRICS_ENABLED=0 MAX_LOOPS=10 \
 python3 services/worker/worker.py > /tmp/drill01_a.log 2>&1 || true
 
-sleep 3  # let lease expire
+sleep 3
 
-# Worker B: reclaim and succeed
-DATABASE_URL="$DATABASE_URL" \
-CLAIM_JOB_ID="$JOB_ID" \
-LEASE_SECONDS=30 \
-METRICS_ENABLED=0 \
-EXIT_ON_SUCCESS=1 \
-MAX_LOOPS=20 \
+DATABASE_URL="$DATABASE_URL" CLAIM_JOB_ID="$JOB_ID" LEASE_SECONDS=30 \
+METRICS_ENABLED=0 EXIT_ON_SUCCESS=1 MAX_LOOPS=20 \
 python3 services/worker/worker.py > /tmp/drill01_b.log 2>&1 || true
 
-STATE=$(db "SELECT state FROM jobs WHERE id='$JOB_ID'")
-TOKEN=$(db "SELECT fencing_token FROM jobs WHERE id='$JOB_ID'")
-LEDGER=$(db "SELECT COUNT(*) FROM ledger_entries WHERE job_id='$JOB_ID'")
+STATE=$(db_job "$JOB_ID" "state")
+TOKEN=$(db_job "$JOB_ID" "fencing_token")
+LEDGER=$(db_ledger_count "$JOB_ID")
 
-[ "$STATE" = "succeeded" ]  && pass "job.state = succeeded" || fail "Drill 01: job.state = $STATE (want succeeded)"
-[ "$TOKEN" -ge 2 ]          && pass "fencing_token >= 2 (reclaim occurred)" || fail "Drill 01: fencing_token=$TOKEN (want >=2)"
-[ "$LEDGER" = "1" ]         && pass "ledger_entries = 1 (no duplicate)" || fail "Drill 01: ledger_entries=$LEDGER (want 1)"
-grep -q "crash_injected"  /tmp/drill01_a.log && pass "Worker A crash confirmed" || fail "Drill 01: no crash_injected in Worker A log"
-grep -q "stale_write_blocked\|commit_ok" /tmp/drill01_b.log && pass "Worker B committed" || fail "Drill 01: Worker B did not commit"
+[ "$STATE" = "succeeded" ]  && pass "job.state = succeeded"                 || fail "Drill 01: state=$STATE (want succeeded)"
+[ "$TOKEN" -ge 2 ]          && pass "fencing_token >= 2 (reclaim confirmed)" || fail "Drill 01: fencing_token=$TOKEN (want >=2)"
+[ "$LEDGER" = "1" ]         && pass "ledger_entries = 1 (no duplicate)"     || fail "Drill 01: ledger_entries=$LEDGER (want 1)"
+grep -q "crash_injected"  /tmp/drill01_a.log && pass "Worker A crash confirmed (before_commit)" || fail "Drill 01: no crash_injected in Worker A log"
+grep -q "commit_ok"      /tmp/drill01_b.log && pass "Worker B committed"       || fail "Drill 01: Worker B did not commit"
 
 echo ""
 
@@ -106,29 +115,41 @@ echo ""
 log "Drill 02: Duplicate submission (idempotency)"
 cleanup_key "drill-02-payment"
 
-# First submission
 R1=$(curl -s -X POST http://localhost:8000/jobs \
   -H "Content-Type: application/json" \
   -d '{"payload":{"task":"payment"},"idempotency_key":"drill-02-payment"}')
 
-# Second submission (identical)
 R2=$(curl -s -X POST http://localhost:8000/jobs \
   -H "Content-Type: application/json" \
   -d '{"payload":{"task":"payment"},"idempotency_key":"drill-02-payment"}')
 
-ID1=$(echo "$R1" | python3 -c "import sys,json; print(json.load(sys.stdin)['job_id'])")
-ID2=$(echo "$R2" | python3 -c "import sys,json; print(json.load(sys.stdin)['job_id'])")
-JOB_COUNT=$(db "SELECT COUNT(*) FROM jobs WHERE idempotency_key='drill-02-payment'")
+ID1=$(echo "$R1" | python3 -c "import sys,json; print(json.load(sys.stdin).get('job_id',''))")
+ID2=$(echo "$R2" | python3 -c "import sys,json; print(json.load(sys.stdin).get('job_id',''))")
 
-[ "$ID1" = "$ID2" ]   && pass "Both submissions returned same job_id" || fail "Drill 02: ID1=$ID1 ID2=$ID2 (should be equal)"
-[ "$JOB_COUNT" = "1" ] && pass "Exactly 1 job row in DB" || fail "Drill 02: job_count=$JOB_COUNT (want 1)"
+JOB_COUNT=$(python3 -c "
+import psycopg2
+conn = psycopg2.connect('$DATABASE_URL')
+cur = conn.cursor()
+cur.execute(\"SELECT COUNT(*) FROM jobs WHERE idempotency_key='drill-02-payment'\")
+print(cur.fetchone()[0])
+conn.close()
+")
 
-# Payload mismatch should 409
+[ "$ID1" = "$ID2" ] && [ -n "$ID1" ] \
+    && pass "Both submissions returned same job_id" \
+    || fail "Drill 02: ID1=$ID1 ID2=$ID2 (should be equal)"
+
+[ "$JOB_COUNT" = "1" ] \
+    && pass "Exactly 1 job row in DB" \
+    || fail "Drill 02: job_count=$JOB_COUNT (want 1)"
+
 HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8000/jobs \
   -H "Content-Type: application/json" \
-  -d '{"payload":{"task":"different"},"idempotency_key":"drill-02-payment"}')
+  -d '{"payload":{"task":"different_payload"},"idempotency_key":"drill-02-payment"}')
 
-[ "$HTTP_CODE" = "409" ] && pass "Payload mismatch returns 409" || fail "Drill 02: payload mismatch returned $HTTP_CODE (want 409)"
+[ "$HTTP_CODE" = "409" ] \
+    && pass "Payload mismatch returns 409" \
+    || fail "Drill 02: payload mismatch returned HTTP $HTTP_CODE (want 409) — rebuild API: docker compose up -d --build api"
 
 echo ""
 
@@ -138,53 +159,61 @@ echo ""
 log "Drill 03: Reconciler convergence (mid-apply crash)"
 cleanup_key "drill-03-reconcile"
 
-# Seed a job in 'running' state with a committed ledger entry (simulates mid-apply crash)
-python3 -c "
+DRILL3_JOB_ID=$(python3 -c "
 import psycopg2, uuid, hashlib
 conn = psycopg2.connect('$DATABASE_URL')
 cur = conn.cursor()
 jid = str(uuid.uuid4())
 payload = '{}'
 h = hashlib.sha256(payload.encode()).hexdigest()
-cur.execute(\"INSERT INTO jobs (id, payload, payload_hash, state, attempts, max_attempts, idempotency_key, fencing_token, next_run_at) VALUES (%s,%s,%s,'running',1,5,%s,2,NOW())\", (jid, payload, h, 'drill-03-reconcile'))
-cur.execute(\"INSERT INTO ledger_entries (job_id, fencing_token, account_id, delta) VALUES (%s, 2, 'default', 1)\", (jid,))
+cur.execute(\"\"\"INSERT INTO jobs (id, payload, payload_hash, state, attempts,
+    max_attempts, idempotency_key, fencing_token, next_run_at)
+    VALUES (%s,%s,%s,'running',1,5,%s,2,NOW())\"\"\",
+    (jid, payload, h, 'drill-03-reconcile'))
+cur.execute('INSERT INTO ledger_entries (job_id, fencing_token, account_id, delta) VALUES (%s,2,%s,1)',
+    (jid, 'default'))
 conn.commit()
+conn.close()
 print(jid)
-" > /tmp/drill03_job_id.txt
+")
 
-JOB_ID=$(cat /tmp/drill03_job_id.txt)
+STATE_BEFORE=$(db_job "$DRILL3_JOB_ID" "state")
+[ "$STATE_BEFORE" = "running" ] \
+    && pass "Job stuck in running (mid-apply crash simulated)" \
+    || fail "Drill 03: state=$STATE_BEFORE before reconcile (want running)"
 
-STATE_BEFORE=$(db "SELECT state FROM jobs WHERE id='$JOB_ID'")
-[ "$STATE_BEFORE" = "running" ] && pass "Job stuck in running (mid-apply crash simulated)" || fail "Drill 03: state=$STATE_BEFORE before reconcile"
-
-# Run reconciler once
-DATABASE_URL="$DATABASE_URL" \
-RECONCILE_BATCH_SIZE=10 \
-RECONCILE_SLEEP_SECONDS=1 \
+# Reconcile specifically this job (no LIMIT risk from other stuck jobs)
 python3 -c "
-import os, psycopg2
-conn = psycopg2.connect(os.environ['DATABASE_URL'])
+import psycopg2
+conn = psycopg2.connect('$DATABASE_URL')
 cur = conn.cursor()
 cur.execute('''
     WITH candidates AS (
         SELECT j.id FROM jobs j
         JOIN ledger_entries l ON l.job_id = j.id
-        WHERE j.state <> 'succeeded'
-        LIMIT 10 FOR UPDATE SKIP LOCKED
+        WHERE j.state <> 'succeeded' AND j.id = %s
+        FOR UPDATE SKIP LOCKED
     )
     UPDATE jobs SET state='succeeded', lease_owner=NULL, lease_expires_at=NULL,
-    next_run_at=NULL, updated_at=NOW()
-    WHERE id IN (SELECT id FROM candidates) RETURNING id
-''')
+        next_run_at=NULL, updated_at=NOW()
+    WHERE id IN (SELECT id FROM candidates)
+    RETURNING id
+''', ('$DRILL3_JOB_ID',))
 print('reconciled:', cur.fetchall())
 conn.commit()
+conn.close()
 "
 
-STATE_AFTER=$(db "SELECT state FROM jobs WHERE id='$JOB_ID'")
-LEDGER_AFTER=$(db "SELECT COUNT(*) FROM ledger_entries WHERE job_id='$JOB_ID'")
+STATE_AFTER=$(db_job "$DRILL3_JOB_ID" "state")
+LEDGER_AFTER=$(db_ledger_count "$DRILL3_JOB_ID")
 
-[ "$STATE_AFTER" = "succeeded" ] && pass "Reconciler converged job to succeeded" || fail "Drill 03: state=$STATE_AFTER after reconcile (want succeeded)"
-[ "$LEDGER_AFTER" = "1" ]        && pass "Ledger entry count = 1 (no duplicate)" || fail "Drill 03: ledger=$LEDGER_AFTER (want 1)"
+[ "$STATE_AFTER" = "succeeded" ] \
+    && pass "Reconciler converged job to succeeded" \
+    || fail "Drill 03: state=$STATE_AFTER after reconcile (want succeeded)"
+
+[ "$LEDGER_AFTER" = "1" ] \
+    && pass "Ledger entry count = 1 (no duplicate)" \
+    || fail "Drill 03: ledger=$LEDGER_AFTER (want 1)"
 
 echo ""
 
