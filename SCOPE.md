@@ -1,42 +1,68 @@
 # SCOPE — Faultline Distributed Job System
 
-## Goal (1 sentence)
-A local-first, production-minded distributed job system with durable execution, leasing, retries/backoff, idempotency, and Prometheus metrics.
+## Goal
 
-## IN SCOPE (v1)
+A production-minded distributed job processing system with durable execution,
+lease coordination, fencing tokens, idempotency, crash recovery, and
+Prometheus observability. Built to prove correctness under failure, not just
+under normal operation.
+
+---
+
+## In Scope (v1)
+
 - API service to enqueue jobs and query status
-- Worker service to claim/execute jobs
-- Durable state in Postgres (jobs, attempts, errors)
-- Queue/broker (Redis Streams or equivalent)
-- Leasing + crash recovery (expired leases are reclaimable)
-- Idempotency keys (duplicate submit does not double-write)
-- Retries with backoff + max-attempt cap
-- Prometheus metrics from API + worker
-- Failure drills folder with runnable scripts + expected outcomes
+- Worker service to claim and execute jobs via lease coordination
+- Durable state in PostgreSQL (single source of truth, no broker)
+- Lease-based execution with `FOR UPDATE SKIP LOCKED`
+- Fencing tokens preventing stale writes after lease expiry
+- Crash recovery: expired lease reaping + reconciler convergence
+- Idempotency keys on job submission
+- Retries with exponential backoff and max-attempt cap
+- Prometheus metrics from API and worker processes
+- Failure drills: worker crash, duplicate submission, DB outage
+- Deterministic concurrency test harness (500-run race validation)
+- Structured invariant-validation logging (machine-parseable JSON)
 
-## OUT OF SCOPE (v1)
-- UI / dashboard (Grafana optional only)
+---
+
+## Out of Scope (v1)
+
+- UI or dashboard (Grafana optional only)
 - Kubernetes deployment
-- Exactly-once semantics (we provide at-least-once + idempotency)
-- Multi-region / geo replication
+- Multi-region or geo replication
 - Complex auth (OAuth, RBAC)
-- Fancy plugin system / marketplace of job types
-- Cloud provider lock-in integrations (SQS, PubSub) — adapters later
+- Workflow engine features (DAGs, dependencies)
+- Stream processing
+- Cloud provider integrations (SQS, PubSub) — adapters later
 
-## Non-goals (explicit)
-- Not a workflow engine (Airflow/Temporal replacement)
+---
+
+## Non-Goals
+
+- Not an Airflow or Temporal replacement
 - Not a stream processing framework
-- Not a “serverless” platform
+- Not a serverless platform
 
-## Success criteria (what proves it works)
-- New user runs: `make up && make demo` → sees a job succeed
-- Drill 01: kill worker mid-job → job recovers after lease expiry
-- Drill 02: submit duplicate job → same job id returned (no double-write)
-- Drill 03: DB down → job remains safe; retries/backoff visible
-- Prometheus exposes basic counters + duration metrics
+---
 
-## Naming conventions
-- Repo: faultline-distributed-job-system
-- Services: faultline-api, faultline-worker
-- DB: faultline
-- Metrics prefix: faultline_
+## Success Criteria
+
+| Criterion | Status |
+|-----------|--------|
+| `make up && make migrate && curl /health` works | ✅ |
+| Drill 01: kill worker mid-job → job recovers after lease expiry | ✅ |
+| Drill 02: submit duplicate job → same job_id returned | ✅ |
+| Drill 03: DB down → job safe; recovers after DB returns | ✅ |
+| Prometheus exposes counters + metrics | ✅ |
+| 500-run race harness: 0 duplicate executions | ✅ |
+| Stale writes blocked 500/500 times | ✅ |
+
+---
+
+## Naming Conventions
+
+- Repo: `faultline`
+- Services: `faultline-api`, `faultline-worker`
+- Database: `faultline`
+- Metrics prefix: `faultline_`

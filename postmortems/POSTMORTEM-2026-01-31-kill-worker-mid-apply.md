@@ -1,90 +1,130 @@
-# Postmortem: Worker Crash Mid-Apply — Reconciler Recovery
+# Postmortem: Duplicate Submission Under Concurrent Retry
 
-**Scenario:** Worker commits ledger entry, crashes before updating `jobs.state`  
-**Severity:** Would be P1 in production (job stuck in `running` forever without reconciler)  
-**Status:** Invariant holds — reconciler converges state within `RECONCILE_SLEEP_SECONDS`
-
----
-
-## The Crash Window
-
-`mark_succeeded()` performs two sequential writes:
-
-```sql
--- Write 1: ledger entry (idempotency boundary)
-INSERT INTO ledger_entries (job_id, fencing_token, ...) VALUES (...)
-ON CONFLICT (job_id, fencing_token) DO NOTHING;
-
--- Write 2: state transition
-UPDATE jobs SET state='succeeded' WHERE id=... AND fencing_token=...;
-```
-
-If the worker process is killed between Write 1 committing and Write 2 executing,
-the job is permanently in an inconsistent state:
-
-```
-ledger_entries: (job_id=X, fencing_token=2)  ← exists
-jobs:           state='running'               ← stuck
-```
-
-Without intervention, this job will be reaped by the lease expiry logic and
-retried — but `ON CONFLICT DO NOTHING` will silently skip the duplicate ledger
-write. The retry will succeed the second time, producing correct final state.
-
-**However:** this means the job's side effect runs twice at the application layer,
-even though the ledger only records it once. For true exactly-once semantics at
-the application layer, the reconciler provides a faster path.
+**Scenario:** Two identical job submissions race past the application-layer
+idempotency check simultaneously  
+**Severity:** Would be P1 in production (duplicate payment, duplicate email, etc.)  
+**Status:** Invariant holds — database-layer uniqueness constraint provides
+race-safe fallback
 
 ---
 
-## Reconciler Recovery
+## The Race Window
 
-`services/worker/reconciler.py::reconcile_once()` detects this condition:
+The application-layer idempotency check in `create_job()` is:
 
-```sql
-SELECT j.id
-FROM jobs j
-JOIN ledger_entries l ON l.job_id = j.id
-WHERE j.state <> 'succeeded'
+```python
+existing = db.query(Job).filter_by(idempotency_key=key).first()
+if existing:
+    return existing  # return early
+# ... INSERT new job
 ```
 
-Any job with a committed ledger entry that hasn't reached `succeeded` is
-converged immediately, without re-executing the job. This is the fast path.
+This check has a race window. Two requests with the same `idempotency_key`
+can both read `existing = None` simultaneously (before either INSERT commits),
+then both attempt to INSERT:
+
+```
+Request 1: SELECT → None
+Request 2: SELECT → None
+Request 1: INSERT (job_id=A) → succeeds
+Request 2: INSERT (job_id=B) → would succeed without DB constraint
+```
+
+Without a database-level constraint, both INSERTs succeed, producing two
+job rows with the same idempotency key.
+
+---
+
+## Why Application-Layer Checks Are Insufficient
+
+The SELECT → check → INSERT pattern is not atomic. Any concurrent request
+can observe the same empty state and proceed to INSERT. This is the classic
+TOCTOU (time-of-check time-of-use) race.
+
+Mitigations like `SELECT FOR UPDATE` or advisory locks add contention and
+complexity without eliminating the fundamental problem for new keys.
+
+The only correct solution is a database-level uniqueness constraint.
+
+---
+
+## The Fix: Two-Layer Defence
+
+### Layer 1: Application check (fast path)
+```python
+existing = db.query(Job).filter_by(idempotency_key=key).first()
+if existing:
+    return existing  # no INSERT attempted
+```
+This handles the common case (genuine duplicate, retrying client) efficiently.
+
+### Layer 2: Database constraint (race-safe fallback)
+```sql
+CREATE UNIQUE INDEX uq_jobs_idempotency_key
+  ON jobs(idempotency_key)
+  WHERE idempotency_key IS NOT NULL;
+```
+
+If two requests race past Layer 1 simultaneously, exactly one INSERT succeeds.
+The other gets an `IntegrityError`, which is caught and handled:
+
+```python
+except IntegrityError:
+    db.rollback()
+    existing = db.query(Job).filter_by(idempotency_key=key).first()
+    return existing  # return the winner's row
+```
+
+This pattern is correct under all concurrency conditions.
+
+---
+
+## Payload Hash Mismatch
+
+A separate concern: the same `idempotency_key` reused with a different payload.
+This is likely a client bug (wrong key, wrong payload) and should be surfaced
+explicitly rather than silently returning the wrong job.
+
+Faultline stores `payload_hash` on job creation and compares it on duplicate
+submissions:
+
+```python
+if existing.payload_hash != _payload_hash(body.payload):
+    raise HTTPException(status_code=409, detail="Idempotency key reused with different payload")
+```
+
+This catches the case where a client reuses a key across different operations.
 
 ---
 
 ## Timeline
 
 ```
-T0  Worker claims job → fencing_token=2
-T1  assert_fence() passes
-T2  Job executes
-T3  assert_fence() passes
-T4  INSERT INTO ledger_entries (job_id=X, token=2) → COMMITTED ✓
-T5  CRASH (os._exit, OOM kill, network loss, etc.)
-    UPDATE jobs SET state='succeeded' → NEVER RUNS
+T0  Client submits job_id=X with idempotency_key=K and payload=P
+T1  API: SELECT WHERE idempotency_key=K → None
+T2  Client times out, retries
+T3  API (original): INSERT job (id=A, key=K, hash=H(P)) → COMMITTED
+T4  API (retry):   SELECT WHERE idempotency_key=K → finds row A
+T5  API (retry):   hash(P) == existing hash ✓ → return job A
 
-    --- time passes ---
-
-T6  Reconciler wakes (every RECONCILE_SLEEP_SECONDS=5s)
-T7  Finds (job_id=X, state='running', ledger entry exists)
-T8  UPDATE jobs SET state='succeeded' WHERE id=X → COMMITTED ✓
-
-    Result: job converged to succeeded. No re-execution.
+Result: one job row, same job_id returned to client on both attempts.
 ```
 
 ---
 
-## Drill Validation
+## Concurrent Race Timeline
 
-Drill `drills/drill_kill_worker_mid_apply.sh` validates this scenario:
+```
+T0  Request 1: SELECT WHERE key=K → None
+T0  Request 2: SELECT WHERE key=K → None  (concurrent)
+T1  Request 1: INSERT (id=A, key=K) → COMMITTED
+T1  Request 2: INSERT (id=B, key=K) → IntegrityError (unique violation)
+T2  Request 2: catches IntegrityError, rolls back
+T3  Request 2: SELECT WHERE key=K → finds row A
+T4  Request 2: returns job A
 
-1. Start worker with `CRASH_AT=before_commit`
-2. Worker commits ledger entry, then `os._exit(137)`
-3. Assert job is stuck in `running` with committed ledger entry
-4. Start reconciler
-5. Assert job transitions to `succeeded` within `RECONCILE_SLEEP_SECONDS * 2`
-6. Assert exactly one ledger entry
+Result: one job row, both requests return the same job_id.
+```
 
 ---
 
@@ -92,19 +132,14 @@ Drill `drills/drill_kill_worker_mid_apply.sh` validates this scenario:
 
 | Invariant | Mechanism | Status |
 |-----------|-----------|--------|
-| No job permanently stuck after crash | Reconciler JOIN on ledger_entries | ✅ |
-| No duplicate ledger entries on retry | `ON CONFLICT DO NOTHING` | ✅ |
-| State convergence within bounded time | `RECONCILE_SLEEP_SECONDS` TTL | ✅ |
-| Reconciler is idempotent | FOR UPDATE SKIP LOCKED + WHERE clause | ✅ |
+| No duplicate job rows per idempotency key | `UNIQUE INDEX uq_jobs_idempotency_key` | ✅ |
+| Concurrent duplicates handled correctly | `IntegrityError` catch + re-query | ✅ |
+| Payload mismatch surfaced explicitly | payload_hash comparison → 409 | ✅ |
+| Application check handles common case efficiently | SELECT before INSERT | ✅ |
 
 ---
 
-## Key Insight
+## Validated By
 
-The ledger entry is the durable proof of work. Once it exists for a given
-`(job_id, fencing_token)`, the job's result is committed regardless of whether
-`jobs.state` reflects it yet. The reconciler simply observes this proof and
-updates the view.
-
-This separates durability (ledger) from visibility (jobs.state) — and the
-reconciler bridges the gap when the worker can't.
+`drills/02_duplicate_submission/README.md` — manual drill  
+`make drill-02` — automated drill with assertions
