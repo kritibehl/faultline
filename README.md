@@ -8,6 +8,13 @@ Most job queues don't have a good answer. Faultline does.
 
 ---
 
+## Metrics dashboard
+
+`faultline_jobs_succeeded_total` scraped from `worker:8000` — step function shows scenario runner bursts across the session.
+
+![Prometheus dashboard](docs/architecture/prometheus_dashboard.png)
+
+
 ## The Failure It's Built to Handle
 
 Worker A claims a job. Its lease expires while it's still running (slow work, network pause, preemption). Worker B reclaims the job and starts executing. Worker A finishes its work and attempts to commit.

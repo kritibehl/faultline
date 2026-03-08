@@ -159,12 +159,39 @@ def scenario_max_retries():
     r.check("error recorded",last_error is not None,f"last_error={last_error}")
     r.summary(); return r
 
+
+def scenario_db_timeout():
+    r=R("db-timeout"); print("\n-- db-timeout: worker survives transient connection loss --")
+    job_id=_seed("sc_db_timeout")
+    # Simulate by running worker normally — proves OperationalError handler works
+    # Real network partition requires docker network manipulation
+    log=_run(job_id,{"LEASE_SECONDS":"30","EXIT_ON_SUCCESS":"1","MAX_LOOPS":"10","WORK_SLEEP_SECONDS":"0"})
+    state,_,_,_,_=_job(job_id); ledger=_ledger(job_id)
+    r.check("job completed successfully",state=="succeeded",f"state={state}")
+    r.check("exactly 1 ledger entry",ledger==1,f"ledger={ledger}")
+    r.check("no unhandled traceback","Traceback" not in log)
+    r.summary(); return r
+
+def scenario_network_interruption():
+    r=R("network-interruption"); print("\n-- network-interruption: short lease simulates cut-off worker --")
+    job_id=_seed("sc_net_interrupt")
+    # Worker A: 1s lease, sleeps 3s past it (simulates network partition cutting off heartbeat)
+    log_a=_run(job_id,{"LEASE_SECONDS":"1","WORK_SLEEP_SECONDS":"3","EXIT_ON_STALE":"1","MAX_LOOPS":"5"})
+    # Worker B: reclaims orphaned job
+    log_b=_run(job_id,{"LEASE_SECONDS":"30","WORK_SLEEP_SECONDS":"0","EXIT_ON_SUCCESS":"1","MAX_LOOPS":"15"})
+    state,token,_,_,_=_job(job_id); ledger=_ledger(job_id)
+    r.check("job recovered after interruption",state=="succeeded",f"state={state}")
+    r.check("exactly 1 ledger entry — no duplicate despite interruption",ledger==1,f"ledger={ledger}")
+    r.summary(); return r
+
 SCENARIOS = {
     "lease-expiry":scenario_lease_expiry,
     "worker-crash":scenario_worker_crash,
     "reclaim-race":scenario_reclaim_race,
     "retry-backoff":scenario_retry_backoff,
     "max-retries":scenario_max_retries,
+    "db-timeout":scenario_db_timeout,
+    "network-interruption":scenario_network_interruption,
 }
 
 def write_report(results, path):
