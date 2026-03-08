@@ -6,3 +6,5 @@ Runs: 500
   ERROR: Run 1: Worker A never opened barrier
 === Run    2 === FAIL | stale_blocked=False b_succeeded=False ledger_entries=0 fencing_token=None
   ERROR: Run 2: Worker A never opened barrier
+=== Run    3 === FAIL | stale_blocked=False b_succeeded=False ledger_entries=0 fencing_token=None
+  ERROR: Run 3: Worker A never opened barrier
