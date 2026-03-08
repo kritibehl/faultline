@@ -1,0 +1,11 @@
+Faultline Volume Test — 1000 jobs, 8 workers
+============================================================
+
+Jobs succeeded     : 751/1000
+Jobs failed        : 0
+Jobs stuck         : 249
+Ledger exactly-one : 751/1000
+Ledger duplicates  : 0
+Ledger missing     : 249
+
+FAILURES DETECTED

@@ -57,7 +57,7 @@ clean:
 drill-01:
 	@echo "Running Drill 01: Worker crash mid-execution..."
 	@docker compose stop worker 2>/dev/null || true
-	@DATABASE_URL=$(DATABASE_URL) bash drills/run_all.sh 2>&1 | grep -A 20 "Drill 01"
+	@DATABASE_URL=$(DATABASE_URL) PYTHONPATH=$(shell pwd) bash drills/run_all.sh 2>&1 | grep -A 20 "Drill 01"
 	@docker compose up -d worker
 
 drill-02:
@@ -88,7 +88,7 @@ drill-03:
 drill-all:
 	@echo "Running all failure drills..."
 	@docker compose stop worker 2>/dev/null || true
-	@DATABASE_URL=$(DATABASE_URL) bash drills/run_all.sh
+	@DATABASE_URL=$(DATABASE_URL) PYTHONPATH=$(shell pwd) bash drills/run_all.sh
 	@docker compose up -d worker
 
 # ─────────────────────────────────────────────────────────

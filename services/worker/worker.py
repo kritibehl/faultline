@@ -2,11 +2,13 @@ import os
 import time
 import uuid
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 import psycopg2
 from psycopg2 import OperationalError
-from prometheus_client import Counter, start_http_server
+from prometheus_client import Counter, Histogram, start_http_server
+
+from services.worker.retry import backoff_seconds, mark_for_retry
 
 
 # ============================================================
@@ -33,8 +35,8 @@ METRICS_ENABLED = os.getenv("METRICS_ENABLED", "1") == "1"
 METRICS_PORT = int(os.getenv("METRICS_PORT", "8000"))
 
 CLAIM_JOB_ID = os.getenv("CLAIM_JOB_ID")
-
 AUTOPSY_LOG_PATH = os.getenv("AUTOPSY_LOG_PATH")
+SIMULATE_FAILURE = os.getenv("SIMULATE_FAILURE", "0") == "1"
 
 
 # ============================================================
@@ -45,13 +47,11 @@ def log_event(event, **fields):
     payload = {
         "event": event,
         "worker_id": WORKER_ID,
-        "ts": datetime.utcnow().isoformat(),
+        "ts": datetime.now(timezone.utc).isoformat(),
         **fields,
     }
-
     line = json.dumps(payload)
     print(line, flush=True)
-
     if AUTOPSY_LOG_PATH:
         with open(AUTOPSY_LOG_PATH, "a") as f:
             f.write(line + "\n")
@@ -89,7 +89,6 @@ def maybe_barrier(conn, cur, point):
     if BARRIER_OPEN == point:
         log_event("barrier_open", name=point)
         open_barrier(conn, cur, point)
-
     if BARRIER_WAIT == point:
         log_event("barrier_wait", name=point)
         ok = wait_barrier(cur, point, BARRIER_TIMEOUT_S)
@@ -104,11 +103,18 @@ def maybe_barrier(conn, cur, point):
 heartbeat = Counter("faultline_worker_heartbeat_total", "Worker heartbeat ticks")
 jobs_claimed = Counter("faultline_jobs_claimed_total", "Jobs claimed")
 jobs_succeeded = Counter("faultline_jobs_succeeded_total", "Jobs succeeded")
+jobs_failed_perm = Counter("faultline_jobs_failed_total", "Jobs permanently failed")
+jobs_retried = Counter("faultline_jobs_retried_total", "Jobs scheduled for retry")
 stale_commits = Counter("faultline_stale_commit_prevented_total", "Stale commits blocked")
+job_duration = Histogram(
+    "faultline_job_duration_seconds",
+    "Job execution duration",
+    buckets=[0.1, 0.5, 1, 2, 5, 10, 30, 60],
+)
 
 
 # ============================================================
-# DB Helpers
+# DB helpers
 # ============================================================
 
 def get_conn():
@@ -129,7 +135,9 @@ def wait_for_schema(timeout_seconds=60):
 
 
 # ============================================================
-# Lease claim (atomic, token increment)
+# Lease claim
+# Atomic UPDATE ... RETURNING fencing_token.
+# FOR UPDATE SKIP LOCKED: concurrent workers never block each other.
 # ============================================================
 
 def claim_one_job(conn, cur):
@@ -148,29 +156,21 @@ def claim_one_job(conn, cur):
                     state='queued'
                  OR (state='running' AND lease_expires_at < NOW())
               )
-            RETURNING id, fencing_token, lease_expires_at
+            RETURNING id, fencing_token, lease_expires_at, attempts, max_attempts
             """,
             (WORKER_ID, LEASE_SECONDS, CLAIM_JOB_ID),
         )
         row = cur.fetchone()
         if row:
-            job_id, token, lease_expires_at = row
-            log_event(
-                "lease_acquired",
-                job_id=job_id,
-                token=int(token),
-                lease_expires_at=str(lease_expires_at),
-                forced=True,
-            )
-
+            job_id, token, lease_expires_at, attempts, max_attempts = row
+            log_event("lease_acquired", job_id=job_id, token=int(token),
+                      lease_expires_at=str(lease_expires_at), forced=True,
+                      attempts=attempts, max_attempts=max_attempts)
             maybe_barrier(conn, cur, "after_lease_acquire")
             maybe_crash("after_lease_acquire")
+            return job_id, int(token), int(attempts), int(max_attempts)
+        return None, None, None, None
 
-            return job_id, int(token)
-
-        return None, None
-
-    # Production path (uses SKIP LOCKED)
     cur.execute(
         """
         UPDATE jobs
@@ -180,38 +180,28 @@ def claim_one_job(conn, cur):
             fencing_token=fencing_token+1,
             updated_at=NOW()
         WHERE id = (
-            SELECT id
-            FROM jobs
-            WHERE (
-                    state='queued'
-                AND (next_run_at IS NULL OR next_run_at <= NOW())
-            )
-            OR (state='running' AND lease_expires_at < NOW())
-            ORDER BY created_at
+            SELECT id FROM jobs
+            WHERE (state='queued' AND (next_run_at IS NULL OR next_run_at <= NOW()))
+               OR (state='running' AND lease_expires_at < NOW())
+            ORDER BY COALESCE(next_run_at, created_at)
             FOR UPDATE SKIP LOCKED
             LIMIT 1
         )
-        RETURNING id, fencing_token, lease_expires_at
+        RETURNING id, fencing_token, lease_expires_at, attempts, max_attempts
         """,
         (WORKER_ID, LEASE_SECONDS),
     )
-
     row = cur.fetchone()
     if row:
-        job_id, token, lease_expires_at = row
-        log_event(
-            "lease_acquired",
-            job_id=job_id,
-            token=int(token),
-            lease_expires_at=str(lease_expires_at),
-        )
-
+        job_id, token, lease_expires_at, attempts, max_attempts = row
+        log_event("lease_acquired", job_id=job_id, token=int(token),
+                  lease_expires_at=str(lease_expires_at),
+                  attempts=attempts, max_attempts=max_attempts)
         maybe_barrier(conn, cur, "after_lease_acquire")
         maybe_crash("after_lease_acquire")
+        return job_id, int(token), int(attempts), int(max_attempts)
 
-        return job_id, int(token)
-
-    return None, None
+    return None, None, None, None
 
 
 # ============================================================
@@ -223,8 +213,7 @@ def assert_fence(cur, job_id, token):
         """
         SELECT fencing_token,
                (lease_expires_at IS NOT NULL AND lease_expires_at < NOW())
-        FROM jobs
-        WHERE id=%s
+        FROM jobs WHERE id=%s
         """,
         (job_id,),
     )
@@ -236,47 +225,23 @@ def assert_fence(cur, job_id, token):
     lease_expired = bool(row[1])
 
     if token != current_token:
-        log_event(
-            "stale_write_blocked",
-            job_id=job_id,
-            stale_token=token,
-            current_token=current_token,
-            reason="token_mismatch",
-        )
+        log_event("stale_write_blocked", job_id=job_id, stale_token=token,
+                  current_token=current_token, reason="token_mismatch")
         stale_commits.inc()
         raise RuntimeError("stale_token")
 
     if lease_expired:
-        log_event(
-            "stale_write_blocked",
-            job_id=job_id,
-            stale_token=token,
-            current_token=current_token,
-            reason="lease_expired",
-        )
+        log_event("stale_write_blocked", job_id=job_id, stale_token=token,
+                  current_token=current_token, reason="lease_expired")
         stale_commits.inc()
         raise RuntimeError("lease_expired")
 
 
 # ============================================================
-# Guarded commit (DB-boundary protected)
-#
-# assert_fence() has already validated that this worker holds the
-# current fencing token and the lease has not expired.
-# mark_succeeded() trusts that validation and does NOT re-check
-# lease_expires_at > NOW() in the WHERE clause — that redundant
-# check caused false stale_commit rejections when the short test
-# lease (1s) expired in the gap between assert_fence() and the
-# UPDATE, even though the worker legitimately held the lock.
-#
-# Correctness is still guaranteed by:
-#   1. fencing_token match   — only the current epoch can write
-#   2. ON CONFLICT DO NOTHING — idempotent; duplicate writes are no-ops
-#   3. assert_fence() gate   — stale workers are rejected before reaching here
+# Guarded commit
 # ============================================================
 
 def mark_succeeded(cur, job_id, token):
-
     cur.execute(
         """
         INSERT INTO ledger_entries (job_id, fencing_token, account_id, delta)
@@ -285,6 +250,8 @@ def mark_succeeded(cur, job_id, token):
         """,
         (job_id, token),
     )
+
+    maybe_crash("before_commit")
 
     cur.execute(
         """
@@ -313,6 +280,16 @@ def mark_succeeded(cur, job_id, token):
 
 
 # ============================================================
+# Job execution
+# ============================================================
+
+def execute_job(job_id, token, attempts):
+    if SIMULATE_FAILURE and attempts == 0:
+        raise RuntimeError("simulated_execution_failure")
+    time.sleep(WORK_SLEEP_SECONDS)
+
+
+# ============================================================
 # Main loop
 # ============================================================
 
@@ -336,7 +313,7 @@ if __name__ == "__main__":
         try:
             with get_conn() as conn:
                 with conn.cursor() as cur:
-                    job_id, token = claim_one_job(conn, cur)
+                    job_id, token, attempts, max_attempts = claim_one_job(conn, cur)
 
                     if not job_id:
                         time.sleep(0.2)
@@ -345,20 +322,43 @@ if __name__ == "__main__":
                     conn.commit()
                     jobs_claimed.inc()
 
-                    log_event("execution_started", job_id=job_id, token=token)
+                    log_event("execution_started", job_id=job_id, token=token,
+                              attempts=attempts, max_attempts=max_attempts)
+
+                    start = time.monotonic()
 
                     try:
                         assert_fence(cur, job_id, token)
-                        time.sleep(WORK_SLEEP_SECONDS)
+
+                        try:
+                            execute_job(job_id, token, attempts)
+                        except Exception as exec_err:
+                            outcome = mark_for_retry(
+                                cur, job_id, token, attempts,
+                                max_attempts, str(exec_err)
+                            )
+                            elapsed = time.monotonic() - start
+                            job_duration.observe(elapsed)
+                            if outcome == "failed":
+                                jobs_failed_perm.inc()
+                                log_event("job_failed_permanently", job_id=job_id,
+                                          attempts=attempts + 1)
+                            else:
+                                jobs_retried.inc()
+                                log_event("job_scheduled_retry", job_id=job_id,
+                                          attempt=attempts + 1,
+                                          backoff_seconds=backoff_seconds(attempts + 1))
+                            conn.commit()
+                            continue
+
                         assert_fence(cur, job_id, token)
-
-                        maybe_barrier(conn, cur, "before_commit")
-                        maybe_crash("before_commit")
-
                         mark_succeeded(cur, job_id, token)
+                        elapsed = time.monotonic() - start
+                        job_duration.observe(elapsed)
                         jobs_succeeded.inc()
 
-                        log_event("commit_ok", job_id=job_id, token=token)
+                        log_event("commit_ok", job_id=job_id, token=token,
+                                  duration_s=round(elapsed, 3))
 
                         if EXIT_ON_SUCCESS:
                             log_event("worker_exit", reason="success")
@@ -371,7 +371,8 @@ if __name__ == "__main__":
                                 break
                         raise
 
-        except OperationalError:
+        except OperationalError as e:
+            log_event("db_error", error=str(e)[:200])
             time.sleep(0.5)
 
         time.sleep(0.2)
