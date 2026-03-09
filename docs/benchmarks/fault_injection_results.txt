@@ -1,0 +1,14 @@
+Faultline Network Fault Injection Results
+Generated: 2026-03-09T20:07:25Z
+Runs per level: 500
+
+Fault level       Runs  Dupes  Stale blocked  Fault errors   Result
+--------------------------------------------------------------
+0%_clean           500      0            500             0     PASS
+5%_fault           500      0            500             0     PASS
+10%_fault          500      0            500             0     PASS
+
+Total runs: 1500
+Total stale blocked: 1500
+Duplicates: 0
+Overall: PASS
