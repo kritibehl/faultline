@@ -1,8 +1,8 @@
-# Faultline
+# Faultline — Distributed Job Processing System
 
-**A crash-safe distributed job execution engine with formal correctness guarantees.**
+**Crash-safe distributed job execution with formal correctness guarantees.**
 
-Faultline solves the hardest class of distributed systems bugs: what happens when a worker dies mid-execution, a lease expires while a job is running, or two workers race to claim the same job? Most job queues paper over these with timeouts and hope. Faultline proves correctness through fencing tokens, formal invariants, and 500-run deterministic race reproduction.
+Faultline solves the hardest class of distributed systems bugs: what happens when a worker dies mid-execution, a lease expires while a job is running, or two workers race to claim the same job? Most job queues paper over these with timeouts and hope. Faultline proves correctness through fencing tokens, formal invariants, and 1,500 deterministic race reproductions under fault injection.
 
 ```bash
 make drill-all    # 29/29 failure scenarios pass
@@ -19,7 +19,7 @@ A distributed job queue must answer one question correctly under every failure m
 Get it wrong and you get duplicate payments, double-sent emails, or corrupted state. The naive solutions all fail:
 
 | Approach | Failure mode |
-|----------|-------------|
+|---|---|
 | Heartbeat + timeout | Worker A times out, B claims, A recovers and commits — **two commits** |
 | Optimistic locking | Clock skew makes "last write wins" unpredictable |
 | Distributed lock service | Lock server becomes single point of failure |
@@ -29,23 +29,36 @@ Faultline's answer: **fencing tokens**. Every claim increments a monotone counte
 
 ---
 
-## Correctness proof
+## Correctness invariants
 
 Five formal invariants enforced on every job:
 
 | ID | Invariant | Enforcement |
-|----|-----------|-------------|
+|---|---|---|
 | I1 | No stale owner may commit | `assert_fence` checks `fencing_token` before every write |
 | I2 | No duplicate side effect for the same logical job | `UNIQUE(job_id, fencing_token)` in `ledger_entries` |
 | I3 | Fencing token is strictly monotone after reclaim | `UPDATE ... SET fencing_token = fencing_token + 1` on reclaim |
 | I4 | Crash recovery converges to exactly one valid outcome | Reconciler promotes `committed-but-not-succeeded` jobs |
 | I5 | No two workers hold an active lease simultaneously | `SELECT FOR UPDATE SKIP LOCKED` + lease expiry enforcement |
 
-Validated across **500 deterministic race reproductions**:
+---
+
+## Results
+
+Validated across **1,500 deterministic race reproductions** at three network fault injection rates:
+
+| Fault rate | Fault types | Runs | Duplicate commits | Stale-write rejections |
+|---|---|---|---|---|
+| 0% | none | 500 | **0** | 500 |
+| 5% | latency + drops + timeouts | 500 | **0** | 500 |
+| 10% | latency + drops + timeouts | 500 | **0** | 500 |
+| **Total** | | **1,500** | **0** | **1,500** |
 
 ```
 [500/500] passed=500 failed=0 stale_blocked=500 duplicate_ledger=0
 ```
+
+See [evidence/results/race_matrix.csv](evidence/results/race_matrix.csv) and [evidence/results/summary.md](evidence/results/summary.md).
 
 ---
 
@@ -82,12 +95,29 @@ Two independent defense layers — either one alone prevents the duplicate:
 
 ---
 
+## Fault injection (FaultProxy)
+
+Network fault injection wraps the psycopg2 connection layer. Each fault mode is independently configurable:
+
+```python
+FaultConfig(
+    latency_ms=200,        # inject network latency
+    drop_rate=0.05,        # 5% connection drops
+    timeout_rate=0.10      # 10% query timeouts
+)
+proxy = FaultProxy(real_conn, config)
+```
+
+Tested at 0%, 5%, and 10% injection rates. Exactly-once semantics hold at all three.
+
+---
+
 ## Failure scenario matrix
 
 29 assertions across 16 failure scenarios, all passing:
 
 | Scenario | Fault injected | Key assertion |
-|----------|---------------|---------------|
+|---|---|---|
 | S01 | Worker crashes after ledger insert, before state update | Reconciler promotes to `succeeded`, 1 ledger entry |
 | S02 | Worker crashes before commit — claim never persisted | Job recovered, no phantom claim |
 | S03 | Lease TTL expires mid-execution (1s lease, 2.5s sleep) | B reclaims, exactly 1 ledger entry |
@@ -267,15 +297,15 @@ Retry backoff: `min(2 × 2^(attempts−1), 300)` seconds.
 
 ## Observability
 
-Prometheus metrics on `worker:8000/metrics`:
+12 Prometheus metrics on `worker:8000/metrics`:
 
 | Metric | Type | What it tells you |
-|--------|------|-------------------|
+|---|---|---|
 | `faultline_jobs_claimed_total` | Counter | Lease acquisition rate |
 | `faultline_jobs_succeeded_total` | Counter | Throughput |
 | `faultline_jobs_retried_total` | Counter | Transient failure rate |
 | `faultline_jobs_failed_perm_total` | Counter | Dead-letter rate |
-| `faultline_stale_commits_prevented_total` | Counter | Fencing effectiveness |
+| `faultline_stale_commits_prevented_total` | Counter | **Leading indicator of lease TTL misconfiguration** |
 | `faultline_reconciler_runs_total` | Counter | Recovery sweep rate |
 | `faultline_reconciler_converged_total` | Counter | Recovery success rate |
 | `faultline_lease_acquisition_latency_seconds` | Histogram | p50/p95/p99 claim latency |
@@ -284,21 +314,19 @@ Prometheus metrics on `worker:8000/metrics`:
 | `faultline_jobs_queued` | Gauge | Backlog depth |
 | `faultline_jobs_running` | Gauge | In-flight count |
 
-![Prometheus dashboard](docs/architecture/prometheus_dashboard.png)
-
-*`faultline_jobs_succeeded_total` — step function shows scenario runner bursts and drill runs.*
+`faultline_stale_commits_prevented_total` is the key metric: a spike means workers are holding leases longer than the TTL allows. Fix: increase TTL or reduce job execution time.
 
 ---
 
 ## Benchmark
 
 | Workers | Jobs | Time (s) | Jobs/min | Duplicates |
-|---------|------|----------|----------|------------|
+|---|---|---|---|---|
 | 1 | 100 | 33.2 | 181 | 0 |
 | 4 | 100 | 11.6 | 517 | 0 |
 | 8 | 100 | 8.1 | 741 | 0 |
 
-*Local MacBook M-series, PostgreSQL in Docker. Zero duplicates across all runs — guaranteed by fencing token + UNIQUE constraint, not load conditions.*
+*Local PostgreSQL in Docker. Zero duplicates across all runs — guaranteed by fencing token + UNIQUE constraint, not load conditions.*
 
 ---
 
@@ -315,7 +343,7 @@ tests/
 Regression test inventory:
 
 | Test | Bug documented |
-|------|---------------|
+|---|---|
 | `test_reg01` | S12 drain used `psql` (not installed locally) — replaced with psycopg2 |
 | `test_reg02` | `mark_for_retry` rolled back silently on `continue` — explicit `conn.commit()` added |
 | `test_reg03` | Exactly 1 ledger entry after reclaim (not 0, not 2) |
@@ -323,58 +351,6 @@ Regression test inventory:
 | `test_reg05` | Fencing token monotonically increases after reclaim |
 | `test_reg06` | Max retries sets `state=failed`, not re-queued |
 | `test_reg07` | Idempotency collision returns same `job_id` |
-
----
-
-## Reclaim race walkthrough
-
-Full timestamped trace in [`postmortems/RECLAIM-RACE-WALKTHROUGH.md`](postmortems/RECLAIM-RACE-WALKTHROUGH.md).
-
-The critical moment without fencing:
-
-```
-t=0.000  Worker A: claims J, token=1
-t=5.000  Lease expires — A is mid-execution, unaware
-t=5.001  Worker B: reclaims J, token=2, commits — payment sent
-t=7.000  Worker A: wakes, also commits — payment sent again ← duplicate
-```
-
-With fencing:
-
-```
-t=7.000  Worker A: assert_fence → current token=2, held=1 → StaleWriteBlocked
-          No commit. No duplicate.
-```
-
----
-
-## Quickstart
-
-```bash
-git clone https://github.com/youruser/faultline && cd faultline
-
-docker compose up -d
-make migrate
-
-# Submit a job
-curl -X POST http://localhost:8000/jobs \
-  -H 'Content-Type: application/json' \
-  -d '{"idempotency_key": "order-123", "payload": {"order_id": 123}}'
-
-# Run all 29 failure drills
-make drill-all
-
-# Run 7 fault scenarios with HTML report
-docker compose stop worker
-python3 services/cli/scenario_runner.py all --report
-docker compose start worker
-
-# Inspect job timeline
-python3 services/inspector/report.py --recent 50 && open docs/reports/inspect_*.html
-
-# View metrics
-open http://localhost:9090
-```
 
 ---
 
@@ -394,7 +370,58 @@ Adding Redis or ZooKeeper adds a second failure domain without solving the core 
 
 ---
 
-## File map
+## Quickstart
+
+```bash
+git clone https://github.com/kritibehl/faultline && cd faultline
+
+docker compose up -d
+make migrate
+
+# Submit a job
+curl -X POST http://localhost:8000/jobs \
+  -H 'Content-Type: application/json' \
+  -d '{"idempotency_key": "order-123", "payload": {"order_id": 123}}'
+
+# Run all 29 failure drills
+make drill-all
+
+# Run 7 fault scenarios with HTML report
+docker compose stop worker
+python3 services/cli/scenario_runner.py all --report
+docker compose start worker
+
+# Run fault injection suite (0/5/10% rates)
+python -m tests.race_suite --fault-rate 0
+python -m tests.race_suite --fault-rate 0.05
+python -m tests.race_suite --fault-rate 0.10
+
+# Inspect evidence
+cat evidence/results/race_matrix.csv
+cat evidence/results/summary.md
+
+# View metrics
+open http://localhost:9090
+```
+
+---
+
+## Evidence
+
+```
+evidence/
+  results/
+    race_matrix.csv          ← fault_rate × runs × dup_commits × stale_write_rejections
+    summary.md               ← what was run, what proved the invariants
+  traces/
+    sample_failure_trace.jsonl   ← stale worker attempt + fence rejection event
+  metrics/
+    prometheus_snapshot.txt  ← counter dump including stale_commits_prevented_total
+```
+
+---
+
+## Project structure
 
 ```
 services/
@@ -406,7 +433,7 @@ services/
     invariants.py        Formal I1–I5 checker (importable + CLI)
     metrics.py           Prometheus counters, histograms, gauges
     retry.py             mark_for_retry(), backoff_seconds()
-    drain_queue.py       Test helper: drain non-S12 jobs
+    drain_queue.py       Test helper
   cli/
     scenario_runner.py   7-scenario fault injector + HTML report writer
   inspector/
@@ -418,7 +445,6 @@ docs/
   SCENARIOS.md           16-scenario × 5-invariant matrix
   architecture/
     README.md            Architecture + lease lifecycle diagrams
-    prometheus_dashboard.png
 postmortems/
   RECLAIM-RACE-WALKTHROUGH.md
 tests/
@@ -426,4 +452,20 @@ tests/
   test_lease_race_fencing.py
   test_benchmarks.py
   test_regression.py
+evidence/
+  results/
+  traces/
+  metrics/
 ```
+
+---
+
+## Related
+
+- [Medium: How I built a distributed job queue that stays correct under crashes, races, and network faults](https://medium.com/@kriti0608/how-i-built-a-distributed-job-queue-that-stays-correct-under-crashes-races-and-network-faults-48bc50eec723)
+- [KubePulse](https://github.com/kritibehl/KubePulse) — Kubernetes resilience validation
+- [AutoOps-Insight](https://github.com/kritibehl/autoops-insight) — CI failure analytics
+
+## Stack
+
+Python · PostgreSQL · Prometheus · GitHub Actions
