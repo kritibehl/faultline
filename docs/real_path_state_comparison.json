@@ -1,0 +1,53 @@
+{
+  "healthy": {
+    "faultline_jobs_claimed_total": 40.0,
+    "faultline_jobs_succeeded_total": 40.0,
+    "faultline_jobs_failed_total": 0.0,
+    "faultline_jobs_retried_total": 0.0,
+    "faultline_db_connect_failures_total": 0.0,
+    "faultline_reconnect_attempts_total": 0.0,
+    "faultline_query_timeout_total": 0.0,
+    "faultline_lease_steal_attempts_total": 0.0,
+    "faultline_partition_recovery_seconds_count": 0.0,
+    "faultline_partition_recovery_seconds_sum": 0.0,
+    "faultline_median_partition_recovery_seconds": 0.0,
+    "faultline_worker_quarantined": 0.0,
+    "faultline_worker_degraded_mode": 0.0,
+    "faultline_job_duration_seconds_count": 40.0,
+    "faultline_job_duration_seconds_sum": 80.55551158201706
+  },
+  "impaired": {
+    "faultline_jobs_claimed_total": null,
+    "faultline_jobs_succeeded_total": null,
+    "faultline_jobs_failed_total": null,
+    "faultline_jobs_retried_total": null,
+    "faultline_db_connect_failures_total": null,
+    "faultline_reconnect_attempts_total": null,
+    "faultline_query_timeout_total": null,
+    "faultline_lease_steal_attempts_total": null,
+    "faultline_partition_recovery_seconds_count": null,
+    "faultline_partition_recovery_seconds_sum": null,
+    "faultline_median_partition_recovery_seconds": null,
+    "faultline_worker_quarantined": null,
+    "faultline_worker_degraded_mode": null,
+    "faultline_job_duration_seconds_count": null,
+    "faultline_job_duration_seconds_sum": null
+  },
+  "recovered": {
+    "faultline_jobs_claimed_total": 8.0,
+    "faultline_jobs_succeeded_total": 7.0,
+    "faultline_jobs_failed_total": 0.0,
+    "faultline_jobs_retried_total": 0.0,
+    "faultline_db_connect_failures_total": 0.0,
+    "faultline_reconnect_attempts_total": 0.0,
+    "faultline_query_timeout_total": 0.0,
+    "faultline_lease_steal_attempts_total": 0.0,
+    "faultline_partition_recovery_seconds_count": 0.0,
+    "faultline_partition_recovery_seconds_sum": 0.0,
+    "faultline_median_partition_recovery_seconds": 0.0,
+    "faultline_worker_quarantined": 0.0,
+    "faultline_worker_degraded_mode": 0.0,
+    "faultline_job_duration_seconds_count": 7.0,
+    "faultline_job_duration_seconds_sum": 14.115012292004394
+  }
+}
