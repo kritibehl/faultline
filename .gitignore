@@ -29,3 +29,6 @@ venv/
 
 .integration_backup/
 .backup_pe_upgrade/
+
+.integration_backup/
+.backup_pe_upgrade/
