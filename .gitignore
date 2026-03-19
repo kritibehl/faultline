@@ -21,3 +21,5 @@ venv/
 # IDE
 .vscode/
 .idea/
+
+.backup_pe_upgrade/
