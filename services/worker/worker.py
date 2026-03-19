@@ -17,7 +17,10 @@ from services.worker.retry import backoff_seconds, mark_for_retry
 # Environment
 # ============================================================
 
-DATABASE_URL = os.environ["DATABASE_URL"]
+DATABASE_URL = os.environ.get("DATABASE_URL") or os.environ.get("POSTGRES_DSN")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL or POSTGRES_DSN must be set")
+DATABASE_URL = DATABASE_URL.replace("postgresql+psycopg2://", "postgresql://", 1)
 start_http_server(int(os.getenv("FAULTLINE_METRICS_PORT", "9108")))
 WORKER_ID = str(uuid.uuid4())
 
