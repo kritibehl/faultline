@@ -22,6 +22,16 @@ lease_steal_attempts_total = Counter(
     "Lease steal attempts",
 )
 
+claim_failures_total = Counter(
+    "faultline_claim_failures_total",
+    "Claim-path failures during impaired execution",
+)
+
+recovered_completions_total = Counter(
+    "faultline_recovered_completions_total",
+    "Successful completions after an impairment window",
+)
+
 partition_recovery_seconds = Histogram(
     "faultline_partition_recovery_seconds",
     "Partition recovery duration seconds",

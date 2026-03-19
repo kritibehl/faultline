@@ -30,7 +30,7 @@ class RemediationState:
     def is_degraded(self) -> bool:
         return time.time() < self.degraded_until
 
-    def adaptive_backoff_seconds(self, base: float = 0.25, cap: float = 5.0) -> float:
+    def adaptive_backoff_seconds(self, base: float = 0.12, cap: float = 1.2) -> float:
         return min(cap, base * (2 ** max(0, self.consecutive_transport_failures - 1)))
 
     def note_partition_start(self) -> None:
