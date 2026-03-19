@@ -1,0 +1,172 @@
+{
+  "results": [
+    {
+      "workers": 2,
+      "retry_multiplier": 1.0,
+      "degraded": false,
+      "throughput_jobs_per_min": 84.0,
+      "recovery_seconds": 1.27
+    },
+    {
+      "workers": 2,
+      "retry_multiplier": 1.0,
+      "degraded": true,
+      "throughput_jobs_per_min": 48.72,
+      "recovery_seconds": 5.07
+    },
+    {
+      "workers": 2,
+      "retry_multiplier": 1.5,
+      "degraded": false,
+      "throughput_jobs_per_min": 56.0,
+      "recovery_seconds": 1.27
+    },
+    {
+      "workers": 2,
+      "retry_multiplier": 1.5,
+      "degraded": true,
+      "throughput_jobs_per_min": 32.48,
+      "recovery_seconds": 5.07
+    },
+    {
+      "workers": 2,
+      "retry_multiplier": 2.0,
+      "degraded": false,
+      "throughput_jobs_per_min": 42.0,
+      "recovery_seconds": 1.27
+    },
+    {
+      "workers": 2,
+      "retry_multiplier": 2.0,
+      "degraded": true,
+      "throughput_jobs_per_min": 24.36,
+      "recovery_seconds": 5.07
+    },
+    {
+      "workers": 4,
+      "retry_multiplier": 1.0,
+      "degraded": false,
+      "throughput_jobs_per_min": 168.0,
+      "recovery_seconds": 1.86
+    },
+    {
+      "workers": 4,
+      "retry_multiplier": 1.0,
+      "degraded": true,
+      "throughput_jobs_per_min": 97.44,
+      "recovery_seconds": 7.43
+    },
+    {
+      "workers": 4,
+      "retry_multiplier": 1.5,
+      "degraded": false,
+      "throughput_jobs_per_min": 112.0,
+      "recovery_seconds": 1.86
+    },
+    {
+      "workers": 4,
+      "retry_multiplier": 1.5,
+      "degraded": true,
+      "throughput_jobs_per_min": 64.96,
+      "recovery_seconds": 7.43
+    },
+    {
+      "workers": 4,
+      "retry_multiplier": 2.0,
+      "degraded": false,
+      "throughput_jobs_per_min": 84.0,
+      "recovery_seconds": 1.86
+    },
+    {
+      "workers": 4,
+      "retry_multiplier": 2.0,
+      "degraded": true,
+      "throughput_jobs_per_min": 48.72,
+      "recovery_seconds": 7.43
+    },
+    {
+      "workers": 8,
+      "retry_multiplier": 1.0,
+      "degraded": false,
+      "throughput_jobs_per_min": 336.0,
+      "recovery_seconds": 2.54
+    },
+    {
+      "workers": 8,
+      "retry_multiplier": 1.0,
+      "degraded": true,
+      "throughput_jobs_per_min": 194.88,
+      "recovery_seconds": 10.14
+    },
+    {
+      "workers": 8,
+      "retry_multiplier": 1.5,
+      "degraded": false,
+      "throughput_jobs_per_min": 224.0,
+      "recovery_seconds": 2.54
+    },
+    {
+      "workers": 8,
+      "retry_multiplier": 1.5,
+      "degraded": true,
+      "throughput_jobs_per_min": 129.92,
+      "recovery_seconds": 10.14
+    },
+    {
+      "workers": 8,
+      "retry_multiplier": 2.0,
+      "degraded": false,
+      "throughput_jobs_per_min": 168.0,
+      "recovery_seconds": 2.54
+    },
+    {
+      "workers": 8,
+      "retry_multiplier": 2.0,
+      "degraded": true,
+      "throughput_jobs_per_min": 97.44,
+      "recovery_seconds": 10.14
+    },
+    {
+      "workers": 16,
+      "retry_multiplier": 1.0,
+      "degraded": false,
+      "throughput_jobs_per_min": 672.0,
+      "recovery_seconds": 3.27
+    },
+    {
+      "workers": 16,
+      "retry_multiplier": 1.0,
+      "degraded": true,
+      "throughput_jobs_per_min": 389.76,
+      "recovery_seconds": 13.08
+    },
+    {
+      "workers": 16,
+      "retry_multiplier": 1.5,
+      "degraded": false,
+      "throughput_jobs_per_min": 448.0,
+      "recovery_seconds": 3.27
+    },
+    {
+      "workers": 16,
+      "retry_multiplier": 1.5,
+      "degraded": true,
+      "throughput_jobs_per_min": 259.84,
+      "recovery_seconds": 13.08
+    },
+    {
+      "workers": 16,
+      "retry_multiplier": 2.0,
+      "degraded": false,
+      "throughput_jobs_per_min": 336.0,
+      "recovery_seconds": 3.27
+    },
+    {
+      "workers": 16,
+      "retry_multiplier": 2.0,
+      "degraded": true,
+      "throughput_jobs_per_min": 194.88,
+      "recovery_seconds": 13.08
+    }
+  ]
+}
