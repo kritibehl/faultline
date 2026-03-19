@@ -1,0 +1,50 @@
+# HELP faultline_db_connect_failures_total DB connect failures
+# TYPE faultline_db_connect_failures_total counter
+faultline_db_connect_failures_total 0.0
+# HELP faultline_db_connect_failures_created DB connect failures
+# TYPE faultline_db_connect_failures_created gauge
+faultline_db_connect_failures_created 1.773938179042419e+09
+# HELP faultline_reconnect_attempts_total Reconnect attempts
+# TYPE faultline_reconnect_attempts_total counter
+faultline_reconnect_attempts_total 0.0
+# HELP faultline_reconnect_attempts_created Reconnect attempts
+# TYPE faultline_reconnect_attempts_created gauge
+faultline_reconnect_attempts_created 1.7739381790424268e+09
+# HELP faultline_query_timeout_total Query timeout count
+# TYPE faultline_query_timeout_total counter
+faultline_query_timeout_total 0.0
+# HELP faultline_query_timeout_created Query timeout count
+# TYPE faultline_query_timeout_created gauge
+faultline_query_timeout_created 1.773938179042432e+09
+# HELP faultline_lease_steal_attempts_total Lease steal attempts
+# TYPE faultline_lease_steal_attempts_total counter
+faultline_lease_steal_attempts_total 36.0
+# HELP faultline_lease_steal_attempts_created Lease steal attempts
+# TYPE faultline_lease_steal_attempts_created gauge
+faultline_lease_steal_attempts_created 1.773938179042439e+09
+# HELP faultline_partition_recovery_seconds Partition recovery duration seconds
+# TYPE faultline_partition_recovery_seconds histogram
+faultline_partition_recovery_seconds_bucket{le="0.1"} 2.0
+faultline_partition_recovery_seconds_bucket{le="0.25"} 2.0
+faultline_partition_recovery_seconds_bucket{le="0.5"} 2.0
+faultline_partition_recovery_seconds_bucket{le="1.0"} 2.0
+faultline_partition_recovery_seconds_bucket{le="2.0"} 3.0
+faultline_partition_recovery_seconds_bucket{le="5.0"} 3.0
+faultline_partition_recovery_seconds_bucket{le="10.0"} 3.0
+faultline_partition_recovery_seconds_bucket{le="30.0"} 3.0
+faultline_partition_recovery_seconds_bucket{le="60.0"} 5.0
+faultline_partition_recovery_seconds_bucket{le="+Inf"} 5.0
+faultline_partition_recovery_seconds_count 5.0
+faultline_partition_recovery_seconds_sum 83.89267110824585
+# HELP faultline_partition_recovery_seconds_created Partition recovery duration seconds
+# TYPE faultline_partition_recovery_seconds_created gauge
+faultline_partition_recovery_seconds_created 1.7739381790424478e+09
+# HELP faultline_median_partition_recovery_seconds Median partition recovery seconds
+# TYPE faultline_median_partition_recovery_seconds gauge
+faultline_median_partition_recovery_seconds 1.2015151977539062
+# HELP faultline_worker_quarantined Whether worker is quarantined
+# TYPE faultline_worker_quarantined gauge
+faultline_worker_quarantined 1.0
+# HELP faultline_worker_degraded_mode Whether worker is in degraded mode
+# TYPE faultline_worker_degraded_mode gauge
+faultline_worker_degraded_mode 1.0
