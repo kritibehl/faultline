@@ -1,0 +1,102 @@
+# HELP faultline_db_connect_failures_total DB connect failures
+# TYPE faultline_db_connect_failures_total counter
+faultline_db_connect_failures_total 0.0
+# HELP faultline_db_connect_failures_created DB connect failures
+# TYPE faultline_db_connect_failures_created gauge
+faultline_db_connect_failures_created 1.773941339950382e+09
+# HELP faultline_reconnect_attempts_total Reconnect attempts
+# TYPE faultline_reconnect_attempts_total counter
+faultline_reconnect_attempts_total 0.0
+# HELP faultline_reconnect_attempts_created Reconnect attempts
+# TYPE faultline_reconnect_attempts_created gauge
+faultline_reconnect_attempts_created 1.7739413399503932e+09
+# HELP faultline_query_timeout_total Query timeout count
+# TYPE faultline_query_timeout_total counter
+faultline_query_timeout_total 0.0
+# HELP faultline_query_timeout_created Query timeout count
+# TYPE faultline_query_timeout_created gauge
+faultline_query_timeout_created 1.773941339950399e+09
+# HELP faultline_lease_steal_attempts_total Lease steal attempts
+# TYPE faultline_lease_steal_attempts_total counter
+faultline_lease_steal_attempts_total 0.0
+# HELP faultline_lease_steal_attempts_created Lease steal attempts
+# TYPE faultline_lease_steal_attempts_created gauge
+faultline_lease_steal_attempts_created 1.7739413399504042e+09
+# HELP faultline_partition_recovery_seconds Partition recovery duration seconds
+# TYPE faultline_partition_recovery_seconds histogram
+faultline_partition_recovery_seconds_bucket{le="0.1"} 0.0
+faultline_partition_recovery_seconds_bucket{le="0.25"} 0.0
+faultline_partition_recovery_seconds_bucket{le="0.5"} 0.0
+faultline_partition_recovery_seconds_bucket{le="1.0"} 0.0
+faultline_partition_recovery_seconds_bucket{le="2.0"} 0.0
+faultline_partition_recovery_seconds_bucket{le="5.0"} 0.0
+faultline_partition_recovery_seconds_bucket{le="10.0"} 0.0
+faultline_partition_recovery_seconds_bucket{le="30.0"} 0.0
+faultline_partition_recovery_seconds_bucket{le="60.0"} 0.0
+faultline_partition_recovery_seconds_bucket{le="+Inf"} 0.0
+faultline_partition_recovery_seconds_count 0.0
+faultline_partition_recovery_seconds_sum 0.0
+# HELP faultline_partition_recovery_seconds_created Partition recovery duration seconds
+# TYPE faultline_partition_recovery_seconds_created gauge
+faultline_partition_recovery_seconds_created 1.7739413399504168e+09
+# HELP faultline_median_partition_recovery_seconds Median partition recovery seconds
+# TYPE faultline_median_partition_recovery_seconds gauge
+faultline_median_partition_recovery_seconds 0.0
+# HELP faultline_worker_quarantined Whether worker is quarantined
+# TYPE faultline_worker_quarantined gauge
+faultline_worker_quarantined 0.0
+# HELP faultline_worker_degraded_mode Whether worker is in degraded mode
+# TYPE faultline_worker_degraded_mode gauge
+faultline_worker_degraded_mode 0.0
+# HELP faultline_worker_heartbeat_total Worker heartbeat ticks
+# TYPE faultline_worker_heartbeat_total counter
+faultline_worker_heartbeat_total 510.0
+# HELP faultline_worker_heartbeat_created Worker heartbeat ticks
+# TYPE faultline_worker_heartbeat_created gauge
+faultline_worker_heartbeat_created 1.773941339979147e+09
+# HELP faultline_jobs_claimed_total Jobs claimed
+# TYPE faultline_jobs_claimed_total counter
+faultline_jobs_claimed_total 40.0
+# HELP faultline_jobs_claimed_created Jobs claimed
+# TYPE faultline_jobs_claimed_created gauge
+faultline_jobs_claimed_created 1.7739413399791648e+09
+# HELP faultline_jobs_succeeded_total Jobs succeeded
+# TYPE faultline_jobs_succeeded_total counter
+faultline_jobs_succeeded_total 40.0
+# HELP faultline_jobs_succeeded_created Jobs succeeded
+# TYPE faultline_jobs_succeeded_created gauge
+faultline_jobs_succeeded_created 1.773941339979171e+09
+# HELP faultline_jobs_failed_total Jobs permanently failed
+# TYPE faultline_jobs_failed_total counter
+faultline_jobs_failed_total 0.0
+# HELP faultline_jobs_failed_created Jobs permanently failed
+# TYPE faultline_jobs_failed_created gauge
+faultline_jobs_failed_created 1.773941339979176e+09
+# HELP faultline_jobs_retried_total Jobs scheduled for retry
+# TYPE faultline_jobs_retried_total counter
+faultline_jobs_retried_total 0.0
+# HELP faultline_jobs_retried_created Jobs scheduled for retry
+# TYPE faultline_jobs_retried_created gauge
+faultline_jobs_retried_created 1.77394133997918e+09
+# HELP faultline_stale_commit_prevented_total Stale commits blocked
+# TYPE faultline_stale_commit_prevented_total counter
+faultline_stale_commit_prevented_total 0.0
+# HELP faultline_stale_commit_prevented_created Stale commits blocked
+# TYPE faultline_stale_commit_prevented_created gauge
+faultline_stale_commit_prevented_created 1.7739413399791849e+09
+# HELP faultline_job_duration_seconds Job execution duration
+# TYPE faultline_job_duration_seconds histogram
+faultline_job_duration_seconds_bucket{le="0.1"} 0.0
+faultline_job_duration_seconds_bucket{le="0.5"} 0.0
+faultline_job_duration_seconds_bucket{le="1.0"} 0.0
+faultline_job_duration_seconds_bucket{le="2.0"} 0.0
+faultline_job_duration_seconds_bucket{le="5.0"} 40.0
+faultline_job_duration_seconds_bucket{le="10.0"} 40.0
+faultline_job_duration_seconds_bucket{le="30.0"} 40.0
+faultline_job_duration_seconds_bucket{le="60.0"} 40.0
+faultline_job_duration_seconds_bucket{le="+Inf"} 40.0
+faultline_job_duration_seconds_count 40.0
+faultline_job_duration_seconds_sum 80.55551158201706
+# HELP faultline_job_duration_seconds_created Job execution duration
+# TYPE faultline_job_duration_seconds_created gauge
+faultline_job_duration_seconds_created 1.773941339979198e+09
