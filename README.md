@@ -1,409 +1,251 @@
-# Faultline — Distributed Job Processing System
+# Faultline
 
-**Crash-safe distributed job execution with formal correctness guarantees.**
+> Crash-safe distributed job queue validated across **1,500 fault-injected race reproductions with 0 duplicate commits**.
 
-Most job queues handle failures with timeouts and hope. Faultline proves correctness — through fencing tokens, formal invariants, and deterministic fault injection — across **1,500 race reproductions with zero duplicate commits.** Every result is validated under deterministic race reproduction, not ad hoc retries or probabilistic sampling.
-
-```bash
-make drill-all   →   29/29 failure scenarios pass
-```
+Faultline is a PostgreSQL-backed distributed execution system built to remain correct under worker crashes, lease loss, stale writes, retries, and transport faults. It combines **lease-based ownership**, **fencing-token validation**, **stale-write rejection**, and **reconciliation** to preserve correctness under concurrency and failure.
 
 ---
 
-## What This Prevents in Production
+## Why it matters
 
-Without exactly-once guarantees, a stale worker recovering after a lease expiry can commit a side effect that already landed — with no error, no log, no trace. In practice that means:
+Distributed workers fail in inconvenient ways:
 
-- **Duplicate payment** — a charge fires twice because two workers both believed they held the job
-- **Duplicate email** — a notification sends twice because the original worker recovered after being replaced
-- **Invalid ledger state** — two conflicting writes produce an inconsistent financial record with no constraint violation
+- A worker can lose its lease and keep running
+- A retry can race with an earlier execution
+- A crashed process can come back late and attempt a stale commit
+- Transport issues can interrupt connect, claim, heartbeat, or commit paths
 
-Faultline's fencing token + database UNIQUE constraint guarantee this cannot happen, even under network partition, worker crash, or clock skew.
+Faultline is designed so these failures do not silently corrupt results. Its correctness model pushes protection to the database boundary, where stale writes are rejected if lease ownership or fencing-token state is no longer valid.
+
+This is not just a queue. It is a **correctness-focused execution system for failure-prone distributed environments**.
 
 ---
 
-## The Problem
+## Proof at a glance
 
-A distributed job queue must answer one question correctly under every failure mode:
-
-> **Exactly which worker committed the side effect for job J?**
-
-Get it wrong and you get duplicate payments, double-sent emails, or corrupted ledger state. The naive solutions all fail:
-
-| Approach | Failure Mode |
+| Metric | Result |
 |---|---|
-| Heartbeat + timeout | Worker A times out, B claims, A recovers and commits — **two commits** |
-| Optimistic locking | Clock skew makes "last write wins" unpredictable |
-| Distributed lock service | Lock server becomes single point of failure |
-| At-least-once + idempotency key | Key collision on different payloads → silent data loss |
+| Fault-injected race reproductions | 1,500 |
+| Duplicate commits | **0** |
+| Jobs claimed and completed (real DB path) | 40 / 40 |
+| Connect failures (healthy run) | 0 |
+| Reconnect attempts (healthy run) | 0 |
+| Average job duration (healthy run) | ~2.01s |
 
----
-
-## How Fencing Tokens Work
-
-Every claim increments a monotone counter. Every commit verifies the token matches. A stale worker's token is permanently invalid — not just for a timing window, but **forever.**
-
-```
-t=0.0s  Worker A claims job J
-          fencing_token = 1
-          lease_expires_at = now + 5s
-
-t=0.1s  Worker A begins execution (takes 7s)
-
-t=5.0s  Lease expires — A is still running
-
-t=5.1s  Worker B reclaims J
-          fencing_token = 2          ← monotone increment
-          lease_expires_at = now + 30s
-
-t=5.2s  Worker B executes, commits
-          INSERT ledger_entries (job_id=J, fencing_token=2)
-          UPDATE jobs SET state='succeeded' WHERE fencing_token=2
-
-t=7.0s  Worker A wakes, tries to commit
-          assert_fence: held=1, current=2 → StaleWriteBlocked raised
-
-Result: exactly 1 ledger entry. Zero duplicates.
-```
-
-Two independent defense layers — either one alone prevents the duplicate:
-
-1. **Application layer** — `assert_fence` raises before the write reaches the DB
-2. **Database layer** — `UNIQUE(job_id, fencing_token)` rejects the insert even if the application check is bypassed
-
----
-
-## Correctness Invariants
-
-Five formal invariants enforced on every job:
-
-| ID | Invariant | Enforcement |
-|---|---|---|
-| I1 | No stale owner may commit | `assert_fence` checks `fencing_token` before every write |
-| I2 | No duplicate side effect for the same logical job | `UNIQUE(job_id, fencing_token)` in `ledger_entries` |
-| I3 | Fencing token is strictly monotone after reclaim | `UPDATE ... SET fencing_token = fencing_token + 1` on reclaim |
-| I4 | Crash recovery converges to exactly one valid outcome | Reconciler promotes `committed-but-not-succeeded` jobs |
-| I5 | No two workers hold an active lease simultaneously | `SELECT FOR UPDATE SKIP LOCKED` + lease expiry enforcement |
-
----
-
-## Results
-
-Validated across **1,500 deterministic race reproductions** at three network fault injection rates:
-
-| Fault Rate | Fault Types | Runs | Duplicate Commits | Stale-Write Rejections |
-|---|---|---|---|---|
-| 0% | None | 500 | **0** | 500 |
-| 5% | Latency · drops · timeouts | 500 | **0** | 500 |
-| 10% | Latency · drops · timeouts | 500 | **0** | 500 |
-| **Total** | | **1,500** | **0** | **1,500** |
-
-```
-[500/500] passed=500 failed=0 stale_blocked=500 duplicate_ledger=0
-```
-
-Full results: [`evidence/results/race_matrix.csv`](evidence/results/race_matrix.csv) · [`evidence/results/summary.md`](evidence/results/summary.md)
-
----
-
-## Observability
-
-12 Prometheus metrics on `worker:8000/metrics`:
-
-| Metric | Type | What It Tells You |
-|---|---|---|
-| `faultline_jobs_claimed_total` | Counter | Lease acquisition rate |
-| `faultline_jobs_succeeded_total` | Counter | Throughput |
-| `faultline_jobs_retried_total` | Counter | Transient failure rate |
-| `faultline_jobs_failed_perm_total` | Counter | Dead-letter rate |
-| `faultline_stale_commits_prevented_total` | Counter | **Leading indicator of lease TTL misconfiguration** |
-| `faultline_reconciler_runs_total` | Counter | Recovery sweep rate |
-| `faultline_reconciler_converged_total` | Counter | Recovery success rate |
-| `faultline_lease_acquisition_latency_seconds` | Histogram | p50/p95/p99 claim latency |
-| `faultline_job_execution_latency_seconds` | Histogram | p50/p95 execution time |
-| `faultline_retries_per_job` | Histogram | Retry distribution |
-| `faultline_jobs_queued` | Gauge | Backlog depth |
-| `faultline_jobs_running` | Gauge | In-flight count |
-
-`faultline_stale_commits_prevented_total` is the key metric: a spike means workers are holding leases longer than the TTL allows. See [`evidence/metrics/prometheus_snapshot.txt`](evidence/metrics/prometheus_snapshot.txt) for a counter dump from a validated run.
-
-![Prometheus dashboard](docs/architecture/prometheus_dashboard.png)
-
----
-
-## Failure Scenario Matrix
-
-29 assertions across 16 failure scenarios, all passing:
-
-| Scenario | Fault Injected | Key Assertion |
-|---|---|---|
-| S01 | Crash after ledger insert, before state update | Reconciler promotes to `succeeded`, 1 ledger entry |
-| S02 | Crash before commit — claim never persisted | Job recovered, no phantom claim |
-| S03 | Lease TTL expires mid-execution (1s lease, 2.5s sleep) | B reclaims, exactly 1 ledger entry |
-| S04 | Stale worker holds old token, tries to commit after reclaim | Token mismatch → write rejected |
-| S05 | Duplicate submission with same idempotency key | Both requests return same `job_id` |
-| S06 | Same idempotency key, different payload | 409 Conflict returned |
-| S07 | Job has ledger entry but `state=running` (mid-apply crash) | Reconciler converges without duplicating |
-| S08 | `max_attempts=1`, job fails on first attempt | `state=failed`, `attempts=1` |
-| S09 | Job fails, gets rescheduled with exponential backoff | `next_run_at` set, succeeds on retry |
-| S10 | 10 concurrent submissions with same idempotency key | Exactly 1 job row created |
-| S11 | Direct DB test: duplicate `(job_id, fencing_token)` insert | UNIQUE constraint blocks second insert |
-| S12 | Worker killed mid-batch (3 jobs), new worker picks up | All 3 jobs succeed, no loss |
-| S13 | Job stuck in `running` with expired lease | Reaper resets to `queued` |
-| S14 | DB connectivity check | `/health` returns `status=ok` |
-| S15 | Queue state counts | `/queue/depth` reflects actual DB counts |
-| S16 | Nonexistent job lookup | Returns 404 |
-
----
-
-## Scenario Runner
-
-```bash
-python3 services/cli/scenario_runner.py all --report
-```
-
-```
-============================================================
-  Faultline Scenario Runner
-============================================================
--- lease-expiry: worker sleeps past TTL, successor reclaims --
-  PASS: job succeeded
-  PASS: exactly 1 ledger entry
-  [PASS] lease-expiry — 2/2 checks (6.3s)
--- worker-crash: crash before commit, successor recovers --
-  PASS: crash injected
-  PASS: job succeeded
-  PASS: exactly 1 ledger entry
-  [PASS] worker-crash — 3/3 checks (3.4s)
--- reclaim-race: concurrent workers, exactly one commits --
-  PASS: job succeeded
-  PASS: exactly 1 ledger entry
-  [PASS] reclaim-race — 2/2 checks (2.5s)
--- retry-backoff: failure triggers backoff, succeeds on retry --
-  PASS: re-queued after failure
-  PASS: attempts incremented
-  PASS: next_run_at set (backoff active)
-  PASS: succeeded on retry
-  PASS: 1 ledger entry
-  [PASS] retry-backoff — 5/5 checks (0.3s)
--- max-retries: exhausts attempts, state=failed --
-  PASS: state=failed
-  PASS: attempts=1
-  PASS: error recorded
-  [PASS] max-retries — 3/3 checks (2.2s)
--- db-timeout: worker survives transient connection loss --
-  PASS: job completed successfully
-  PASS: exactly 1 ledger entry
-  PASS: no unhandled traceback
-  [PASS] db-timeout — 3/3 checks (0.2s)
--- network-interruption: short lease simulates cut-off worker --
-  PASS: job recovered after interruption
-  PASS: exactly 1 ledger entry
-  [PASS] network-interruption — 2/2 checks (7.9s)
-============================================================
-  Results: 7/7 scenarios passed
-============================================================
-```
-
----
-
-## Lease Lifecycle
-
-```
-                    ┌──────────────────────────────────┐
-                    │             queued               │
-                    │     next_run_at <= NOW()         │
-                    └───────────────┬──────────────────┘
-                                    │ SELECT FOR UPDATE SKIP LOCKED
-                                    │ fencing_token += 1
-                                    ▼
-                    ┌──────────────────────────────────┐
-                    │             running              │
-                    │   lease_owner   = worker_id      │
-                    │   lease_expires_at = now + TTL   │
-                    └──┬───────────────────────┬───────┘
-                       │                       │
-              execute OK                 lease expires
-              assert_fence passes        reaper fires
-                       │                       │
-                       │              fencing_token += 1
-                       │              state → queued
-                       ▼
-          ┌─────────────────────┐
-          │      succeeded      │
-          └─────────────────────┘
-                                    on failure:
-                              attempts < max_attempts → backoff → queued
-                              attempts >= max_attempts → failed
-```
-
-Retry backoff: `min(2 × 2^(attempts−1), 300)` seconds.
+Stale writes are rejected by DB-side fencing checks. Prometheus telemetry covers connect failures, reconnect attempts, query timeouts, lease-steal attempts, degraded mode, quarantine state, and partition recovery timing.
 
 ---
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                           Clients                               │
-│               POST /jobs      GET /jobs/:id                     │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │ HTTP/JSON
-┌───────────────────────────▼─────────────────────────────────────┐
-│                       FastAPI (api)                             │
-│  POST /jobs       → ON CONFLICT (idempotency_key) DO NOTHING    │
-│  GET  /jobs/:id   → state, fencing_token, attempts, last_error  │
-│  GET  /health     → db connectivity                             │
-│  GET  /queue/depth → counts by state                            │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │ psycopg2
-┌───────────────────────────▼─────────────────────────────────────┐
-│                       PostgreSQL                                │
-│                                                                 │
-│  jobs                        ledger_entries                     │
-│  id, state, fencing_token    job_id, fencing_token, worker_id   │
-│  lease_owner, lease_expires  UNIQUE(job_id, fencing_token) ◄─── │
-│  attempts, next_run_at            blocks all duplicate commits  │
-│  idempotency_key UNIQUE                                         │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │ SELECT FOR UPDATE SKIP LOCKED
-┌───────────────────────────▼─────────────────────────────────────┐
-│                    Worker pool (N processes)                     │
-│                                                                 │
-│  claim_one_job()   → FOR UPDATE SKIP LOCKED, token += 1         │
-│  assert_fence()    → verify token before execution              │
-│  execute_job()     → run user logic                             │
-│  assert_fence()    → verify token still valid after execute     │
-│  mark_succeeded()  → INSERT ledger + UPDATE state='succeeded'   │
-│                                                                 │
-│  Background:                                                    │
-│    Reconciler    → fixes committed-but-not-succeeded jobs       │
-│    Lease reaper  → resets expired running jobs to queued        │
-│    Prometheus    → metrics on :8000/metrics                     │
-└─────────────────────────────────────────────────────────────────┘
+Producer / API
+     │
+     ▼
+PostgreSQL jobs table
+     │
+     ▼
+Claim path (FOR UPDATE SKIP LOCKED)
+     │
+     ▼
+Worker lease ownership
+     │
+     ▼
+Execution
+     │
+     ▼
+Commit with fencing token validation
+     │
+     ├──► stale write rejected if lease/token is no longer valid
+     │
+     ├──► reconciler reclaims abandoned work
+     │
+     └──► Prometheus metrics export correctness + recovery telemetry
 ```
-
-**Why PostgreSQL as sole coordinator?** `SELECT FOR UPDATE SKIP LOCKED` provides exactly-once claim semantics. `UNIQUE(job_id, fencing_token)` provides exactly-once write semantics. No ZooKeeper, no Redis — one dependency, one failure domain.
 
 ---
 
-## Fault Injection
+## Core guarantees
 
-```python
-FaultConfig(
-    latency_ms=200,
-    drop_rate=0.05,
-    timeout_rate=0.10,
-)
-proxy = FaultProxy(real_conn, config)
-```
-
-Tested at 0%, 5%, and 10% injection rates. Exactly-once semantics hold at all three.
+1. Only the current valid lease owner may commit a result.
+2. Late workers cannot overwrite newer executions.
+3. Crashes do not permanently strand claimed work.
+4. Retries do not create duplicate committed outcomes.
+5. Stale commit attempts are rejected at the database boundary.
 
 ---
 
-## Benchmarks
+## How it works
 
-| Workers | Jobs | Time (s) | Jobs/min | Duplicates |
-|---|---|---|---|---|
-| 1 | 100 | 33.2 | 181 | 0 |
-| 4 | 100 | 11.6 | 517 | 0 |
-| 8 | 100 | 8.1 | 741 | 0 |
+### 1. Claim path
 
-*Zero duplicates across all runs — guaranteed by fencing token + UNIQUE constraint, not load conditions.*
+Workers claim jobs from PostgreSQL using row-level coordination and skip-locked semantics so competing workers do not simultaneously take ownership of the same queued item.
 
----
+### 2. Lease ownership
 
-## Tests
+A claimed job is associated with a `lease_owner`, `lease_expires_at`, and `fencing_token`. The lease makes execution ownership time-bounded. If a worker crashes or stalls long enough to lose its lease, another worker can safely reclaim the job.
 
-```
-tests/
-  test_idempotent_apply.py    unit: idempotency enforcement, payload hash collision
-  test_lease_race_fencing.py  500-run race harness — zero stale commits, zero duplicate ledger entries
-  test_benchmarks.py          throughput benchmark at 1 / 4 / 8 workers
-  test_regression.py          one regression test per production bug found
-```
+### 3. Fencing-token validation
 
-Regression inventory:
+Every successful claim advances a fencing token. Commit logic validates both the current lease ownership and the current fencing token — meaning a worker that resumes late with an older token cannot successfully commit.
 
-| Test | Bug Documented |
-|---|---|
-| `test_reg01` | S12 drain used `psql` (not installed locally) — replaced with psycopg2 |
-| `test_reg02` | `mark_for_retry` rolled back silently on `continue` — explicit `conn.commit()` added |
-| `test_reg03` | Exactly 1 ledger entry after reclaim (not 0, not 2) |
-| `test_reg04` | UNIQUE constraint blocks duplicate ledger insert |
-| `test_reg05` | Fencing token monotonically increases after reclaim |
-| `test_reg06` | Max retries sets `state=failed`, not re-queued |
-| `test_reg07` | Idempotency collision returns same `job_id` |
+### 4. Stale-write rejection
+
+The database rejects stale writes when a worker tries to complete a job using outdated ownership state. This is the key protection against duplicate or invalid completion under race conditions.
+
+### 5. Reconciliation
+
+A reconciler scans for expired or abandoned work and restores forward progress without violating correctness.
 
 ---
 
-## Design Decisions
+## Failure walkthrough
 
-**Why fencing tokens instead of lock timeouts?** Timeouts create a race window. Fencing tokens are monotone and checked at commit time — a stale writer's token is permanently invalid, with no window.
+**Scenario: lost lease → stale commit → protected outcome**
 
-**Why two `assert_fence` calls per execution?** The first check catches reclaim before execution started. The second catches reclaim mid-execution (expired lease mid-flight). Missing the second check is the most common fencing token implementation bug — it's the exact scenario that causes duplicate payments in production.
+1. Worker A claims a job and receives fencing token `7`
+2. Worker A stalls, crashes, or loses its lease
+3. Worker B reclaims the same job and receives fencing token `8`
+4. Worker A resumes late and attempts to commit with stale token `7`
+5. The database rejects the stale write
+6. Worker B commits successfully — job correctness is preserved
 
-**Why explicit `conn.commit()` after `mark_for_retry`?** psycopg2 commits on clean `with` block exit, but `continue` in a `while True` loop can exit the block without committing. This was REG-02. Explicit commit removes the ambiguity entirely.
+| Failure scenario | Without safeguards | Faultline outcome |
+|---|---|---|
+| Worker loses lease and resumes late | stale worker commits anyway | stale commit rejected |
+| Retry races with older execution | duplicate result write | fencing token blocks stale write |
+| Worker crashes after claim | job may be stranded | reconciler restores progress |
+| Transport impairment during execution | ownership ambiguity or silent failure | telemetry + remediation expose and contain impairment |
+| Late stale commit after newer worker succeeds | incorrect overwrite | DB-side validation blocks stale write |
 
 ---
 
 ## Quickstart
 
+**Prerequisites**
+
+- Docker / Docker Compose
+- Python 3.11+
+- PostgreSQL client libraries installed via project dependencies
+
+**Start infrastructure**
+
 ```bash
-git clone https://github.com/kritibehl/faultline && cd faultline
+docker compose up -d postgres redis api
+```
 
-docker compose up -d
-make migrate
+**Set DB environment**
 
-# Submit a job
-curl -X POST http://localhost:8000/jobs \
-  -H 'Content-Type: application/json' \
-  -d '{"idempotency_key": "order-123", "payload": {"order_id": 123}}'
+```bash
+export DATABASE_URL='postgresql://faultline:faultline@localhost:5432/faultline'
+export POSTGRES_DSN='postgresql+psycopg2://faultline:faultline@localhost:5432/faultline'
+```
 
-# Run all 29 failure drills
-make drill-all
+**Run migrations**
 
-# Run fault injection suite (0/5/10% rates)
-python -m tests.race_suite --fault-rate 0
-python -m tests.race_suite --fault-rate 0.05
-python -m tests.race_suite --fault-rate 0.10
+```bash
+python3 -m services.api.migrate
+```
 
-# View metrics
-open http://localhost:9090
+**Start a worker**
+
+```bash
+python3 -m services.worker.worker
+```
+
+**Enqueue a job**
+
+```bash
+curl -X POST http://127.0.0.1:8000/jobs \
+  -H "Content-Type: application/json" \
+  -d '{"payload":{"kind":"demo"},"idempotency_key":"demo-1"}'
+```
+
+**Typical healthy worker log sequence**
+
+```
+lease_acquired
+execution_started
+commit_ok
 ```
 
 ---
 
-## Repo Structure
+## Fault and recovery drills
 
-```
-services/
-  api/          FastAPI endpoints, idempotency logic
-  worker/       Main loop: claim → assert → execute → commit
-  cli/          Scenario runner + HTML report writer
-  inspector/    Job timeline HTML inspector
-drills/         29-assertion failure drill suite
-tests/          Race harness, benchmarks, regression tests
-evidence/       race_matrix.csv, traces, Prometheus snapshots
-docs/           Correctness proofs, scenario matrix, architecture
-postmortems/    Reclaim-race walkthrough
-```
+Faultline supports named transport impairment profiles for studying connect instability, ownership disruptions, degraded execution, remediation state transitions, and recovery visibility.
+
+| Profile | Description |
+|---|---|
+| `healthy` | Baseline — no impairment |
+| `packet_loss` | Random packet loss |
+| `asymmetric_latency` | Unequal send/receive latency |
+| `bursty_link_degradation` | Intermittent burst degradation |
+| `dns_failure` | DNS resolution failure |
+| `partial_partition` | Partial network partition |
+| `intermittent_handshake` | Flaky connection handshake |
+| `survivable_degraded` | Degraded but operational |
 
 ---
 
-## Related
+## Validation status
 
-- [Medium: How I built a distributed job queue that stays correct under crashes, races, and network faults](https://medium.com/@kriti0608/how-i-built-a-distributed-job-queue-that-stays-correct-under-crashes-races-and-network-faults-48bc50eec723)
-- [KubePulse](https://github.com/kritibehl/KubePulse) — Kubernetes resilience validation
-- [DetTrace](https://github.com/kritibehl/dettrace) — Distributed incident replay and forensics
-- [AutoOps-Insight](https://github.com/kritibehl/autoops-insight) — Operator-facing incident triage
-- [FairEval-Suite](https://github.com/kritibehl/FairEval-Suite) — Regression gating for GenAI systems
+**Fully proven:**
 
-## Stack
+- Correctness protection under race conditions and stale writes
+- Healthy real DB-backed execution (40/40 jobs, 0 failures)
+- Transport-aware telemetry and remediation instrumentation
+- Drill-style recovery instrumentation
 
-Python · PostgreSQL · Prometheus · GitHub Actions
+**In progress:**
+- Complete healthy vs. impaired vs. recovered benchmark artifacts for real work on the true execution path
 
-## License
+This README only claims what has already been validated.
 
-MIT
+---
+
+## Proof artifacts
+
+```
+docs/real_path_healthy_metrics_sample.txt
+docs/partial_partition_metrics_sample.txt
+docs/benchmark_capacity_sample.json
+```
+
+**Healthy real-path metrics (representative)**
+
+```
+faultline_jobs_claimed_total              40.0
+faultline_jobs_succeeded_total            40.0
+faultline_db_connect_failures_total        0.0
+faultline_reconnect_attempts_total         0.0
+faultline_job_duration_seconds_count      40.0
+faultline_job_duration_seconds_sum        80.5555
+```
+
+**Impairment/recovery instrumentation surfaced in drill validation**
+
+```
+faultline_lease_steal_attempts_total
+faultline_partition_recovery_seconds
+faultline_median_partition_recovery_seconds
+faultline_worker_degraded_mode
+faultline_worker_quarantined
+```
+
+![Prometheus dashboard](docs/architecture/prometheus_dashboard.png)
+
+---
+
+## Why this matters in production
+
+The hardest production bugs are often not feature bugs — they are correctness bugs that only appear under delayed retries, lease expiry, process restarts, dropped or degraded connectivity, late stale writers, and race windows between ownership change and commit. These are expensive because they produce **silent corruption** rather than obvious crashes.
+
+Faultline takes the opposite approach:
+
+- Define correctness invariants explicitly
+- Enforce ownership and fencing at commit time
+- Reject stale writes rather than hoping they don't happen
+- Instrument degradation and recovery so failures are visible
+
+That is the kind of systems thinking needed in platform, production engineering, and network-adjacent distributed systems work.
