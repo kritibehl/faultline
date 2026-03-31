@@ -1,5 +1,7 @@
 # Faultline
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/{owner}/{repo}/badge)](https://scorecard.dev/viewer/?uri=github.com/{owner}/{repo})
+
 > Crash-safe distributed job queue validated across **1,500 fault-injected race reproductions with 0 duplicate commits**.
 
 Faultline is a PostgreSQL-backed distributed execution system built to remain correct under worker crashes, lease loss, stale writes, retries, and transport faults. It combines **lease-based ownership**, **fencing-token validation**, **stale-write rejection**, and **reconciliation** to preserve correctness under concurrency and failure.
