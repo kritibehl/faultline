@@ -1,6 +1,6 @@
 # Faultline
 
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/{owner}/{repo}/badge)](https://scorecard.dev/viewer/?uri=github.com/{owner}/{repo})
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/kritibehl/faultline/badge)](https://scorecard.dev/viewer/?uri=github.com/kritibehl/faultline)
 
 > Crash-safe distributed job queue validated across **1,500 fault-injected race reproductions with 0 duplicate commits**.
 
