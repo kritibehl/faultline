@@ -12,12 +12,16 @@ import uuid
 from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException
+from services.common.tracing import init_tracing, get_tracer, input_fingerprint, inject_traceparent, start_span
 from prometheus_client import Counter, generate_latest
 from psycopg2.extras import Json
 from pydantic import BaseModel
 from starlette.responses import Response
 
 from db import get_conn
+
+init_tracing("faultline-api")
+tracer = get_tracer("faultline.api")
 
 app = FastAPI(title="Faultline", version="1.0.0")
 

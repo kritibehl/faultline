@@ -1,4 +1,5 @@
 from services.worker.transport_db import connect_db
+from services.common.tracing import init_tracing, get_tracer, start_job_span_from_payload, start_span
 import os
 from prometheus_client import start_http_server
 import time
@@ -23,6 +24,8 @@ if not DATABASE_URL:
 DATABASE_URL = DATABASE_URL.replace("postgresql+psycopg2://", "postgresql://", 1)
 start_http_server(int(os.getenv("FAULTLINE_METRICS_PORT", "9108")))
 WORKER_ID = str(uuid.uuid4())
+init_tracing("faultline-worker")
+tracer = get_tracer("faultline.worker")
 
 LEASE_SECONDS = int(os.getenv("LEASE_SECONDS", "30"))
 CRASH_AT = os.getenv("CRASH_AT")
@@ -169,13 +172,33 @@ def claim_one_job(conn, cur):
         row = cur.fetchone()
         if row:
             job_id, token, lease_expires_at, attempts, max_attempts = row
-            log_event("lease_acquired", job_id=job_id, token=int(token),
-                      lease_expires_at=str(lease_expires_at), forced=True,
-                      attempts=attempts, max_attempts=max_attempts)
-            maybe_barrier(conn, cur, "after_lease_acquire")
-            maybe_crash("after_lease_acquire")
-            return job_id, int(token), int(attempts), int(max_attempts)
-        return None, None, None, None
+
+            with start_job_span_from_payload(
+                tracer,
+                "worker.claim",
+                payload,
+                job_id=str(job_id),
+                worker_id=WORKER_ID,
+                fencing_token=int(token),
+            ):
+                pass
+
+            with start_job_span_from_payload(
+                tracer,
+                "lease.acquire",
+                payload,
+                job_id=str(job_id),
+                lease_ttl=int(LEASE_SECONDS),
+            ):
+                pass
+
+        log_event("lease_acquired", job_id=job_id, token=int(token),
+                  lease_expires_at=str(lease_expires_at), forced=True,
+                  attempts=attempts, max_attempts=max_attempts)
+        maybe_barrier(conn, cur, "after_lease_acquire")
+        maybe_crash("after_lease_acquire")
+        return job_id, int(token), int(attempts), int(max_attempts)
+    return None, None, None, None
 
     cur.execute(
         """
@@ -281,6 +304,15 @@ def mark_succeeded(cur, job_id, token):
 
     if cur.rowcount == 0:
         log_event("commit_stale", job_id=job_id, token=token)
+        with start_job_span_from_payload(
+            tracer,
+            "lease.expire",
+            payload,
+            job_id=str(job_id),
+            reason="stale",
+        ):
+            pass
+
         stale_commits.inc()
         raise RuntimeError("stale_commit")
 
@@ -337,7 +369,13 @@ if __name__ == "__main__":
                         assert_fence(cur, job_id, token)
 
                         try:
-                            execute_job(job_id, token, attempts)
+                            with start_job_span_from_payload(
+                                tracer,
+                                "job.execute",
+                                payload,
+                                job_id=str(job_id),
+                            ):
+                                execute_job(job_id, token, attempts)
                         except Exception as exec_err:
                             outcome = mark_for_retry(
                                 cur, job_id, token, attempts,
@@ -362,6 +400,15 @@ if __name__ == "__main__":
                         elapsed = time.monotonic() - start
                         job_duration.observe(elapsed)
                         jobs_succeeded.inc()
+
+                        with start_job_span_from_payload(
+                            tracer,
+                            "job.complete",
+                            payload,
+                            job_id=str(job_id),
+                            status="succeeded",
+                        ):
+                            pass
 
                         log_event("commit_ok", job_id=job_id, token=token,
                                   duration_s=round(elapsed, 3))
