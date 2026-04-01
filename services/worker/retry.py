@@ -1,3 +1,6 @@
+init_tracing("faultline-retry")
+tracer = get_tracer("faultline.retry")
+from services.common.tracing import init_tracing, get_tracer, start_span
 import os
 
 BACKOFF_BASE_SECONDS = float(os.getenv("BACKOFF_BASE_SECONDS", "2"))
@@ -38,3 +41,14 @@ def mark_for_retry(cur, job_id: str, token: int, attempts: int,
              delay, job_id, token),
         )
         return "retry"
+
+
+def _otel_retry_backoff_span(job_id, attempt, delay_seconds):
+    with start_span(
+        tracer,
+        "retry.backoff",
+        job_id=str(job_id),
+        attempt=int(attempt),
+        delay_ms=int(delay_seconds * 1000),
+    ):
+        pass

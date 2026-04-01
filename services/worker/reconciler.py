@@ -1,3 +1,6 @@
+init_tracing("faultline-reconciler")
+tracer = get_tracer("faultline.reconciler")
+from services.common.tracing import init_tracing, get_tracer, start_span
 import os
 import time
 import psycopg2
@@ -62,3 +65,13 @@ if __name__ == "__main__":
             time.sleep(2)
 
         time.sleep(SLEEP_SECONDS)
+
+
+def _otel_recover_span(job_id, orphan_age_seconds):
+    with start_span(
+        tracer,
+        "reconciler.recover",
+        job_id=str(job_id),
+        orphan_age=float(orphan_age_seconds),
+    ):
+        pass
