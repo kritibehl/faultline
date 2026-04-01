@@ -172,32 +172,33 @@ def claim_one_job(conn, cur):
         row = cur.fetchone()
         if row:
             job_id, token, lease_expires_at, attempts, max_attempts = row
-            with start_job_span_from_payload(
-            tracer,
-            "worker.claim",
-            payload,
-            job_id=str(job_id),
-            worker_id=WORKER_ID,
-            fencing_token=int(token),
-        ):
-            pass
 
-        with start_job_span_from_payload(
-            tracer,
-            "lease.acquire",
-            payload,
-            job_id=str(job_id),
-            lease_ttl=int(LEASE_SECONDS),
-        ):
-            pass
+            with start_job_span_from_payload(
+                tracer,
+                "worker.claim",
+                payload,
+                job_id=str(job_id),
+                worker_id=WORKER_ID,
+                fencing_token=int(token),
+            ):
+                pass
+
+            with start_job_span_from_payload(
+                tracer,
+                "lease.acquire",
+                payload,
+                job_id=str(job_id),
+                lease_ttl=int(LEASE_SECONDS),
+            ):
+                pass
 
         log_event("lease_acquired", job_id=job_id, token=int(token),
-                      lease_expires_at=str(lease_expires_at), forced=True,
-                      attempts=attempts, max_attempts=max_attempts)
-            maybe_barrier(conn, cur, "after_lease_acquire")
-            maybe_crash("after_lease_acquire")
-            return job_id, int(token), int(attempts), int(max_attempts)
-        return None, None, None, None
+                  lease_expires_at=str(lease_expires_at), forced=True,
+                  attempts=attempts, max_attempts=max_attempts)
+        maybe_barrier(conn, cur, "after_lease_acquire")
+        maybe_crash("after_lease_acquire")
+        return job_id, int(token), int(attempts), int(max_attempts)
+    return None, None, None, None
 
     cur.execute(
         """
@@ -369,12 +370,12 @@ if __name__ == "__main__":
 
                         try:
                             with start_job_span_from_payload(
-                tracer,
-                "job.execute",
-                payload,
-                job_id=str(job_id),
-            ):
-                execute_job(job_id, token, attempts)
+                                tracer,
+                                "job.execute",
+                                payload,
+                                job_id=str(job_id),
+                            ):
+                                execute_job(job_id, token, attempts)
                         except Exception as exec_err:
                             outcome = mark_for_retry(
                                 cur, job_id, token, attempts,
@@ -399,6 +400,15 @@ if __name__ == "__main__":
                         elapsed = time.monotonic() - start
                         job_duration.observe(elapsed)
                         jobs_succeeded.inc()
+
+                        with start_job_span_from_payload(
+                            tracer,
+                            "job.complete",
+                            payload,
+                            job_id=str(job_id),
+                            status="succeeded",
+                        ):
+                            pass
 
                         log_event("commit_ok", job_id=job_id, token=token,
                                   duration_s=round(elapsed, 3))

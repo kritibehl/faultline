@@ -1,46 +1,12 @@
+from services.common.tracing import init_tracing, get_tracer, start_span
+from datetime import datetime, timezone, timedelta
+
 init_tracing("faultline-retry")
 tracer = get_tracer("faultline.retry")
-from services.common.tracing import init_tracing, get_tracer, start_span
-import os
-
-BACKOFF_BASE_SECONDS = float(os.getenv("BACKOFF_BASE_SECONDS", "2"))
-BACKOFF_MAX_SECONDS = float(os.getenv("BACKOFF_MAX_SECONDS", "300"))
 
 
-def backoff_seconds(attempts: int, base: float = None, cap: float = None) -> float:
-    b = base if base is not None else BACKOFF_BASE_SECONDS
-    c = cap if cap is not None else BACKOFF_MAX_SECONDS
-    return min(b * (2 ** (attempts - 1)), c)
-
-
-def mark_for_retry(cur, job_id: str, token: int, attempts: int,
-                   max_attempts: int, error_msg: str = "") -> str:
-    new_attempts = attempts + 1
-    if new_attempts >= max_attempts:
-        cur.execute(
-            """
-            UPDATE jobs
-            SET state='failed', lease_owner=NULL, lease_expires_at=NULL,
-                attempts=%s, last_error=%s, updated_at=NOW()
-            WHERE id=%s AND fencing_token=%s
-            """,
-            (new_attempts, error_msg[:1000] if error_msg else None, job_id, token),
-        )
-        return "failed"
-    else:
-        delay = backoff_seconds(new_attempts)
-        cur.execute(
-            """
-            UPDATE jobs
-            SET state='queued', lease_owner=NULL, lease_expires_at=NULL,
-                attempts=%s, last_error=%s,
-                next_run_at=NOW() + make_interval(secs => %s), updated_at=NOW()
-            WHERE id=%s AND fencing_token=%s
-            """,
-            (new_attempts, error_msg[:1000] if error_msg else None,
-             delay, job_id, token),
-        )
-        return "retry"
+def backoff_seconds(attempt: int) -> int:
+    return min(2 ** attempt, 30)
 
 
 def _otel_retry_backoff_span(job_id, attempt, delay_seconds):
@@ -52,3 +18,31 @@ def _otel_retry_backoff_span(job_id, attempt, delay_seconds):
         delay_ms=int(delay_seconds * 1000),
     ):
         pass
+
+
+def mark_for_retry(cur, job_id, token, attempts, max_attempts, last_error):
+    if attempts + 1 >= max_attempts:
+        cur.execute(
+            """
+            UPDATE jobs
+            SET state='failed', lease_owner=NULL, lease_expires_at=NULL,
+                last_error=%s, updated_at=NOW()
+            WHERE id=%s AND fencing_token=%s
+            """,
+            (last_error, job_id, token),
+        )
+        return "failed"
+
+    delay = backoff_seconds(attempts + 1)
+    _otel_retry_backoff_span(job_id, attempts + 1, delay)
+
+    cur.execute(
+        """
+        UPDATE jobs
+        SET state='queued', lease_owner=NULL, lease_expires_at=NULL,
+            available_at=%s, last_error=%s, updated_at=NOW()
+        WHERE id=%s AND fencing_token=%s
+        """,
+        (datetime.now(timezone.utc) + timedelta(seconds=delay), last_error, job_id, token),
+    )
+    return "retried"
