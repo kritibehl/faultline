@@ -6,6 +6,15 @@ import time
 from dataclasses import dataclass
 
 
+@dataclass
+class FaultConfig:
+    drop_rate: float = 0.0
+    latency_ms: tuple[int, int] | int = 0
+    timeout_rate: float = 0.0
+    seed: int = 0
+    enabled: bool = True
+
+
 class NetworkImpairment(Exception):
     pass
 
@@ -96,3 +105,15 @@ class NetworkFaultInjector:
             impaired=impaired,
             detail=detail,
         )
+
+
+__all__ = [
+    "FaultConfig",
+    "NetworkImpairment",
+    "DNSFailure",
+    "HandshakeFailure",
+    "PartialPartition",
+    "QueryTimeout",
+    "NetworkEvent",
+    "NetworkFaultInjector",
+]

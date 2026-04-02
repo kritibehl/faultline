@@ -1,3 +1,4 @@
+from sqlalchemy import text
 """
 api/routes/jobs.py
 ───────────────────
@@ -38,7 +39,7 @@ def _payload_hash(payload: dict) -> str:
 def health(db: Session = Depends(get_db)):
     """Liveness + DB connectivity check."""
     try:
-        db.execute("SELECT 1")
+        db.execute(text("SELECT 1"))
         return {"status": "ok", "db": "connected"}
     except Exception as e:
         raise HTTPException(status_code=503, detail=f"DB unavailable: {e}")
