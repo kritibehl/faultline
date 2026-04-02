@@ -251,3 +251,26 @@ Faultline takes the opposite approach:
 - Instrument degradation and recovery so failures are visible
 
 That is the kind of systems thinking needed in platform, production engineering, and network-adjacent distributed systems work.
+
+---
+
+## Deterministic Lease-Race Proof
+
+Faultline now includes a proof-first harness for the hardest correctness case:
+
+- worker A claims first
+- worker A loses lease
+- worker B reclaims with a higher fencing token
+- stale completion from worker A is rejected
+- job still succeeds exactly once
+
+Run:
+
+```bash
+./scripts/run_controlled_race.sh
+Artifacts are emitted under artifacts/races/ as:
+
+raw race artifact JSON
+incident timeline markdown
+root-cause explanation markdown
+DetTrace-ready JSONL export

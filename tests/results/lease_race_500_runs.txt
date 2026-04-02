@@ -1,18 +1,81 @@
 Faultline — lease-expiry race fencing validation
-Runs: 3
+Runs: 500
 ============================================================
 
 === Run    1 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
 === Run    2 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
 === Run    3 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
-
-============================================================
-RESULTS
-============================================================
-Total runs            : 3
-Passed                : 3
-Failed                : 0
-Stale writes blocked  : 3/3
-Duplicate ledger entries: 0
-
-✅ ALL INVARIANTS HELD — 0 duplicate executions across 3 controlled runs
+=== Run    4 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run    5 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run    6 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run    7 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run    8 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run    9 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   10 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   11 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   12 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   13 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   14 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   15 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   16 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   17 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   18 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   19 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   20 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   21 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   22 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   23 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   24 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   25 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   26 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   27 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   28 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   29 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   30 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   31 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   32 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   33 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   34 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   35 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   36 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   37 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   38 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   39 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   40 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   41 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   42 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   43 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   44 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   45 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   46 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   47 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   48 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   49 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   50 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   51 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   52 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   53 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   54 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   55 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   56 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   57 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   58 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   59 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   60 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   61 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   62 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   63 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   64 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   65 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   66 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   67 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   68 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   69 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   70 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   71 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   72 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   73 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   74 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   75 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   76 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run   77 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
