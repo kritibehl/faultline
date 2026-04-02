@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package faultline.worker;
+
+service FaultlineWorker {
+  rpc SubmitJob(SubmitJobRequest) returns (SubmitJobResponse);
+  rpc ClaimNextJob(ClaimNextJobRequest) returns (ClaimNextJobResponse);
+  rpc CompleteJob(CompleteJobRequest) returns (CompleteJobResponse);
+  rpc GetJob(GetJobRequest) returns (GetJobResponse);
+}
+
+message SubmitJobRequest {
+  string payload = 1;
+  string traceparent = 2;
+}
+
+message SubmitJobResponse {
+  string job_id = 1;
+  string state = 2;
+}
+
+message ClaimNextJobRequest {
+  string worker_id = 1;
+  int32 lease_seconds = 2;
+  string force_job_id = 3;
+}
+
+message ClaimNextJobResponse {
+  bool claimed = 1;
+  string job_id = 2;
+  string payload = 3;
+  int64 fencing_token = 4;
+  string lease_owner = 5;
+}
+
+message CompleteJobRequest {
+  string worker_id = 1;
+  string job_id = 2;
+  int64 fencing_token = 3;
+}
+
+message CompleteJobResponse {
+  bool ok = 1;
+  string state = 2;
+}
+
+message GetJobRequest {
+  string job_id = 1;
+}
+
+message GetJobResponse {
+  string job_id = 1;
+  string state = 2;
+  string lease_owner = 3;
+  int64 fencing_token = 4;
+}

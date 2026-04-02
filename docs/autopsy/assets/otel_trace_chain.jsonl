@@ -1,0 +1,482 @@
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "d2e91416-1ad1-4672-8472-6771d58f5d7d", "ts": 1775166011.88893, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166011.896241, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "d2e91416-1ad1-4672-8472-6771d58f5d7d", "token": 1, "ts": 1775166011.898934}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "d2e91416-1ad1-4672-8472-6771d58f5d7d", "ts": 1775166012.956572, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166012.962047, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "d2e91416-1ad1-4672-8472-6771d58f5d7d", "token": 2, "ts": 1775166012.965325}
+{"attempts": 0, "event": "execute_done", "job_id": "d2e91416-1ad1-4672-8472-6771d58f5d7d", "token": 2, "ts": 1775166012.965429}
+{"duration_s": 0.009, "event": "complete", "job_id": "d2e91416-1ad1-4672-8472-6771d58f5d7d", "token": 2, "ts": 1775166012.973143, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "d2e91416-1ad1-4672-8472-6771d58f5d7d", "token": 1, "ts": 1775166013.101916}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "d2e91416-1ad1-4672-8472-6771d58f5d7d", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166013.104038}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "7c4a4c39-7d3b-44b7-92b0-d68c47c5923b", "ts": 1775166013.410383, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166013.412456, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "7c4a4c39-7d3b-44b7-92b0-d68c47c5923b", "token": 1, "ts": 1775166013.413892}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "7c4a4c39-7d3b-44b7-92b0-d68c47c5923b", "ts": 1775166014.489473, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166014.491468, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "7c4a4c39-7d3b-44b7-92b0-d68c47c5923b", "token": 2, "ts": 1775166014.494738}
+{"attempts": 0, "event": "execute_done", "job_id": "7c4a4c39-7d3b-44b7-92b0-d68c47c5923b", "token": 2, "ts": 1775166014.494905}
+{"duration_s": 0.005, "event": "complete", "job_id": "7c4a4c39-7d3b-44b7-92b0-d68c47c5923b", "token": 2, "ts": 1775166014.498341, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "7c4a4c39-7d3b-44b7-92b0-d68c47c5923b", "token": 1, "ts": 1775166014.619248}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "7c4a4c39-7d3b-44b7-92b0-d68c47c5923b", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166014.624096}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "a2fd4ff4-1ea6-49dd-894d-e3d103154638", "ts": 1775166014.923665, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166014.925789, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "a2fd4ff4-1ea6-49dd-894d-e3d103154638", "token": 1, "ts": 1775166014.927604}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "a2fd4ff4-1ea6-49dd-894d-e3d103154638", "ts": 1775166015.949409, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166015.951516, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "a2fd4ff4-1ea6-49dd-894d-e3d103154638", "token": 2, "ts": 1775166015.954568}
+{"attempts": 0, "event": "execute_done", "job_id": "a2fd4ff4-1ea6-49dd-894d-e3d103154638", "token": 2, "ts": 1775166015.954775}
+{"duration_s": 0.005, "event": "complete", "job_id": "a2fd4ff4-1ea6-49dd-894d-e3d103154638", "token": 2, "ts": 1775166015.958128, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "a2fd4ff4-1ea6-49dd-894d-e3d103154638", "token": 1, "ts": 1775166016.129923}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "a2fd4ff4-1ea6-49dd-894d-e3d103154638", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166016.133897}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "e52342fa-bd09-4910-b843-d4c18e27634d", "ts": 1775166016.438614, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166016.44087, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "e52342fa-bd09-4910-b843-d4c18e27634d", "token": 1, "ts": 1775166016.442013}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "e52342fa-bd09-4910-b843-d4c18e27634d", "ts": 1775166017.495766, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166017.497924, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "e52342fa-bd09-4910-b843-d4c18e27634d", "token": 2, "ts": 1775166017.500301}
+{"attempts": 0, "event": "execute_done", "job_id": "e52342fa-bd09-4910-b843-d4c18e27634d", "token": 2, "ts": 1775166017.500512}
+{"duration_s": 0.004, "event": "complete", "job_id": "e52342fa-bd09-4910-b843-d4c18e27634d", "token": 2, "ts": 1775166017.503205, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "e52342fa-bd09-4910-b843-d4c18e27634d", "token": 1, "ts": 1775166017.647009}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "e52342fa-bd09-4910-b843-d4c18e27634d", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166017.653276}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "fca08a09-7e31-411c-91f0-b3b5b50242c7", "ts": 1775166017.968114, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166017.97096, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "fca08a09-7e31-411c-91f0-b3b5b50242c7", "token": 1, "ts": 1775166017.972487}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "fca08a09-7e31-411c-91f0-b3b5b50242c7", "ts": 1775166018.978093, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166018.98053, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "fca08a09-7e31-411c-91f0-b3b5b50242c7", "token": 2, "ts": 1775166018.983311}
+{"attempts": 0, "event": "execute_done", "job_id": "fca08a09-7e31-411c-91f0-b3b5b50242c7", "token": 2, "ts": 1775166018.983527}
+{"duration_s": 0.005, "event": "complete", "job_id": "fca08a09-7e31-411c-91f0-b3b5b50242c7", "token": 2, "ts": 1775166018.986771, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "fca08a09-7e31-411c-91f0-b3b5b50242c7", "token": 1, "ts": 1775166019.178017}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "fca08a09-7e31-411c-91f0-b3b5b50242c7", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166019.184887}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "a74aaadc-453c-49b5-8013-8e90e5c22d80", "ts": 1775166019.476116, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166019.477806, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "a74aaadc-453c-49b5-8013-8e90e5c22d80", "token": 1, "ts": 1775166019.479414}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "a74aaadc-453c-49b5-8013-8e90e5c22d80", "ts": 1775166020.532306, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166020.535245, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "a74aaadc-453c-49b5-8013-8e90e5c22d80", "token": 2, "ts": 1775166020.539094}
+{"attempts": 0, "event": "execute_done", "job_id": "a74aaadc-453c-49b5-8013-8e90e5c22d80", "token": 2, "ts": 1775166020.539287}
+{"duration_s": 0.006, "event": "complete", "job_id": "a74aaadc-453c-49b5-8013-8e90e5c22d80", "token": 2, "ts": 1775166020.542946, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "a74aaadc-453c-49b5-8013-8e90e5c22d80", "token": 1, "ts": 1775166020.682665}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "a74aaadc-453c-49b5-8013-8e90e5c22d80", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166020.685294}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "e4ac76dd-4781-44f5-b46b-2c870fcdfdc4", "ts": 1775166020.989464, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166020.992148, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "e4ac76dd-4781-44f5-b46b-2c870fcdfdc4", "token": 1, "ts": 1775166020.994075}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "e4ac76dd-4781-44f5-b46b-2c870fcdfdc4", "ts": 1775166021.996197, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166021.999174, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "e4ac76dd-4781-44f5-b46b-2c870fcdfdc4", "token": 2, "ts": 1775166022.002347}
+{"attempts": 0, "event": "execute_done", "job_id": "e4ac76dd-4781-44f5-b46b-2c870fcdfdc4", "token": 2, "ts": 1775166022.002577}
+{"duration_s": 0.005, "event": "complete", "job_id": "e4ac76dd-4781-44f5-b46b-2c870fcdfdc4", "token": 2, "ts": 1775166022.005978, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "e4ac76dd-4781-44f5-b46b-2c870fcdfdc4", "token": 1, "ts": 1775166022.199578}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "e4ac76dd-4781-44f5-b46b-2c870fcdfdc4", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166022.20558}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "c1ccfc92-9be4-4889-ad73-7452f612794c", "ts": 1775166022.503356, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166022.505279, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "c1ccfc92-9be4-4889-ad73-7452f612794c", "token": 1, "ts": 1775166022.506587}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "c1ccfc92-9be4-4889-ad73-7452f612794c", "ts": 1775166023.565767, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166023.569932, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "c1ccfc92-9be4-4889-ad73-7452f612794c", "token": 2, "ts": 1775166023.574261}
+{"attempts": 0, "event": "execute_done", "job_id": "c1ccfc92-9be4-4889-ad73-7452f612794c", "token": 2, "ts": 1775166023.574692}
+{"duration_s": 0.006, "event": "complete", "job_id": "c1ccfc92-9be4-4889-ad73-7452f612794c", "token": 2, "ts": 1775166023.578773, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "c1ccfc92-9be4-4889-ad73-7452f612794c", "token": 1, "ts": 1775166023.707243}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "c1ccfc92-9be4-4889-ad73-7452f612794c", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166023.713064}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "6da15e7f-0ef5-4737-89f1-ce5828803d74", "ts": 1775166023.994364, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166023.99666, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "6da15e7f-0ef5-4737-89f1-ce5828803d74", "token": 1, "ts": 1775166023.997613}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "6da15e7f-0ef5-4737-89f1-ce5828803d74", "ts": 1775166025.046499, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166025.049021, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "6da15e7f-0ef5-4737-89f1-ce5828803d74", "token": 2, "ts": 1775166025.052096}
+{"attempts": 0, "event": "execute_done", "job_id": "6da15e7f-0ef5-4737-89f1-ce5828803d74", "token": 2, "ts": 1775166025.052301}
+{"duration_s": 0.004, "event": "complete", "job_id": "6da15e7f-0ef5-4737-89f1-ce5828803d74", "token": 2, "ts": 1775166025.054864, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "6da15e7f-0ef5-4737-89f1-ce5828803d74", "token": 1, "ts": 1775166025.19892}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "6da15e7f-0ef5-4737-89f1-ce5828803d74", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166025.201733}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "f774f63b-77bd-490e-bf69-ff6c5b2d3156", "ts": 1775166025.48802, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166025.490073, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "f774f63b-77bd-490e-bf69-ff6c5b2d3156", "token": 1, "ts": 1775166025.491344}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "f774f63b-77bd-490e-bf69-ff6c5b2d3156", "ts": 1775166026.560423, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166026.563455, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "f774f63b-77bd-490e-bf69-ff6c5b2d3156", "token": 2, "ts": 1775166026.567111}
+{"attempts": 0, "event": "execute_done", "job_id": "f774f63b-77bd-490e-bf69-ff6c5b2d3156", "token": 2, "ts": 1775166026.567306}
+{"duration_s": 0.006, "event": "complete", "job_id": "f774f63b-77bd-490e-bf69-ff6c5b2d3156", "token": 2, "ts": 1775166026.571081, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "f774f63b-77bd-490e-bf69-ff6c5b2d3156", "token": 1, "ts": 1775166026.696906}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "f774f63b-77bd-490e-bf69-ff6c5b2d3156", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166026.702227}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "9a00300a-27de-4e32-a2bb-ceb39ce38307", "ts": 1775166026.985487, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166026.987489, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "9a00300a-27de-4e32-a2bb-ceb39ce38307", "token": 1, "ts": 1775166026.988508}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "9a00300a-27de-4e32-a2bb-ceb39ce38307", "ts": 1775166028.033873, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166028.035782, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "9a00300a-27de-4e32-a2bb-ceb39ce38307", "token": 2, "ts": 1775166028.03834}
+{"attempts": 0, "event": "execute_done", "job_id": "9a00300a-27de-4e32-a2bb-ceb39ce38307", "token": 2, "ts": 1775166028.038494}
+{"duration_s": 0.004, "event": "complete", "job_id": "9a00300a-27de-4e32-a2bb-ceb39ce38307", "token": 2, "ts": 1775166028.041346, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "9a00300a-27de-4e32-a2bb-ceb39ce38307", "token": 1, "ts": 1775166028.193921}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "9a00300a-27de-4e32-a2bb-ceb39ce38307", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166028.202442}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "4e345f24-c404-42fb-aa85-60c1f177321b", "ts": 1775166028.496075, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166028.498314, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "4e345f24-c404-42fb-aa85-60c1f177321b", "token": 1, "ts": 1775166028.499318}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "4e345f24-c404-42fb-aa85-60c1f177321b", "ts": 1775166029.530928, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166029.534382, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "4e345f24-c404-42fb-aa85-60c1f177321b", "token": 2, "ts": 1775166029.537691}
+{"attempts": 0, "event": "execute_done", "job_id": "4e345f24-c404-42fb-aa85-60c1f177321b", "token": 2, "ts": 1775166029.537891}
+{"duration_s": 0.005, "event": "complete", "job_id": "4e345f24-c404-42fb-aa85-60c1f177321b", "token": 2, "ts": 1775166029.541691, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "4e345f24-c404-42fb-aa85-60c1f177321b", "token": 1, "ts": 1775166029.704773}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "4e345f24-c404-42fb-aa85-60c1f177321b", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166029.709623}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "339e4fb6-e1c0-44cb-93a5-ae717b5dbfda", "ts": 1775166030.022895, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166030.025396, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "339e4fb6-e1c0-44cb-93a5-ae717b5dbfda", "token": 1, "ts": 1775166030.026454}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "339e4fb6-e1c0-44cb-93a5-ae717b5dbfda", "ts": 1775166031.07324, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166031.075272, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "339e4fb6-e1c0-44cb-93a5-ae717b5dbfda", "token": 2, "ts": 1775166031.07787}
+{"attempts": 0, "event": "execute_done", "job_id": "339e4fb6-e1c0-44cb-93a5-ae717b5dbfda", "token": 2, "ts": 1775166031.078022}
+{"duration_s": 0.003, "event": "complete", "job_id": "339e4fb6-e1c0-44cb-93a5-ae717b5dbfda", "token": 2, "ts": 1775166031.080106, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "339e4fb6-e1c0-44cb-93a5-ae717b5dbfda", "token": 1, "ts": 1775166031.232784}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "339e4fb6-e1c0-44cb-93a5-ae717b5dbfda", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166031.239543}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "de3240c1-2bb6-442e-b32a-edc83ba594d9", "ts": 1775166031.552143, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166031.554224, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "de3240c1-2bb6-442e-b32a-edc83ba594d9", "token": 1, "ts": 1775166031.555848}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "de3240c1-2bb6-442e-b32a-edc83ba594d9", "ts": 1775166032.572173, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166032.574908, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "de3240c1-2bb6-442e-b32a-edc83ba594d9", "token": 2, "ts": 1775166032.57857}
+{"attempts": 0, "event": "execute_done", "job_id": "de3240c1-2bb6-442e-b32a-edc83ba594d9", "token": 2, "ts": 1775166032.578768}
+{"duration_s": 0.005, "event": "complete", "job_id": "de3240c1-2bb6-442e-b32a-edc83ba594d9", "token": 2, "ts": 1775166032.581963, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "de3240c1-2bb6-442e-b32a-edc83ba594d9", "token": 1, "ts": 1775166032.761345}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "de3240c1-2bb6-442e-b32a-edc83ba594d9", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166032.766134}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "170f4089-e8e8-40dc-bee9-54a7e450a43b", "ts": 1775166033.064016, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166033.06724, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "170f4089-e8e8-40dc-bee9-54a7e450a43b", "token": 1, "ts": 1775166033.06908}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "170f4089-e8e8-40dc-bee9-54a7e450a43b", "ts": 1775166034.087289, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166034.08979, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "170f4089-e8e8-40dc-bee9-54a7e450a43b", "token": 2, "ts": 1775166034.093128}
+{"attempts": 0, "event": "execute_done", "job_id": "170f4089-e8e8-40dc-bee9-54a7e450a43b", "token": 2, "ts": 1775166034.093362}
+{"duration_s": 0.006, "event": "complete", "job_id": "170f4089-e8e8-40dc-bee9-54a7e450a43b", "token": 2, "ts": 1775166034.097187, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "170f4089-e8e8-40dc-bee9-54a7e450a43b", "token": 1, "ts": 1775166034.274563}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "170f4089-e8e8-40dc-bee9-54a7e450a43b", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166034.280845}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "c9fd4a30-dc1f-4b65-99d4-c6dddf137529", "ts": 1775166034.581572, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166034.58432, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "c9fd4a30-dc1f-4b65-99d4-c6dddf137529", "token": 1, "ts": 1775166034.58589}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "c9fd4a30-dc1f-4b65-99d4-c6dddf137529", "ts": 1775166035.588344, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166035.591045, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "c9fd4a30-dc1f-4b65-99d4-c6dddf137529", "token": 2, "ts": 1775166035.594449}
+{"attempts": 0, "event": "execute_done", "job_id": "c9fd4a30-dc1f-4b65-99d4-c6dddf137529", "token": 2, "ts": 1775166035.59467}
+{"duration_s": 0.005, "event": "complete", "job_id": "c9fd4a30-dc1f-4b65-99d4-c6dddf137529", "token": 2, "ts": 1775166035.59826, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "c9fd4a30-dc1f-4b65-99d4-c6dddf137529", "token": 1, "ts": 1775166035.791405}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "c9fd4a30-dc1f-4b65-99d4-c6dddf137529", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166035.795776}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "c965c038-d62f-47d9-9aba-1c39d0d4b862", "ts": 1775166036.104214, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166036.10732, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "c965c038-d62f-47d9-9aba-1c39d0d4b862", "token": 1, "ts": 1775166036.110108}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "c965c038-d62f-47d9-9aba-1c39d0d4b862", "ts": 1775166037.145592, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166037.147452, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "c965c038-d62f-47d9-9aba-1c39d0d4b862", "token": 2, "ts": 1775166037.149507}
+{"attempts": 0, "event": "execute_done", "job_id": "c965c038-d62f-47d9-9aba-1c39d0d4b862", "token": 2, "ts": 1775166037.149701}
+{"duration_s": 0.004, "event": "complete", "job_id": "c965c038-d62f-47d9-9aba-1c39d0d4b862", "token": 2, "ts": 1775166037.152188, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "c965c038-d62f-47d9-9aba-1c39d0d4b862", "token": 1, "ts": 1775166037.315877}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "c965c038-d62f-47d9-9aba-1c39d0d4b862", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166037.320562}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "c14644d9-6841-4f76-956a-5ca18d1c1547", "ts": 1775166037.757256, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166037.759738, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "c14644d9-6841-4f76-956a-5ca18d1c1547", "token": 1, "ts": 1775166037.760774}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "c14644d9-6841-4f76-956a-5ca18d1c1547", "ts": 1775166038.768075, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166038.771032, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "c14644d9-6841-4f76-956a-5ca18d1c1547", "token": 2, "ts": 1775166038.7752}
+{"attempts": 0, "event": "execute_done", "job_id": "c14644d9-6841-4f76-956a-5ca18d1c1547", "token": 2, "ts": 1775166038.775515}
+{"duration_s": 0.006, "event": "complete", "job_id": "c14644d9-6841-4f76-956a-5ca18d1c1547", "token": 2, "ts": 1775166038.779103, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "c14644d9-6841-4f76-956a-5ca18d1c1547", "token": 1, "ts": 1775166038.966318}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "c14644d9-6841-4f76-956a-5ca18d1c1547", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166038.972046}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "daaddd9f-7bad-4e92-b389-bd50b0457f0f", "ts": 1775166039.279582, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166039.281745, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "daaddd9f-7bad-4e92-b389-bd50b0457f0f", "token": 1, "ts": 1775166039.283132}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "daaddd9f-7bad-4e92-b389-bd50b0457f0f", "ts": 1775166040.350194, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166040.352607, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "daaddd9f-7bad-4e92-b389-bd50b0457f0f", "token": 2, "ts": 1775166040.369663}
+{"attempts": 0, "event": "execute_done", "job_id": "daaddd9f-7bad-4e92-b389-bd50b0457f0f", "token": 2, "ts": 1775166040.370178}
+{"duration_s": 0.035, "event": "complete", "job_id": "daaddd9f-7bad-4e92-b389-bd50b0457f0f", "token": 2, "ts": 1775166040.389801, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "daaddd9f-7bad-4e92-b389-bd50b0457f0f", "token": 1, "ts": 1775166040.483403}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "daaddd9f-7bad-4e92-b389-bd50b0457f0f", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166040.485356}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "2115490a-d124-435a-8f2b-8b091b85b1ed", "ts": 1775166040.773389, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166040.775746, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "2115490a-d124-435a-8f2b-8b091b85b1ed", "token": 1, "ts": 1775166040.777118}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "2115490a-d124-435a-8f2b-8b091b85b1ed", "ts": 1775166041.826201, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166041.829507, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "2115490a-d124-435a-8f2b-8b091b85b1ed", "token": 2, "ts": 1775166041.832576}
+{"attempts": 0, "event": "execute_done", "job_id": "2115490a-d124-435a-8f2b-8b091b85b1ed", "token": 2, "ts": 1775166041.832919}
+{"duration_s": 0.004, "event": "complete", "job_id": "2115490a-d124-435a-8f2b-8b091b85b1ed", "token": 2, "ts": 1775166041.835483, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "2115490a-d124-435a-8f2b-8b091b85b1ed", "token": 1, "ts": 1775166041.979549}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "2115490a-d124-435a-8f2b-8b091b85b1ed", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166041.983855}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "73816114-5112-41c3-8167-18f1cb3d3caf", "ts": 1775166042.292204, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166042.294358, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "73816114-5112-41c3-8167-18f1cb3d3caf", "token": 1, "ts": 1775166042.295486}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "73816114-5112-41c3-8167-18f1cb3d3caf", "ts": 1775166043.353098, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166043.35553, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "73816114-5112-41c3-8167-18f1cb3d3caf", "token": 2, "ts": 1775166043.358747}
+{"attempts": 0, "event": "execute_done", "job_id": "73816114-5112-41c3-8167-18f1cb3d3caf", "token": 2, "ts": 1775166043.359248}
+{"duration_s": 0.005, "event": "complete", "job_id": "73816114-5112-41c3-8167-18f1cb3d3caf", "token": 2, "ts": 1775166043.361983, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "73816114-5112-41c3-8167-18f1cb3d3caf", "token": 1, "ts": 1775166043.495919}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "73816114-5112-41c3-8167-18f1cb3d3caf", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166043.500026}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "e6ea5a07-44c1-4dc5-9a31-4845c7d344bf", "ts": 1775166043.772723, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166043.775041, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "e6ea5a07-44c1-4dc5-9a31-4845c7d344bf", "token": 1, "ts": 1775166043.77632}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "e6ea5a07-44c1-4dc5-9a31-4845c7d344bf", "ts": 1775166044.780613, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166044.78343, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "e6ea5a07-44c1-4dc5-9a31-4845c7d344bf", "token": 2, "ts": 1775166044.787061}
+{"attempts": 0, "event": "execute_done", "job_id": "e6ea5a07-44c1-4dc5-9a31-4845c7d344bf", "token": 2, "ts": 1775166044.787372}
+{"duration_s": 0.006, "event": "complete", "job_id": "e6ea5a07-44c1-4dc5-9a31-4845c7d344bf", "token": 2, "ts": 1775166044.792241, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "e6ea5a07-44c1-4dc5-9a31-4845c7d344bf", "token": 1, "ts": 1775166044.97908}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "e6ea5a07-44c1-4dc5-9a31-4845c7d344bf", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166044.98215}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "fba96eca-5ffa-4abd-8913-f6e75f84083e", "ts": 1775166045.270387, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166045.272656, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "fba96eca-5ffa-4abd-8913-f6e75f84083e", "token": 1, "ts": 1775166045.274098}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "fba96eca-5ffa-4abd-8913-f6e75f84083e", "ts": 1775166046.286412, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166046.288736, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "fba96eca-5ffa-4abd-8913-f6e75f84083e", "token": 2, "ts": 1775166046.292013}
+{"attempts": 0, "event": "execute_done", "job_id": "fba96eca-5ffa-4abd-8913-f6e75f84083e", "token": 2, "ts": 1775166046.292211}
+{"duration_s": 0.005, "event": "complete", "job_id": "fba96eca-5ffa-4abd-8913-f6e75f84083e", "token": 2, "ts": 1775166046.295767, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "fba96eca-5ffa-4abd-8913-f6e75f84083e", "token": 1, "ts": 1775166046.474988}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "fba96eca-5ffa-4abd-8913-f6e75f84083e", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166046.47782}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "addbc60f-9c5b-42aa-a3db-72e35462b157", "ts": 1775166046.765885, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166046.768016, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "addbc60f-9c5b-42aa-a3db-72e35462b157", "token": 1, "ts": 1775166046.769183}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "addbc60f-9c5b-42aa-a3db-72e35462b157", "ts": 1775166047.845543, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166047.849319, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "addbc60f-9c5b-42aa-a3db-72e35462b157", "token": 2, "ts": 1775166047.853539}
+{"attempts": 0, "event": "execute_done", "job_id": "addbc60f-9c5b-42aa-a3db-72e35462b157", "token": 2, "ts": 1775166047.853755}
+{"duration_s": 0.006, "event": "complete", "job_id": "addbc60f-9c5b-42aa-a3db-72e35462b157", "token": 2, "ts": 1775166047.858338, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "addbc60f-9c5b-42aa-a3db-72e35462b157", "token": 1, "ts": 1775166047.974551}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "addbc60f-9c5b-42aa-a3db-72e35462b157", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166047.978027}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "b3c9884b-a774-4015-8c05-4682b70db661", "ts": 1775166048.249033, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166048.251536, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "b3c9884b-a774-4015-8c05-4682b70db661", "token": 1, "ts": 1775166048.252581}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "b3c9884b-a774-4015-8c05-4682b70db661", "ts": 1775166049.312196, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166049.314327, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "b3c9884b-a774-4015-8c05-4682b70db661", "token": 2, "ts": 1775166049.317589}
+{"attempts": 0, "event": "execute_done", "job_id": "b3c9884b-a774-4015-8c05-4682b70db661", "token": 2, "ts": 1775166049.31787}
+{"duration_s": 0.011, "event": "complete", "job_id": "b3c9884b-a774-4015-8c05-4682b70db661", "token": 2, "ts": 1775166049.327507, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "b3c9884b-a774-4015-8c05-4682b70db661", "token": 1, "ts": 1775166049.453173}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "b3c9884b-a774-4015-8c05-4682b70db661", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166049.461832}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "87e33008-5197-4b7a-a6aa-bee698d2c476", "ts": 1775166049.76218, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166049.764968, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "87e33008-5197-4b7a-a6aa-bee698d2c476", "token": 1, "ts": 1775166049.766241}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "87e33008-5197-4b7a-a6aa-bee698d2c476", "ts": 1775166050.785383, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166050.788995, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "87e33008-5197-4b7a-a6aa-bee698d2c476", "token": 2, "ts": 1775166050.793437}
+{"attempts": 0, "event": "execute_done", "job_id": "87e33008-5197-4b7a-a6aa-bee698d2c476", "token": 2, "ts": 1775166050.793897}
+{"duration_s": 0.007, "event": "complete", "job_id": "87e33008-5197-4b7a-a6aa-bee698d2c476", "token": 2, "ts": 1775166050.798511, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "87e33008-5197-4b7a-a6aa-bee698d2c476", "token": 1, "ts": 1775166050.971672}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "87e33008-5197-4b7a-a6aa-bee698d2c476", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166050.976607}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "6a1603b6-d708-4114-8010-88fe8b4b666b", "ts": 1775166051.282566, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166051.284561, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "6a1603b6-d708-4114-8010-88fe8b4b666b", "token": 1, "ts": 1775166051.285636}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "6a1603b6-d708-4114-8010-88fe8b4b666b", "ts": 1775166052.291273, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166052.292499, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "6a1603b6-d708-4114-8010-88fe8b4b666b", "token": 2, "ts": 1775166052.29412}
+{"attempts": 0, "event": "execute_done", "job_id": "6a1603b6-d708-4114-8010-88fe8b4b666b", "token": 2, "ts": 1775166052.294185}
+{"duration_s": 0.002, "event": "complete", "job_id": "6a1603b6-d708-4114-8010-88fe8b4b666b", "token": 2, "ts": 1775166052.295896, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "6a1603b6-d708-4114-8010-88fe8b4b666b", "token": 1, "ts": 1775166052.48879}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "6a1603b6-d708-4114-8010-88fe8b4b666b", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166052.490992}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "3b2aeea5-eb6e-42e4-b299-ec1a60960771", "ts": 1775166052.751625, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166052.753506, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "3b2aeea5-eb6e-42e4-b299-ec1a60960771", "token": 1, "ts": 1775166052.754441}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "3b2aeea5-eb6e-42e4-b299-ec1a60960771", "ts": 1775166053.797649, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166053.799527, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "3b2aeea5-eb6e-42e4-b299-ec1a60960771", "token": 2, "ts": 1775166053.801621}
+{"attempts": 0, "event": "execute_done", "job_id": "3b2aeea5-eb6e-42e4-b299-ec1a60960771", "token": 2, "ts": 1775166053.801727}
+{"duration_s": 0.004, "event": "complete", "job_id": "3b2aeea5-eb6e-42e4-b299-ec1a60960771", "token": 2, "ts": 1775166053.804159, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "3b2aeea5-eb6e-42e4-b299-ec1a60960771", "token": 1, "ts": 1775166053.957375}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "3b2aeea5-eb6e-42e4-b299-ec1a60960771", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166053.976021}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "48cc6b3f-bb62-4690-993f-96648bbe0d80", "ts": 1775166058.895546, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166058.899145, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "48cc6b3f-bb62-4690-993f-96648bbe0d80", "token": 1, "ts": 1775166058.900325}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "48cc6b3f-bb62-4690-993f-96648bbe0d80", "ts": 1775166059.941003, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166059.942206, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "48cc6b3f-bb62-4690-993f-96648bbe0d80", "token": 2, "ts": 1775166059.944291}
+{"attempts": 0, "event": "execute_done", "job_id": "48cc6b3f-bb62-4690-993f-96648bbe0d80", "token": 2, "ts": 1775166059.944374}
+{"duration_s": 0.004, "event": "complete", "job_id": "48cc6b3f-bb62-4690-993f-96648bbe0d80", "token": 2, "ts": 1775166059.947483, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "48cc6b3f-bb62-4690-993f-96648bbe0d80", "token": 1, "ts": 1775166060.10428}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "48cc6b3f-bb62-4690-993f-96648bbe0d80", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166060.108042}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "eaa26a97-8703-4e05-80cd-51fdcd4f596c", "ts": 1775166060.39105, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166060.393364, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "eaa26a97-8703-4e05-80cd-51fdcd4f596c", "token": 1, "ts": 1775166060.394341}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "eaa26a97-8703-4e05-80cd-51fdcd4f596c", "ts": 1775166061.453819, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166061.456781, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "eaa26a97-8703-4e05-80cd-51fdcd4f596c", "token": 2, "ts": 1775166061.46055}
+{"attempts": 0, "event": "execute_done", "job_id": "eaa26a97-8703-4e05-80cd-51fdcd4f596c", "token": 2, "ts": 1775166061.460818}
+{"duration_s": 0.006, "event": "complete", "job_id": "eaa26a97-8703-4e05-80cd-51fdcd4f596c", "token": 2, "ts": 1775166061.464265, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "eaa26a97-8703-4e05-80cd-51fdcd4f596c", "token": 1, "ts": 1775166061.597055}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "eaa26a97-8703-4e05-80cd-51fdcd4f596c", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166061.600208}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "6527ae79-85b3-4193-8e2e-24aa1900a310", "ts": 1775166061.866155, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166061.868696, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "6527ae79-85b3-4193-8e2e-24aa1900a310", "token": 1, "ts": 1775166061.869889}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "6527ae79-85b3-4193-8e2e-24aa1900a310", "ts": 1775166062.919696, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166062.922584, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "6527ae79-85b3-4193-8e2e-24aa1900a310", "token": 2, "ts": 1775166062.926904}
+{"attempts": 0, "event": "execute_done", "job_id": "6527ae79-85b3-4193-8e2e-24aa1900a310", "token": 2, "ts": 1775166062.927121}
+{"duration_s": 0.007, "event": "complete", "job_id": "6527ae79-85b3-4193-8e2e-24aa1900a310", "token": 2, "ts": 1775166062.932227, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "6527ae79-85b3-4193-8e2e-24aa1900a310", "token": 1, "ts": 1775166063.075203}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "6527ae79-85b3-4193-8e2e-24aa1900a310", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166063.078436}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "a20ed11c-0d1b-4a45-8cea-691f8ac0aa8d", "ts": 1775166063.37585, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166063.37871, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "a20ed11c-0d1b-4a45-8cea-691f8ac0aa8d", "token": 1, "ts": 1775166063.380269}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "a20ed11c-0d1b-4a45-8cea-691f8ac0aa8d", "ts": 1775166064.449395, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166064.451174, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "a20ed11c-0d1b-4a45-8cea-691f8ac0aa8d", "token": 2, "ts": 1775166064.454055}
+{"attempts": 0, "event": "execute_done", "job_id": "a20ed11c-0d1b-4a45-8cea-691f8ac0aa8d", "token": 2, "ts": 1775166064.454223}
+{"duration_s": 0.005, "event": "complete", "job_id": "a20ed11c-0d1b-4a45-8cea-691f8ac0aa8d", "token": 2, "ts": 1775166064.457914, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "a20ed11c-0d1b-4a45-8cea-691f8ac0aa8d", "token": 1, "ts": 1775166064.585633}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "a20ed11c-0d1b-4a45-8cea-691f8ac0aa8d", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166064.587947}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "971ca980-d6e9-4c59-b912-92e4cff09794", "ts": 1775166064.856863, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166064.8594, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "971ca980-d6e9-4c59-b912-92e4cff09794", "token": 1, "ts": 1775166064.860637}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "971ca980-d6e9-4c59-b912-92e4cff09794", "ts": 1775166065.876057, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166065.87772, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "971ca980-d6e9-4c59-b912-92e4cff09794", "token": 2, "ts": 1775166065.880083}
+{"attempts": 0, "event": "execute_done", "job_id": "971ca980-d6e9-4c59-b912-92e4cff09794", "token": 2, "ts": 1775166065.880375}
+{"duration_s": 0.004, "event": "complete", "job_id": "971ca980-d6e9-4c59-b912-92e4cff09794", "token": 2, "ts": 1775166065.883115, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "971ca980-d6e9-4c59-b912-92e4cff09794", "token": 1, "ts": 1775166066.063015}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "971ca980-d6e9-4c59-b912-92e4cff09794", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166066.069076}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "7be441ca-6a1f-441a-8248-9d73a682e4f1", "ts": 1775166066.361662, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166066.364347, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "7be441ca-6a1f-441a-8248-9d73a682e4f1", "token": 1, "ts": 1775166066.36548}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "7be441ca-6a1f-441a-8248-9d73a682e4f1", "ts": 1775166067.373933, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166067.376777, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "7be441ca-6a1f-441a-8248-9d73a682e4f1", "token": 2, "ts": 1775166067.381482}
+{"attempts": 0, "event": "execute_done", "job_id": "7be441ca-6a1f-441a-8248-9d73a682e4f1", "token": 2, "ts": 1775166067.381798}
+{"duration_s": 0.009, "event": "complete", "job_id": "7be441ca-6a1f-441a-8248-9d73a682e4f1", "token": 2, "ts": 1775166067.388764, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "7be441ca-6a1f-441a-8248-9d73a682e4f1", "token": 1, "ts": 1775166067.570922}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "7be441ca-6a1f-441a-8248-9d73a682e4f1", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166067.57429}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "04b38ed8-4843-4ee8-94ae-03771c4472c4", "ts": 1775166067.859287, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166067.862024, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "04b38ed8-4843-4ee8-94ae-03771c4472c4", "token": 1, "ts": 1775166067.863282}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "04b38ed8-4843-4ee8-94ae-03771c4472c4", "ts": 1775166068.894246, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166068.895607, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "04b38ed8-4843-4ee8-94ae-03771c4472c4", "token": 2, "ts": 1775166068.897922}
+{"attempts": 0, "event": "execute_done", "job_id": "04b38ed8-4843-4ee8-94ae-03771c4472c4", "token": 2, "ts": 1775166068.89801}
+{"duration_s": 0.003, "event": "complete", "job_id": "04b38ed8-4843-4ee8-94ae-03771c4472c4", "token": 2, "ts": 1775166068.900131, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "04b38ed8-4843-4ee8-94ae-03771c4472c4", "token": 1, "ts": 1775166069.068823}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "04b38ed8-4843-4ee8-94ae-03771c4472c4", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166069.076734}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "6f43e40f-1275-44a3-b745-9938720738c6", "ts": 1775166069.356072, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166069.358433, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "6f43e40f-1275-44a3-b745-9938720738c6", "token": 1, "ts": 1775166069.359447}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "6f43e40f-1275-44a3-b745-9938720738c6", "ts": 1775166070.391919, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166070.393995, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "6f43e40f-1275-44a3-b745-9938720738c6", "token": 2, "ts": 1775166070.397275}
+{"attempts": 0, "event": "execute_done", "job_id": "6f43e40f-1275-44a3-b745-9938720738c6", "token": 2, "ts": 1775166070.397441}
+{"duration_s": 0.006, "event": "complete", "job_id": "6f43e40f-1275-44a3-b745-9938720738c6", "token": 2, "ts": 1775166070.401564, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "6f43e40f-1275-44a3-b745-9938720738c6", "token": 1, "ts": 1775166070.560552}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "6f43e40f-1275-44a3-b745-9938720738c6", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166070.562243}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "99900a22-37a8-49ed-a273-44e6ca91140a", "ts": 1775166070.86852, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166070.874916, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "99900a22-37a8-49ed-a273-44e6ca91140a", "token": 1, "ts": 1775166070.878716}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "99900a22-37a8-49ed-a273-44e6ca91140a", "ts": 1775166071.896763, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166071.899083, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "99900a22-37a8-49ed-a273-44e6ca91140a", "token": 2, "ts": 1775166071.90232}
+{"attempts": 0, "event": "execute_done", "job_id": "99900a22-37a8-49ed-a273-44e6ca91140a", "token": 2, "ts": 1775166071.902506}
+{"duration_s": 0.005, "event": "complete", "job_id": "99900a22-37a8-49ed-a273-44e6ca91140a", "token": 2, "ts": 1775166071.905743, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "99900a22-37a8-49ed-a273-44e6ca91140a", "token": 1, "ts": 1775166072.084446}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "99900a22-37a8-49ed-a273-44e6ca91140a", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166072.088428}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "801819f6-c925-49ac-aab5-86ac48af28b1", "ts": 1775166072.376465, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166072.37901, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "801819f6-c925-49ac-aab5-86ac48af28b1", "token": 1, "ts": 1775166072.380382}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "801819f6-c925-49ac-aab5-86ac48af28b1", "ts": 1775166073.384038, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166073.386052, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "801819f6-c925-49ac-aab5-86ac48af28b1", "token": 2, "ts": 1775166073.389798}
+{"attempts": 0, "event": "execute_done", "job_id": "801819f6-c925-49ac-aab5-86ac48af28b1", "token": 2, "ts": 1775166073.390059}
+{"duration_s": 0.004, "event": "complete", "job_id": "801819f6-c925-49ac-aab5-86ac48af28b1", "token": 2, "ts": 1775166073.392848, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "801819f6-c925-49ac-aab5-86ac48af28b1", "token": 1, "ts": 1775166073.585807}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "801819f6-c925-49ac-aab5-86ac48af28b1", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166073.590536}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "289df57f-5d4b-45f9-8968-b3dd90cde0c1", "ts": 1775166073.850936, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166073.85329, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "289df57f-5d4b-45f9-8968-b3dd90cde0c1", "token": 1, "ts": 1775166073.854383}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "289df57f-5d4b-45f9-8968-b3dd90cde0c1", "ts": 1775166074.89535, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166074.897511, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "289df57f-5d4b-45f9-8968-b3dd90cde0c1", "token": 2, "ts": 1775166074.900478}
+{"attempts": 0, "event": "execute_done", "job_id": "289df57f-5d4b-45f9-8968-b3dd90cde0c1", "token": 2, "ts": 1775166074.901193}
+{"duration_s": 0.007, "event": "complete", "job_id": "289df57f-5d4b-45f9-8968-b3dd90cde0c1", "token": 2, "ts": 1775166074.906408, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "289df57f-5d4b-45f9-8968-b3dd90cde0c1", "token": 1, "ts": 1775166075.055896}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "289df57f-5d4b-45f9-8968-b3dd90cde0c1", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166075.058218}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "c2b8920d-5142-4b74-b931-3337442c51a7", "ts": 1775166075.309817, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166075.312551, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "c2b8920d-5142-4b74-b931-3337442c51a7", "token": 1, "ts": 1775166075.313882}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "c2b8920d-5142-4b74-b931-3337442c51a7", "ts": 1775166076.358466, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166076.360644, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "c2b8920d-5142-4b74-b931-3337442c51a7", "token": 2, "ts": 1775166076.363295}
+{"attempts": 0, "event": "execute_done", "job_id": "c2b8920d-5142-4b74-b931-3337442c51a7", "token": 2, "ts": 1775166076.363522}
+{"duration_s": 0.005, "event": "complete", "job_id": "c2b8920d-5142-4b74-b931-3337442c51a7", "token": 2, "ts": 1775166076.366959, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "c2b8920d-5142-4b74-b931-3337442c51a7", "token": 1, "ts": 1775166076.517146}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "c2b8920d-5142-4b74-b931-3337442c51a7", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166076.519795}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "9204d083-47d9-4bbe-ae98-84ae2a6a50e0", "ts": 1775166076.80698, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166076.809171, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "9204d083-47d9-4bbe-ae98-84ae2a6a50e0", "token": 1, "ts": 1775166076.810324}
+{"attempts": 0, "event": "execute_done", "job_id": "9204d083-47d9-4bbe-ae98-84ae2a6a50e0", "token": 1, "ts": 1775166078.015568}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "9204d083-47d9-4bbe-ae98-84ae2a6a50e0", "ts": 1775166078.033764, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166078.043165, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "9204d083-47d9-4bbe-ae98-84ae2a6a50e0", "token": 2, "ts": 1775166078.085818}
+{"attempts": 0, "event": "execute_done", "job_id": "9204d083-47d9-4bbe-ae98-84ae2a6a50e0", "token": 2, "ts": 1775166078.086182}
+{"duration_s": 0.014, "event": "complete", "job_id": "9204d083-47d9-4bbe-ae98-84ae2a6a50e0", "token": 2, "ts": 1775166078.094567, "worker_id": "worker-b"}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "1bd19ba3-3eaf-4bed-9e26-86895f2e94d0", "ts": 1775166078.433648, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166078.438088, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "1bd19ba3-3eaf-4bed-9e26-86895f2e94d0", "token": 1, "ts": 1775166078.441294}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "1bd19ba3-3eaf-4bed-9e26-86895f2e94d0", "ts": 1775166079.490934, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166079.502367, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "1bd19ba3-3eaf-4bed-9e26-86895f2e94d0", "token": 2, "ts": 1775166079.506418}
+{"attempts": 0, "event": "execute_done", "job_id": "1bd19ba3-3eaf-4bed-9e26-86895f2e94d0", "token": 2, "ts": 1775166079.50683}
+{"duration_s": 0.012, "event": "complete", "job_id": "1bd19ba3-3eaf-4bed-9e26-86895f2e94d0", "token": 2, "ts": 1775166079.516647, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "1bd19ba3-3eaf-4bed-9e26-86895f2e94d0", "token": 1, "ts": 1775166079.646495}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "1bd19ba3-3eaf-4bed-9e26-86895f2e94d0", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166079.648798}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "e011f164-18d3-4693-931e-9089ffa5d1c3", "ts": 1775166112.44269, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166112.445405, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "e011f164-18d3-4693-931e-9089ffa5d1c3", "token": 1, "ts": 1775166112.446761}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "e011f164-18d3-4693-931e-9089ffa5d1c3", "ts": 1775166113.500394, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166113.50156, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "e011f164-18d3-4693-931e-9089ffa5d1c3", "token": 2, "ts": 1775166113.503539}
+{"attempts": 0, "event": "execute_done", "job_id": "e011f164-18d3-4693-931e-9089ffa5d1c3", "token": 2, "ts": 1775166113.503627}
+{"duration_s": 0.003, "event": "complete", "job_id": "e011f164-18d3-4693-931e-9089ffa5d1c3", "token": 2, "ts": 1775166113.505899, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "e011f164-18d3-4693-931e-9089ffa5d1c3", "token": 1, "ts": 1775166113.652124}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "e011f164-18d3-4693-931e-9089ffa5d1c3", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166113.655963}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "f60db7ec-4803-44fa-b010-1a255759c1cc", "ts": 1775166113.957817, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166113.965302, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "f60db7ec-4803-44fa-b010-1a255759c1cc", "token": 1, "ts": 1775166113.972275}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "f60db7ec-4803-44fa-b010-1a255759c1cc", "ts": 1775166115.040476, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166115.043826, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "f60db7ec-4803-44fa-b010-1a255759c1cc", "token": 2, "ts": 1775166115.049552}
+{"attempts": 0, "event": "execute_done", "job_id": "f60db7ec-4803-44fa-b010-1a255759c1cc", "token": 2, "ts": 1775166115.049844}
+{"duration_s": 0.006, "event": "complete", "job_id": "f60db7ec-4803-44fa-b010-1a255759c1cc", "token": 2, "ts": 1775166115.054338, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "f60db7ec-4803-44fa-b010-1a255759c1cc", "token": 1, "ts": 1775166115.178198}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "f60db7ec-4803-44fa-b010-1a255759c1cc", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166115.181554}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "41bf4255-7c6e-4274-a8d5-f1b3a12daa99", "ts": 1775166115.481476, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166115.487012, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "41bf4255-7c6e-4274-a8d5-f1b3a12daa99", "token": 1, "ts": 1775166115.488823}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "41bf4255-7c6e-4274-a8d5-f1b3a12daa99", "ts": 1775166116.535935, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166116.539349, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "41bf4255-7c6e-4274-a8d5-f1b3a12daa99", "token": 2, "ts": 1775166116.542598}
+{"attempts": 0, "event": "execute_done", "job_id": "41bf4255-7c6e-4274-a8d5-f1b3a12daa99", "token": 2, "ts": 1775166116.542809}
+{"duration_s": 0.006, "event": "complete", "job_id": "41bf4255-7c6e-4274-a8d5-f1b3a12daa99", "token": 2, "ts": 1775166116.546534, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "41bf4255-7c6e-4274-a8d5-f1b3a12daa99", "token": 1, "ts": 1775166116.694144}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "41bf4255-7c6e-4274-a8d5-f1b3a12daa99", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166116.697563}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "632b0fd6-fbb7-451d-9c0f-805015dd57d9", "ts": 1775166116.978166, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166116.980467, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "632b0fd6-fbb7-451d-9c0f-805015dd57d9", "token": 1, "ts": 1775166116.981622}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "632b0fd6-fbb7-451d-9c0f-805015dd57d9", "ts": 1775166118.06783, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166118.07064, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "632b0fd6-fbb7-451d-9c0f-805015dd57d9", "token": 2, "ts": 1775166118.072489}
+{"attempts": 0, "event": "execute_done", "job_id": "632b0fd6-fbb7-451d-9c0f-805015dd57d9", "token": 2, "ts": 1775166118.0726}
+{"duration_s": 0.004, "event": "complete", "job_id": "632b0fd6-fbb7-451d-9c0f-805015dd57d9", "token": 2, "ts": 1775166118.076009, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "632b0fd6-fbb7-451d-9c0f-805015dd57d9", "token": 1, "ts": 1775166118.185787}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "632b0fd6-fbb7-451d-9c0f-805015dd57d9", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166118.188297}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "d3d90a56-6dfb-4182-9417-4f9bfe03a9ee", "ts": 1775166118.493103, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166118.495293, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "d3d90a56-6dfb-4182-9417-4f9bfe03a9ee", "token": 1, "ts": 1775166118.496447}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "d3d90a56-6dfb-4182-9417-4f9bfe03a9ee", "ts": 1775166119.523286, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166119.525972, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "d3d90a56-6dfb-4182-9417-4f9bfe03a9ee", "token": 2, "ts": 1775166119.528109}
+{"attempts": 0, "event": "execute_done", "job_id": "d3d90a56-6dfb-4182-9417-4f9bfe03a9ee", "token": 2, "ts": 1775166119.52824}
+{"duration_s": 0.007, "event": "complete", "job_id": "d3d90a56-6dfb-4182-9417-4f9bfe03a9ee", "token": 2, "ts": 1775166119.533848, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "d3d90a56-6dfb-4182-9417-4f9bfe03a9ee", "token": 1, "ts": 1775166119.701205}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "d3d90a56-6dfb-4182-9417-4f9bfe03a9ee", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166119.703361}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "2be6140b-09e2-4133-a5d6-2bd2a7610c2f", "ts": 1775166119.979005, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166119.98154, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "2be6140b-09e2-4133-a5d6-2bd2a7610c2f", "token": 1, "ts": 1775166119.983108}
+{"event": "claim", "fencing_token": 2, "forced": true, "job_id": "2be6140b-09e2-4133-a5d6-2bd2a7610c2f", "ts": 1775166121.046128, "worker_id": "worker-b"}
+{"barrier": "after_lease_acquire", "event": "barrier_seen", "ts": 1775166121.047368, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_start", "job_id": "2be6140b-09e2-4133-a5d6-2bd2a7610c2f", "token": 2, "ts": 1775166121.049692}
+{"attempts": 0, "event": "execute_done", "job_id": "2be6140b-09e2-4133-a5d6-2bd2a7610c2f", "token": 2, "ts": 1775166121.049788}
+{"duration_s": 0.003, "event": "complete", "job_id": "2be6140b-09e2-4133-a5d6-2bd2a7610c2f", "token": 2, "ts": 1775166121.052209, "worker_id": "worker-b"}
+{"attempts": 0, "event": "execute_done", "job_id": "2be6140b-09e2-4133-a5d6-2bd2a7610c2f", "token": 1, "ts": 1775166121.185666}
+{"current_token": 2, "event": "stale_write_blocked", "job_id": "2be6140b-09e2-4133-a5d6-2bd2a7610c2f", "reason": "token_mismatch", "stale_token": 1, "ts": 1775166121.187987}
+{"event": "claim", "fencing_token": 1, "forced": true, "job_id": "e0f6634c-4006-43af-b365-6f1b4eb4c25b", "ts": 1775166121.457647, "worker_id": "worker-a"}
+{"barrier": "after_lease_acquire", "event": "barrier_open", "ts": 1775166121.459907, "worker_id": "worker-a"}
+{"attempts": 0, "event": "execute_start", "job_id": "e0f6634c-4006-43af-b365-6f1b4eb4c25b", "token": 1, "ts": 1775166121.461091}

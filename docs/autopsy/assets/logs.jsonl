@@ -17080,3 +17080,486 @@
 {"event": "worker_exit", "ts": "2026-04-02T21:11:37.618966", "reason": "success"}
 {"event": "stale_write_blocked", "ts": "2026-04-02T21:11:37.801487", "job_id": "9b1973d0-86e6-435b-8ecf-8f7187a9d922", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
 {"event": "worker_exit", "ts": "2026-04-02T21:11:37.802725", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:11.889221", "job_id": "d2e91416-1ad1-4672-8472-6771d58f5d7d", "token": 1, "lease_expires_at": "2026-04-02 21:40:12.871664", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:11.895661", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:11.896596", "job_id": "d2e91416-1ad1-4672-8472-6771d58f5d7d", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:12.957982", "job_id": "d2e91416-1ad1-4672-8472-6771d58f5d7d", "token": 2, "lease_expires_at": "2026-04-02 21:40:42.945847", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:12.961695", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:12.964071", "job_id": "d2e91416-1ad1-4672-8472-6771d58f5d7d", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:12.973352", "job_id": "d2e91416-1ad1-4672-8472-6771d58f5d7d", "token": 2, "duration_s": 0.009}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:12.974840", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:13.103802", "job_id": "d2e91416-1ad1-4672-8472-6771d58f5d7d", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:13.105122", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:13.410547", "job_id": "7c4a4c39-7d3b-44b7-92b0-d68c47c5923b", "token": 1, "lease_expires_at": "2026-04-02 21:40:14.407973", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:13.412320", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:13.412527", "job_id": "7c4a4c39-7d3b-44b7-92b0-d68c47c5923b", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:14.489839", "job_id": "7c4a4c39-7d3b-44b7-92b0-d68c47c5923b", "token": 2, "lease_expires_at": "2026-04-02 21:40:44.482959", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:14.491278", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:14.493304", "job_id": "7c4a4c39-7d3b-44b7-92b0-d68c47c5923b", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:14.498606", "job_id": "7c4a4c39-7d3b-44b7-92b0-d68c47c5923b", "token": 2, "duration_s": 0.005}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:14.499528", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:14.623773", "job_id": "7c4a4c39-7d3b-44b7-92b0-d68c47c5923b", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:14.626585", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:14.923843", "job_id": "a2fd4ff4-1ea6-49dd-894d-e3d103154638", "token": 1, "lease_expires_at": "2026-04-02 21:40:15.921175", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:14.925645", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:14.925871", "job_id": "a2fd4ff4-1ea6-49dd-894d-e3d103154638", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:15.949880", "job_id": "a2fd4ff4-1ea6-49dd-894d-e3d103154638", "token": 2, "lease_expires_at": "2026-04-02 21:40:45.943982", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:15.951297", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:15.953122", "job_id": "a2fd4ff4-1ea6-49dd-894d-e3d103154638", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:15.958467", "job_id": "a2fd4ff4-1ea6-49dd-894d-e3d103154638", "token": 2, "duration_s": 0.005}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:15.959373", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:16.133350", "job_id": "a2fd4ff4-1ea6-49dd-894d-e3d103154638", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:16.136018", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:16.438806", "job_id": "e52342fa-bd09-4910-b843-d4c18e27634d", "token": 1, "lease_expires_at": "2026-04-02 21:40:17.436473", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:16.440723", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:16.440951", "job_id": "e52342fa-bd09-4910-b843-d4c18e27634d", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:17.496321", "job_id": "e52342fa-bd09-4910-b843-d4c18e27634d", "token": 2, "lease_expires_at": "2026-04-02 21:40:47.491725", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:17.497694", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:17.498978", "job_id": "e52342fa-bd09-4910-b843-d4c18e27634d", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:17.503405", "job_id": "e52342fa-bd09-4910-b843-d4c18e27634d", "token": 2, "duration_s": 0.004}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:17.504257", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:17.652483", "job_id": "e52342fa-bd09-4910-b843-d4c18e27634d", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:17.654918", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:17.968350", "job_id": "fca08a09-7e31-411c-91f0-b3b5b50242c7", "token": 1, "lease_expires_at": "2026-04-02 21:40:18.965220", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:17.970781", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:17.971048", "job_id": "fca08a09-7e31-411c-91f0-b3b5b50242c7", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:18.978631", "job_id": "fca08a09-7e31-411c-91f0-b3b5b50242c7", "token": 2, "lease_expires_at": "2026-04-02 21:40:48.971399", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:18.980306", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:18.981756", "job_id": "fca08a09-7e31-411c-91f0-b3b5b50242c7", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:18.986921", "job_id": "fca08a09-7e31-411c-91f0-b3b5b50242c7", "token": 2, "duration_s": 0.005}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:18.987933", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:19.184079", "job_id": "fca08a09-7e31-411c-91f0-b3b5b50242c7", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:19.186948", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:19.476299", "job_id": "a74aaadc-453c-49b5-8013-8e90e5c22d80", "token": 1, "lease_expires_at": "2026-04-02 21:40:20.474019", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:19.477704", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:19.477868", "job_id": "a74aaadc-453c-49b5-8013-8e90e5c22d80", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:20.533141", "job_id": "a74aaadc-453c-49b5-8013-8e90e5c22d80", "token": 2, "lease_expires_at": "2026-04-02 21:40:50.525975", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:20.534959", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:20.537116", "job_id": "a74aaadc-453c-49b5-8013-8e90e5c22d80", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:20.543118", "job_id": "a74aaadc-453c-49b5-8013-8e90e5c22d80", "token": 2, "duration_s": 0.006}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:20.544566", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:20.685001", "job_id": "a74aaadc-453c-49b5-8013-8e90e5c22d80", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:20.686546", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:20.989677", "job_id": "e4ac76dd-4781-44f5-b46b-2c870fcdfdc4", "token": 1, "lease_expires_at": "2026-04-02 21:40:21.986642", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:20.991956", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:20.992245", "job_id": "e4ac76dd-4781-44f5-b46b-2c870fcdfdc4", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:21.997039", "job_id": "e4ac76dd-4781-44f5-b46b-2c870fcdfdc4", "token": 2, "lease_expires_at": "2026-04-02 21:40:51.990987", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:21.998983", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:22.000654", "job_id": "e4ac76dd-4781-44f5-b46b-2c870fcdfdc4", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:22.006304", "job_id": "e4ac76dd-4781-44f5-b46b-2c870fcdfdc4", "token": 2, "duration_s": 0.005}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:22.007322", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:22.204777", "job_id": "e4ac76dd-4781-44f5-b46b-2c870fcdfdc4", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:22.207694", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:22.503549", "job_id": "c1ccfc92-9be4-4889-ad73-7452f612794c", "token": 1, "lease_expires_at": "2026-04-02 21:40:23.501238", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:22.505165", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:22.505353", "job_id": "c1ccfc92-9be4-4889-ad73-7452f612794c", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:23.567176", "job_id": "c1ccfc92-9be4-4889-ad73-7452f612794c", "token": 2, "lease_expires_at": "2026-04-02 21:40:53.558715", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:23.569459", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:23.571793", "job_id": "c1ccfc92-9be4-4889-ad73-7452f612794c", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:23.579251", "job_id": "c1ccfc92-9be4-4889-ad73-7452f612794c", "token": 2, "duration_s": 0.006}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:23.580806", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:23.712681", "job_id": "c1ccfc92-9be4-4889-ad73-7452f612794c", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:23.714153", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:23.994532", "job_id": "6da15e7f-0ef5-4737-89f1-ce5828803d74", "token": 1, "lease_expires_at": "2026-04-02 21:40:24.991649", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:23.996463", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:23.996757", "job_id": "6da15e7f-0ef5-4737-89f1-ce5828803d74", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:25.047050", "job_id": "6da15e7f-0ef5-4737-89f1-ce5828803d74", "token": 2, "lease_expires_at": "2026-04-02 21:40:55.041962", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:25.048662", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:25.050095", "job_id": "6da15e7f-0ef5-4737-89f1-ce5828803d74", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:25.055209", "job_id": "6da15e7f-0ef5-4737-89f1-ce5828803d74", "token": 2, "duration_s": 0.004}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:25.056219", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:25.201453", "job_id": "6da15e7f-0ef5-4737-89f1-ce5828803d74", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:25.203059", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:25.488208", "job_id": "f774f63b-77bd-490e-bf69-ff6c5b2d3156", "token": 1, "lease_expires_at": "2026-04-02 21:40:26.485750", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:25.489947", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:25.490153", "job_id": "f774f63b-77bd-490e-bf69-ff6c5b2d3156", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:26.561251", "job_id": "f774f63b-77bd-490e-bf69-ff6c5b2d3156", "token": 2, "lease_expires_at": "2026-04-02 21:40:56.555018", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:26.563130", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:26.565150", "job_id": "f774f63b-77bd-490e-bf69-ff6c5b2d3156", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:26.571354", "job_id": "f774f63b-77bd-490e-bf69-ff6c5b2d3156", "token": 2, "duration_s": 0.006}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:26.572729", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:26.701926", "job_id": "f774f63b-77bd-490e-bf69-ff6c5b2d3156", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:26.704000", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:26.985662", "job_id": "9a00300a-27de-4e32-a2bb-ceb39ce38307", "token": 1, "lease_expires_at": "2026-04-02 21:40:27.983320", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:26.987379", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:26.987569", "job_id": "9a00300a-27de-4e32-a2bb-ceb39ce38307", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:28.034217", "job_id": "9a00300a-27de-4e32-a2bb-ceb39ce38307", "token": 2, "lease_expires_at": "2026-04-02 21:40:58.029320", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:28.035557", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:28.036981", "job_id": "9a00300a-27de-4e32-a2bb-ceb39ce38307", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:28.041505", "job_id": "9a00300a-27de-4e32-a2bb-ceb39ce38307", "token": 2, "duration_s": 0.004}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:28.042456", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:28.201664", "job_id": "9a00300a-27de-4e32-a2bb-ceb39ce38307", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:28.206221", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:28.496284", "job_id": "4e345f24-c404-42fb-aa85-60c1f177321b", "token": 1, "lease_expires_at": "2026-04-02 21:40:29.493829", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:28.498179", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:28.498408", "job_id": "4e345f24-c404-42fb-aa85-60c1f177321b", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:29.532078", "job_id": "4e345f24-c404-42fb-aa85-60c1f177321b", "token": 2, "lease_expires_at": "2026-04-02 21:40:59.524910", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:29.534150", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:29.535978", "job_id": "4e345f24-c404-42fb-aa85-60c1f177321b", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:29.541891", "job_id": "4e345f24-c404-42fb-aa85-60c1f177321b", "token": 2, "duration_s": 0.005}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:29.543240", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:29.708908", "job_id": "4e345f24-c404-42fb-aa85-60c1f177321b", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:29.711291", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:30.023096", "job_id": "339e4fb6-e1c0-44cb-93a5-ae717b5dbfda", "token": 1, "lease_expires_at": "2026-04-02 21:40:31.020025", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:30.025246", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:30.025477", "job_id": "339e4fb6-e1c0-44cb-93a5-ae717b5dbfda", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:31.073679", "job_id": "339e4fb6-e1c0-44cb-93a5-ae717b5dbfda", "token": 2, "lease_expires_at": "2026-04-02 21:41:01.069114", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:31.075053", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:31.076682", "job_id": "339e4fb6-e1c0-44cb-93a5-ae717b5dbfda", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:31.080222", "job_id": "339e4fb6-e1c0-44cb-93a5-ae717b5dbfda", "token": 2, "duration_s": 0.003}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:31.080881", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:31.238815", "job_id": "339e4fb6-e1c0-44cb-93a5-ae717b5dbfda", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:31.243544", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:31.552301", "job_id": "de3240c1-2bb6-442e-b32a-edc83ba594d9", "token": 1, "lease_expires_at": "2026-04-02 21:40:32.549882", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:31.554113", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:31.554288", "job_id": "de3240c1-2bb6-442e-b32a-edc83ba594d9", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:32.572942", "job_id": "de3240c1-2bb6-442e-b32a-edc83ba594d9", "token": 2, "lease_expires_at": "2026-04-02 21:41:02.565233", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:32.574650", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:32.576615", "job_id": "de3240c1-2bb6-442e-b32a-edc83ba594d9", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:32.582107", "job_id": "de3240c1-2bb6-442e-b32a-edc83ba594d9", "token": 2, "duration_s": 0.005}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:32.583300", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:32.765316", "job_id": "de3240c1-2bb6-442e-b32a-edc83ba594d9", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:32.767846", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:33.064259", "job_id": "170f4089-e8e8-40dc-bee9-54a7e450a43b", "token": 1, "lease_expires_at": "2026-04-02 21:40:34.061192", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:33.067049", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:33.067340", "job_id": "170f4089-e8e8-40dc-bee9-54a7e450a43b", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:34.087735", "job_id": "170f4089-e8e8-40dc-bee9-54a7e450a43b", "token": 2, "lease_expires_at": "2026-04-02 21:41:04.081926", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:34.089574", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:34.091169", "job_id": "170f4089-e8e8-40dc-bee9-54a7e450a43b", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:34.097352", "job_id": "170f4089-e8e8-40dc-bee9-54a7e450a43b", "token": 2, "duration_s": 0.006}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:34.099055", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:34.279929", "job_id": "170f4089-e8e8-40dc-bee9-54a7e450a43b", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:34.282697", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:34.581833", "job_id": "c9fd4a30-dc1f-4b65-99d4-c6dddf137529", "token": 1, "lease_expires_at": "2026-04-02 21:40:35.578775", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:34.584100", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:34.584408", "job_id": "c9fd4a30-dc1f-4b65-99d4-c6dddf137529", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:35.588959", "job_id": "c9fd4a30-dc1f-4b65-99d4-c6dddf137529", "token": 2, "lease_expires_at": "2026-04-02 21:41:05.583125", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:35.590736", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:35.592629", "job_id": "c9fd4a30-dc1f-4b65-99d4-c6dddf137529", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:35.598493", "job_id": "c9fd4a30-dc1f-4b65-99d4-c6dddf137529", "token": 2, "duration_s": 0.005}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:35.599778", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:35.795020", "job_id": "c9fd4a30-dc1f-4b65-99d4-c6dddf137529", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:35.797127", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:36.104406", "job_id": "c965c038-d62f-47d9-9aba-1c39d0d4b862", "token": 1, "lease_expires_at": "2026-04-02 21:40:37.101867", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:36.107050", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:36.107525", "job_id": "c965c038-d62f-47d9-9aba-1c39d0d4b862", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:37.145994", "job_id": "c965c038-d62f-47d9-9aba-1c39d0d4b862", "token": 2, "lease_expires_at": "2026-04-02 21:41:07.141701", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:37.147200", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:37.148359", "job_id": "c965c038-d62f-47d9-9aba-1c39d0d4b862", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:37.152344", "job_id": "c965c038-d62f-47d9-9aba-1c39d0d4b862", "token": 2, "duration_s": 0.004}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:37.153015", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:37.320027", "job_id": "c965c038-d62f-47d9-9aba-1c39d0d4b862", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:37.322326", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:37.757492", "job_id": "c14644d9-6841-4f76-956a-5ca18d1c1547", "token": 1, "lease_expires_at": "2026-04-02 21:40:38.753665", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:37.759579", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:37.759820", "job_id": "c14644d9-6841-4f76-956a-5ca18d1c1547", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:38.768894", "job_id": "c14644d9-6841-4f76-956a-5ca18d1c1547", "token": 2, "lease_expires_at": "2026-04-02 21:41:08.762835", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:38.770733", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:38.772969", "job_id": "c14644d9-6841-4f76-956a-5ca18d1c1547", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:38.779283", "job_id": "c14644d9-6841-4f76-956a-5ca18d1c1547", "token": 2, "duration_s": 0.006}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:38.780540", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:38.971218", "job_id": "c14644d9-6841-4f76-956a-5ca18d1c1547", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:38.973691", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:39.279753", "job_id": "daaddd9f-7bad-4e92-b389-bd50b0457f0f", "token": 1, "lease_expires_at": "2026-04-02 21:40:40.277479", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:39.281628", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:39.281818", "job_id": "daaddd9f-7bad-4e92-b389-bd50b0457f0f", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:40.350682", "job_id": "daaddd9f-7bad-4e92-b389-bd50b0457f0f", "token": 2, "lease_expires_at": "2026-04-02 21:41:10.343227", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:40.352309", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:40.354258", "job_id": "daaddd9f-7bad-4e92-b389-bd50b0457f0f", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:40.390243", "job_id": "daaddd9f-7bad-4e92-b389-bd50b0457f0f", "token": 2, "duration_s": 0.035}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:40.397926", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:40.485156", "job_id": "daaddd9f-7bad-4e92-b389-bd50b0457f0f", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:40.486895", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:40.773636", "job_id": "2115490a-d124-435a-8f2b-8b091b85b1ed", "token": 1, "lease_expires_at": "2026-04-02 21:40:41.771097", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:40.775607", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:40.775826", "job_id": "2115490a-d124-435a-8f2b-8b091b85b1ed", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:41.826725", "job_id": "2115490a-d124-435a-8f2b-8b091b85b1ed", "token": 2, "lease_expires_at": "2026-04-02 21:41:11.821621", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:41.829174", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:41.830982", "job_id": "2115490a-d124-435a-8f2b-8b091b85b1ed", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:41.835662", "job_id": "2115490a-d124-435a-8f2b-8b091b85b1ed", "token": 2, "duration_s": 0.004}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:41.836651", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:41.983390", "job_id": "2115490a-d124-435a-8f2b-8b091b85b1ed", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:41.985348", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:42.292432", "job_id": "73816114-5112-41c3-8167-18f1cb3d3caf", "token": 1, "lease_expires_at": "2026-04-02 21:40:43.289567", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:42.294205", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:42.294456", "job_id": "73816114-5112-41c3-8167-18f1cb3d3caf", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:43.353581", "job_id": "73816114-5112-41c3-8167-18f1cb3d3caf", "token": 2, "lease_expires_at": "2026-04-02 21:41:13.348737", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:43.355176", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:43.356769", "job_id": "73816114-5112-41c3-8167-18f1cb3d3caf", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:43.362177", "job_id": "73816114-5112-41c3-8167-18f1cb3d3caf", "token": 2, "duration_s": 0.005}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:43.363027", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:43.499361", "job_id": "73816114-5112-41c3-8167-18f1cb3d3caf", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:43.501151", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:43.772959", "job_id": "e6ea5a07-44c1-4dc5-9a31-4845c7d344bf", "token": 1, "lease_expires_at": "2026-04-02 21:40:44.770377", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:43.774882", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:43.775139", "job_id": "e6ea5a07-44c1-4dc5-9a31-4845c7d344bf", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:44.781211", "job_id": "e6ea5a07-44c1-4dc5-9a31-4845c7d344bf", "token": 2, "lease_expires_at": "2026-04-02 21:41:14.774642", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:44.783128", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:44.785011", "job_id": "e6ea5a07-44c1-4dc5-9a31-4845c7d344bf", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:44.792833", "job_id": "e6ea5a07-44c1-4dc5-9a31-4845c7d344bf", "token": 2, "duration_s": 0.006}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:44.795000", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:44.981636", "job_id": "e6ea5a07-44c1-4dc5-9a31-4845c7d344bf", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:44.983289", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:45.270590", "job_id": "fba96eca-5ffa-4abd-8913-f6e75f84083e", "token": 1, "lease_expires_at": "2026-04-02 21:40:46.268347", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:45.272521", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:45.272741", "job_id": "fba96eca-5ffa-4abd-8913-f6e75f84083e", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:46.286861", "job_id": "fba96eca-5ffa-4abd-8913-f6e75f84083e", "token": 2, "lease_expires_at": "2026-04-02 21:41:16.281225", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:46.288526", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:46.290169", "job_id": "fba96eca-5ffa-4abd-8913-f6e75f84083e", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:46.295911", "job_id": "fba96eca-5ffa-4abd-8913-f6e75f84083e", "token": 2, "duration_s": 0.005}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:46.296922", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:46.477483", "job_id": "fba96eca-5ffa-4abd-8913-f6e75f84083e", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:46.479054", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:46.766139", "job_id": "addbc60f-9c5b-42aa-a3db-72e35462b157", "token": 1, "lease_expires_at": "2026-04-02 21:40:47.763756", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:46.767877", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:46.768111", "job_id": "addbc60f-9c5b-42aa-a3db-72e35462b157", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:47.846421", "job_id": "addbc60f-9c5b-42aa-a3db-72e35462b157", "token": 2, "lease_expires_at": "2026-04-02 21:41:17.839223", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:47.849023", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:47.851454", "job_id": "addbc60f-9c5b-42aa-a3db-72e35462b157", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:47.858787", "job_id": "addbc60f-9c5b-42aa-a3db-72e35462b157", "token": 2, "duration_s": 0.006}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:47.859992", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:47.977711", "job_id": "addbc60f-9c5b-42aa-a3db-72e35462b157", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:47.979582", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:48.249206", "job_id": "b3c9884b-a774-4015-8c05-4682b70db661", "token": 1, "lease_expires_at": "2026-04-02 21:40:49.246650", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:48.251383", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:48.251614", "job_id": "b3c9884b-a774-4015-8c05-4682b70db661", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:49.312649", "job_id": "b3c9884b-a774-4015-8c05-4682b70db661", "token": 2, "lease_expires_at": "2026-04-02 21:41:19.307187", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:49.314093", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:49.315699", "job_id": "b3c9884b-a774-4015-8c05-4682b70db661", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:49.327895", "job_id": "b3c9884b-a774-4015-8c05-4682b70db661", "token": 2, "duration_s": 0.011}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:49.329840", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:49.461300", "job_id": "b3c9884b-a774-4015-8c05-4682b70db661", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:49.468014", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:49.762399", "job_id": "87e33008-5197-4b7a-a6aa-bee698d2c476", "token": 1, "lease_expires_at": "2026-04-02 21:40:50.759870", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:49.764785", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:49.765058", "job_id": "87e33008-5197-4b7a-a6aa-bee698d2c476", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:50.786102", "job_id": "87e33008-5197-4b7a-a6aa-bee698d2c476", "token": 2, "lease_expires_at": "2026-04-02 21:41:20.779209", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:50.788502", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:50.790778", "job_id": "87e33008-5197-4b7a-a6aa-bee698d2c476", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:50.798956", "job_id": "87e33008-5197-4b7a-a6aa-bee698d2c476", "token": 2, "duration_s": 0.007}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:50.800587", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:50.975837", "job_id": "87e33008-5197-4b7a-a6aa-bee698d2c476", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:50.978548", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:51.282764", "job_id": "6a1603b6-d708-4114-8010-88fe8b4b666b", "token": 1, "lease_expires_at": "2026-04-02 21:40:52.280490", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:51.284413", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:51.284634", "job_id": "6a1603b6-d708-4114-8010-88fe8b4b666b", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:52.291465", "job_id": "6a1603b6-d708-4114-8010-88fe8b4b666b", "token": 2, "lease_expires_at": "2026-04-02 21:41:22.287226", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:52.292403", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:52.293319", "job_id": "6a1603b6-d708-4114-8010-88fe8b4b666b", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:52.295960", "job_id": "6a1603b6-d708-4114-8010-88fe8b4b666b", "token": 2, "duration_s": 0.002}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:52.296723", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:52.490746", "job_id": "6a1603b6-d708-4114-8010-88fe8b4b666b", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:52.491788", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:52.751812", "job_id": "3b2aeea5-eb6e-42e4-b299-ec1a60960771", "token": 1, "lease_expires_at": "2026-04-02 21:40:53.749698", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:52.753388", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:52.753573", "job_id": "3b2aeea5-eb6e-42e4-b299-ec1a60960771", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:53.798329", "job_id": "3b2aeea5-eb6e-42e4-b299-ec1a60960771", "token": 2, "lease_expires_at": "2026-04-02 21:41:23.793955", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:53.799357", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:53.800485", "job_id": "3b2aeea5-eb6e-42e4-b299-ec1a60960771", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:53.804243", "job_id": "3b2aeea5-eb6e-42e4-b299-ec1a60960771", "token": 2, "duration_s": 0.004}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:53.804964", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:40:53.974914", "job_id": "3b2aeea5-eb6e-42e4-b299-ec1a60960771", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:54.015324", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:58.895767", "job_id": "48cc6b3f-bb62-4690-993f-96648bbe0d80", "token": 1, "lease_expires_at": "2026-04-02 21:40:59.892650", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:40:58.898962", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:58.899231", "job_id": "48cc6b3f-bb62-4690-993f-96648bbe0d80", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:40:59.941215", "job_id": "48cc6b3f-bb62-4690-993f-96648bbe0d80", "token": 2, "lease_expires_at": "2026-04-02 21:41:29.928357", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:40:59.942118", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:40:59.943315", "job_id": "48cc6b3f-bb62-4690-993f-96648bbe0d80", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:40:59.947623", "job_id": "48cc6b3f-bb62-4690-993f-96648bbe0d80", "token": 2, "duration_s": 0.004}
+{"event": "worker_exit", "ts": "2026-04-02T21:40:59.948270", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:41:00.107444", "job_id": "48cc6b3f-bb62-4690-993f-96648bbe0d80", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:00.109084", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:00.391258", "job_id": "eaa26a97-8703-4e05-80cd-51fdcd4f596c", "token": 1, "lease_expires_at": "2026-04-02 21:41:01.387994", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:41:00.393204", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:00.393447", "job_id": "eaa26a97-8703-4e05-80cd-51fdcd4f596c", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:01.454587", "job_id": "eaa26a97-8703-4e05-80cd-51fdcd4f596c", "token": 2, "lease_expires_at": "2026-04-02 21:41:31.447657", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:41:01.456554", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:01.458162", "job_id": "eaa26a97-8703-4e05-80cd-51fdcd4f596c", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:41:01.464732", "job_id": "eaa26a97-8703-4e05-80cd-51fdcd4f596c", "token": 2, "duration_s": 0.006}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:01.465772", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:41:01.599875", "job_id": "eaa26a97-8703-4e05-80cd-51fdcd4f596c", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:01.601318", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:01.866394", "job_id": "6527ae79-85b3-4193-8e2e-24aa1900a310", "token": 1, "lease_expires_at": "2026-04-02 21:41:02.863642", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:41:01.868471", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:01.868803", "job_id": "6527ae79-85b3-4193-8e2e-24aa1900a310", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:02.920145", "job_id": "6527ae79-85b3-4193-8e2e-24aa1900a310", "token": 2, "lease_expires_at": "2026-04-02 21:41:32.911440", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:41:02.922221", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:02.924728", "job_id": "6527ae79-85b3-4193-8e2e-24aa1900a310", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:41:02.932661", "job_id": "6527ae79-85b3-4193-8e2e-24aa1900a310", "token": 2, "duration_s": 0.007}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:02.934114", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:41:03.078086", "job_id": "6527ae79-85b3-4193-8e2e-24aa1900a310", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:03.079619", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:03.376062", "job_id": "a20ed11c-0d1b-4a45-8cea-691f8ac0aa8d", "token": 1, "lease_expires_at": "2026-04-02 21:41:04.372646", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:41:03.378551", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:03.378871", "job_id": "a20ed11c-0d1b-4a45-8cea-691f8ac0aa8d", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:04.449708", "job_id": "a20ed11c-0d1b-4a45-8cea-691f8ac0aa8d", "token": 2, "lease_expires_at": "2026-04-02 21:41:34.444338", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:41:04.450973", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:04.452444", "job_id": "a20ed11c-0d1b-4a45-8cea-691f8ac0aa8d", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:41:04.458098", "job_id": "a20ed11c-0d1b-4a45-8cea-691f8ac0aa8d", "token": 2, "duration_s": 0.005}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:04.459204", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:41:04.587761", "job_id": "a20ed11c-0d1b-4a45-8cea-691f8ac0aa8d", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:04.588866", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:04.857383", "job_id": "971ca980-d6e9-4c59-b912-92e4cff09794", "token": 1, "lease_expires_at": "2026-04-02 21:41:05.854302", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:41:04.859271", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:04.859479", "job_id": "971ca980-d6e9-4c59-b912-92e4cff09794", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:05.876394", "job_id": "971ca980-d6e9-4c59-b912-92e4cff09794", "token": 2, "lease_expires_at": "2026-04-02 21:41:35.871723", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:41:05.877586", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:05.878644", "job_id": "971ca980-d6e9-4c59-b912-92e4cff09794", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:41:05.883304", "job_id": "971ca980-d6e9-4c59-b912-92e4cff09794", "token": 2, "duration_s": 0.004}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:05.884136", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:41:06.068218", "job_id": "971ca980-d6e9-4c59-b912-92e4cff09794", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:06.070821", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:06.361927", "job_id": "7be441ca-6a1f-441a-8248-9d73a682e4f1", "token": 1, "lease_expires_at": "2026-04-02 21:41:07.359011", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:41:06.364205", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:06.364435", "job_id": "7be441ca-6a1f-441a-8248-9d73a682e4f1", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:07.374549", "job_id": "7be441ca-6a1f-441a-8248-9d73a682e4f1", "token": 2, "lease_expires_at": "2026-04-02 21:41:37.367004", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:41:07.376544", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:07.379255", "job_id": "7be441ca-6a1f-441a-8248-9d73a682e4f1", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:41:07.389023", "job_id": "7be441ca-6a1f-441a-8248-9d73a682e4f1", "token": 2, "duration_s": 0.009}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:07.395560", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:41:07.573888", "job_id": "7be441ca-6a1f-441a-8248-9d73a682e4f1", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:07.575621", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:07.859509", "job_id": "04b38ed8-4843-4ee8-94ae-03771c4472c4", "token": 1, "lease_expires_at": "2026-04-02 21:41:08.855356", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:41:07.861879", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:07.862116", "job_id": "04b38ed8-4843-4ee8-94ae-03771c4472c4", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:08.894508", "job_id": "04b38ed8-4843-4ee8-94ae-03771c4472c4", "token": 2, "lease_expires_at": "2026-04-02 21:41:38.890740", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:41:08.895471", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:08.896858", "job_id": "04b38ed8-4843-4ee8-94ae-03771c4472c4", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:41:08.900208", "job_id": "04b38ed8-4843-4ee8-94ae-03771c4472c4", "token": 2, "duration_s": 0.003}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:08.900724", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:41:09.076474", "job_id": "04b38ed8-4843-4ee8-94ae-03771c4472c4", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:09.077759", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:09.356262", "job_id": "6f43e40f-1275-44a3-b745-9938720738c6", "token": 1, "lease_expires_at": "2026-04-02 21:41:10.354259", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:41:09.358269", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:09.358519", "job_id": "6f43e40f-1275-44a3-b745-9938720738c6", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:10.392559", "job_id": "6f43e40f-1275-44a3-b745-9938720738c6", "token": 2, "lease_expires_at": "2026-04-02 21:41:40.386145", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:41:10.393827", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:10.395599", "job_id": "6f43e40f-1275-44a3-b745-9938720738c6", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:41:10.401751", "job_id": "6f43e40f-1275-44a3-b745-9938720738c6", "token": 2, "duration_s": 0.006}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:10.402817", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:41:10.562062", "job_id": "6f43e40f-1275-44a3-b745-9938720738c6", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:10.562909", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:10.868749", "job_id": "99900a22-37a8-49ed-a273-44e6ca91140a", "token": 1, "lease_expires_at": "2026-04-02 21:41:11.861093", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:41:10.874099", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:10.875333", "job_id": "99900a22-37a8-49ed-a273-44e6ca91140a", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:11.897289", "job_id": "99900a22-37a8-49ed-a273-44e6ca91140a", "token": 2, "lease_expires_at": "2026-04-02 21:41:41.892487", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:41:11.898841", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:11.900522", "job_id": "99900a22-37a8-49ed-a273-44e6ca91140a", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:41:11.905880", "job_id": "99900a22-37a8-49ed-a273-44e6ca91140a", "token": 2, "duration_s": 0.005}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:11.907007", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:41:12.087906", "job_id": "99900a22-37a8-49ed-a273-44e6ca91140a", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:12.089964", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:12.376699", "job_id": "801819f6-c925-49ac-aab5-86ac48af28b1", "token": 1, "lease_expires_at": "2026-04-02 21:41:13.374577", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:41:12.378814", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:12.379094", "job_id": "801819f6-c925-49ac-aab5-86ac48af28b1", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:13.384421", "job_id": "801819f6-c925-49ac-aab5-86ac48af28b1", "token": 2, "lease_expires_at": "2026-04-02 21:41:43.380368", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:41:13.385807", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:13.388138", "job_id": "801819f6-c925-49ac-aab5-86ac48af28b1", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:41:13.393133", "job_id": "801819f6-c925-49ac-aab5-86ac48af28b1", "token": 2, "duration_s": 0.004}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:13.394041", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:41:13.589802", "job_id": "801819f6-c925-49ac-aab5-86ac48af28b1", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:13.591839", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:13.851148", "job_id": "289df57f-5d4b-45f9-8968-b3dd90cde0c1", "token": 1, "lease_expires_at": "2026-04-02 21:41:14.848852", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:41:13.853136", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:13.853360", "job_id": "289df57f-5d4b-45f9-8968-b3dd90cde0c1", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:14.895579", "job_id": "289df57f-5d4b-45f9-8968-b3dd90cde0c1", "token": 2, "lease_expires_at": "2026-04-02 21:41:44.890560", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:41:14.897235", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:14.898856", "job_id": "289df57f-5d4b-45f9-8968-b3dd90cde0c1", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:41:14.906704", "job_id": "289df57f-5d4b-45f9-8968-b3dd90cde0c1", "token": 2, "duration_s": 0.007}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:14.908758", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:41:15.058025", "job_id": "289df57f-5d4b-45f9-8968-b3dd90cde0c1", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:15.059228", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:15.310086", "job_id": "c2b8920d-5142-4b74-b931-3337442c51a7", "token": 1, "lease_expires_at": "2026-04-02 21:41:16.307769", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:41:15.312348", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:15.312654", "job_id": "c2b8920d-5142-4b74-b931-3337442c51a7", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:16.358973", "job_id": "c2b8920d-5142-4b74-b931-3337442c51a7", "token": 2, "lease_expires_at": "2026-04-02 21:41:46.347734", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:41:16.360333", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:16.361752", "job_id": "c2b8920d-5142-4b74-b931-3337442c51a7", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:41:16.367120", "job_id": "c2b8920d-5142-4b74-b931-3337442c51a7", "token": 2, "duration_s": 0.005}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:16.367919", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:41:16.519412", "job_id": "c2b8920d-5142-4b74-b931-3337442c51a7", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:16.521474", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:16.807163", "job_id": "9204d083-47d9-4bbe-ae98-84ae2a6a50e0", "token": 1, "lease_expires_at": "2026-04-02 21:41:17.804523", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:41:16.809030", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:16.809248", "job_id": "9204d083-47d9-4bbe-ae98-84ae2a6a50e0", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:18.034239", "job_id": "9204d083-47d9-4bbe-ae98-84ae2a6a50e0", "token": 2, "lease_expires_at": "2026-04-02 21:41:47.907422", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:41:18.042908", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:18.079595", "job_id": "9204d083-47d9-4bbe-ae98-84ae2a6a50e0", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_stale", "ts": "2026-04-02T21:41:18.083125", "job_id": "9204d083-47d9-4bbe-ae98-84ae2a6a50e0", "token": 1}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:18.085685", "reason": "stale"}
+{"event": "commit_ok", "ts": "2026-04-02T21:41:18.094770", "job_id": "9204d083-47d9-4bbe-ae98-84ae2a6a50e0", "token": 2, "duration_s": 0.014}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:18.099414", "reason": "success"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:18.433891", "job_id": "1bd19ba3-3eaf-4bed-9e26-86895f2e94d0", "token": 1, "lease_expires_at": "2026-04-02 21:41:19.430034", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:41:18.437799", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:18.438203", "job_id": "1bd19ba3-3eaf-4bed-9e26-86895f2e94d0", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:19.492097", "job_id": "1bd19ba3-3eaf-4bed-9e26-86895f2e94d0", "token": 2, "lease_expires_at": "2026-04-02 21:41:49.485244", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:41:19.501734", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:19.503994", "job_id": "1bd19ba3-3eaf-4bed-9e26-86895f2e94d0", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:41:19.517122", "job_id": "1bd19ba3-3eaf-4bed-9e26-86895f2e94d0", "token": 2, "duration_s": 0.012}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:19.518996", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:41:19.648618", "job_id": "1bd19ba3-3eaf-4bed-9e26-86895f2e94d0", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:19.649382", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:52.443013", "job_id": "e011f164-18d3-4693-931e-9089ffa5d1c3", "token": 1, "lease_expires_at": "2026-04-02 21:41:53.439805", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:41:52.445265", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:52.445486", "job_id": "e011f164-18d3-4693-931e-9089ffa5d1c3", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:53.500614", "job_id": "e011f164-18d3-4693-931e-9089ffa5d1c3", "token": 2, "lease_expires_at": "2026-04-02 21:42:23.496569", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:41:53.501456", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:53.502509", "job_id": "e011f164-18d3-4693-931e-9089ffa5d1c3", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:41:53.505993", "job_id": "e011f164-18d3-4693-931e-9089ffa5d1c3", "token": 2, "duration_s": 0.003}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:53.506647", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:41:53.655643", "job_id": "e011f164-18d3-4693-931e-9089ffa5d1c3", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:53.657126", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:53.958011", "job_id": "f60db7ec-4803-44fa-b010-1a255759c1cc", "token": 1, "lease_expires_at": "2026-04-02 21:41:54.954967", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:41:53.964897", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:53.965438", "job_id": "f60db7ec-4803-44fa-b010-1a255759c1cc", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:55.040942", "job_id": "f60db7ec-4803-44fa-b010-1a255759c1cc", "token": 2, "lease_expires_at": "2026-04-02 21:42:25.032279", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:41:55.043481", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:55.047645", "job_id": "f60db7ec-4803-44fa-b010-1a255759c1cc", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:41:55.054624", "job_id": "f60db7ec-4803-44fa-b010-1a255759c1cc", "token": 2, "duration_s": 0.006}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:55.055543", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:41:55.181248", "job_id": "f60db7ec-4803-44fa-b010-1a255759c1cc", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:55.182634", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:55.481702", "job_id": "41bf4255-7c6e-4274-a8d5-f1b3a12daa99", "token": 1, "lease_expires_at": "2026-04-02 21:41:56.476930", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:41:55.486801", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:55.487114", "job_id": "41bf4255-7c6e-4274-a8d5-f1b3a12daa99", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:56.536802", "job_id": "41bf4255-7c6e-4274-a8d5-f1b3a12daa99", "token": 2, "lease_expires_at": "2026-04-02 21:42:26.529533", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:41:56.539006", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:56.540796", "job_id": "41bf4255-7c6e-4274-a8d5-f1b3a12daa99", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:41:56.546744", "job_id": "41bf4255-7c6e-4274-a8d5-f1b3a12daa99", "token": 2, "duration_s": 0.006}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:56.548788", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:41:56.697334", "job_id": "41bf4255-7c6e-4274-a8d5-f1b3a12daa99", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:56.699341", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:56.978355", "job_id": "632b0fd6-fbb7-451d-9c0f-805015dd57d9", "token": 1, "lease_expires_at": "2026-04-02 21:41:57.975786", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:41:56.980309", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:56.980558", "job_id": "632b0fd6-fbb7-451d-9c0f-805015dd57d9", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:58.068832", "job_id": "632b0fd6-fbb7-451d-9c0f-805015dd57d9", "token": 2, "lease_expires_at": "2026-04-02 21:42:28.055429", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:41:58.070458", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:58.071400", "job_id": "632b0fd6-fbb7-451d-9c0f-805015dd57d9", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:41:58.076258", "job_id": "632b0fd6-fbb7-451d-9c0f-805015dd57d9", "token": 2, "duration_s": 0.004}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:58.077019", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:41:58.188093", "job_id": "632b0fd6-fbb7-451d-9c0f-805015dd57d9", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:58.189158", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:58.493301", "job_id": "d3d90a56-6dfb-4182-9417-4f9bfe03a9ee", "token": 1, "lease_expires_at": "2026-04-02 21:41:59.490193", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:41:58.495145", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:58.495387", "job_id": "d3d90a56-6dfb-4182-9417-4f9bfe03a9ee", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:59.523792", "job_id": "d3d90a56-6dfb-4182-9417-4f9bfe03a9ee", "token": 2, "lease_expires_at": "2026-04-02 21:42:29.509326", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:41:59.525802", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:59.526918", "job_id": "d3d90a56-6dfb-4182-9417-4f9bfe03a9ee", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:41:59.534066", "job_id": "d3d90a56-6dfb-4182-9417-4f9bfe03a9ee", "token": 2, "duration_s": 0.007}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:59.535978", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:41:59.703166", "job_id": "d3d90a56-6dfb-4182-9417-4f9bfe03a9ee", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:41:59.704954", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:41:59.979182", "job_id": "2be6140b-09e2-4133-a5d6-2bd2a7610c2f", "token": 1, "lease_expires_at": "2026-04-02 21:42:00.976583", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:41:59.981376", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:41:59.981626", "job_id": "2be6140b-09e2-4133-a5d6-2bd2a7610c2f", "token": 1, "attempts": 0, "max_attempts": 5}
+{"event": "lease_acquired", "ts": "2026-04-02T21:42:01.046354", "job_id": "2be6140b-09e2-4133-a5d6-2bd2a7610c2f", "token": 2, "lease_expires_at": "2026-04-02 21:42:31.040500", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_seen", "ts": "2026-04-02T21:42:01.047264", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:42:01.048580", "job_id": "2be6140b-09e2-4133-a5d6-2bd2a7610c2f", "token": 2, "attempts": 0, "max_attempts": 5}
+{"event": "commit_ok", "ts": "2026-04-02T21:42:01.052294", "job_id": "2be6140b-09e2-4133-a5d6-2bd2a7610c2f", "token": 2, "duration_s": 0.003}
+{"event": "worker_exit", "ts": "2026-04-02T21:42:01.052914", "reason": "success"}
+{"event": "stale_write_blocked", "ts": "2026-04-02T21:42:01.187746", "job_id": "2be6140b-09e2-4133-a5d6-2bd2a7610c2f", "stale_token": 1, "current_token": 2, "reason": "token_mismatch"}
+{"event": "worker_exit", "ts": "2026-04-02T21:42:01.189101", "reason": "stale"}
+{"event": "lease_acquired", "ts": "2026-04-02T21:42:01.457841", "job_id": "e0f6634c-4006-43af-b365-6f1b4eb4c25b", "token": 1, "lease_expires_at": "2026-04-02 21:42:02.454868", "forced": true, "attempts": 0, "max_attempts": 5}
+{"event": "barrier_open", "ts": "2026-04-02T21:42:01.459781", "barrier": "after_lease_acquire"}
+{"event": "execution_started", "ts": "2026-04-02T21:42:01.459980", "job_id": "e0f6634c-4006-43af-b365-6f1b4eb4c25b", "token": 1, "attempts": 0, "max_attempts": 5}
