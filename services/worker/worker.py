@@ -16,7 +16,7 @@ DATABASE_URL = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_DSN")
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL or POSTGRES_DSN must be set")
 
-WORKER_ID = os.getenv("WORKER_ID") or str(uuid.uuid4())
+WORKER_ID = os.getenv("FAULTLINE_WORKER_ID") or os.getenv("WORKER_ID") or str(uuid.uuid4())
 LEASE_SECONDS = int(os.getenv("LEASE_SECONDS", "30"))
 WORK_SLEEP_SECONDS = float(os.getenv("WORK_SLEEP_SECONDS", "2"))
 MAX_LOOPS = int(os.getenv("MAX_LOOPS", "0"))
@@ -37,6 +37,7 @@ jobs_retried = Counter("faultline_jobs_retried_total", "Jobs retried")
 jobs_failed_perm = Counter("faultline_jobs_failed_perm_total", "Jobs permanently failed")
 stale_commits = Counter("faultline_stale_commits_blocked_total", "Stale commits blocked")
 job_duration = Histogram("faultline_job_duration_seconds", "Job execution duration")
+
 
 
 def _append_trace_event(event: str, **fields) -> None:

@@ -274,3 +274,47 @@ raw race artifact JSON
 incident timeline markdown
 root-cause explanation markdown
 DetTrace-ready JSONL export
+
+---
+
+## Operations Dashboard and Incident Evidence
+
+Faultline now includes operator-facing reporting surfaces for controlled race validation and stale-write protection:
+
+### Operations Dashboard
+- workflow/job table
+- status filters
+- retry counts
+- stale-write rejection count
+- success/failure trend surface
+- incident and report lookup by job ID
+
+### Incident Timeline View
+Per-run timeline surfaces evidence such as:
+- claim started
+- lease acquired
+- token/fencing activity
+- fault injection evidence
+- retry activity
+- stale write blocked
+- commit accepted/rejected
+
+### Run Explorer
+- filter by job ID
+- filter by worker
+- filter by fault type
+- inspect structured logs
+- download artifact JSON
+
+### Race Report Artifact
+Each race artifact can be rendered into a structured report including:
+- worker A/B event order
+- claim winner
+- token history
+- DB final state and transitions
+- rule-based root-cause explanation
+
+Open the dashboard at:
+
+```bash
+/ops-dashboard

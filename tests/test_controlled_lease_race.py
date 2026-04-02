@@ -1,4 +1,5 @@
 import json
+import hashlib
 import os
 import pathlib
 import subprocess
@@ -27,23 +28,30 @@ def wait_until(predicate, timeout=15, interval=0.1, label="condition"):
 
 
 def seed_job(cur, job_id):
+    payload_obj = {"kind": "lease_race_test"}
+    payload_json = json.dumps(payload_obj, sort_keys=True)
+    payload_hash = hashlib.sha256(payload_json.encode("utf-8")).hexdigest()
+
     cur.execute(
         """
-        INSERT INTO jobs (id, payload, state, attempts, max_attempts, fencing_token, created_at, updated_at)
-        VALUES (%s, %s::jsonb, 'queued', 0, 3, 0, NOW(), NOW())
+        INSERT INTO jobs (
+            id, payload_hash, payload, state, attempts, max_attempts,
+            fencing_token, created_at, updated_at, lease_owner, lease_expires_at, last_error
+        )
+        VALUES (%s, %s, %s::jsonb, 'queued', 0, 3, 0, NOW(), NOW(), NULL, NULL, NULL)
         ON CONFLICT (id) DO UPDATE
-        SET payload = EXCLUDED.payload,
+        SET payload_hash = EXCLUDED.payload_hash,
+            payload = EXCLUDED.payload,
             state='queued',
             attempts=0,
             max_attempts=3,
             fencing_token=0,
             lease_owner=NULL,
             lease_expires_at=NULL,
-            completed_at=NULL,
             last_error=NULL,
             updated_at=NOW()
         """,
-        (job_id, json.dumps({"kind": "lease_race_test"})),
+        (job_id, payload_hash, payload_json),
     )
 
 
@@ -53,7 +61,7 @@ def fetch_job(job_id):
             cur.execute(
                 """
                 SELECT id, state, lease_owner, fencing_token,
-                       lease_expires_at, completed_at, attempts, last_error
+                       lease_expires_at, attempts, last_error
                 FROM jobs
                 WHERE id=%s
                 """,
@@ -68,18 +76,30 @@ def fetch_job(job_id):
                 "lease_owner": row[2],
                 "fencing_token": row[3],
                 "lease_expires_at": None if row[4] is None else row[4].isoformat(),
-                "completed_at": None if row[5] is None else row[5].isoformat(),
-                "attempts": row[6],
-                "last_error": row[7],
+                "attempts": row[5],
+                "last_error": row[6],
             }
 
 
 def worker_cmd(worker_id, job_id, hold_seconds):
     env = os.environ.copy()
+
+    # CRITICAL: propagate DB connection
+    env.setdefault("DATABASE_URL", "postgresql://faultline:faultline@localhost:5432/faultline")
+
     env["FAULTLINE_WORKER_ID"] = worker_id
+    env["WORKER_ID"] = worker_id
     env["CLAIM_JOB_ID"] = job_id
-    env["RACE_HOLD_SECONDS"] = str(hold_seconds)
+    env["LEASE_SECONDS"] = "3"
+    env["WORK_SLEEP_SECONDS"] = str(hold_seconds)
+
+    # Disable metrics server to avoid port collision
+    env["METRICS_ENABLED"] = "0"
+
+    env["EXIT_ON_SUCCESS"] = "1"
+    env["EXIT_ON_STALE"] = "1"
     env["PYTHONUNBUFFERED"] = "1"
+
     return ["python3", "-m", "services.worker.worker"], env
 
 
@@ -101,7 +121,7 @@ def write_artifact(job_id, worker_a_log, worker_b_log, final_state):
 
 @pytest.mark.timeout(60)
 def test_controlled_lease_race_stale_commit_rejected():
-    job_id = f"lease-race-{uuid.uuid4().hex[:12]}"
+    job_id = str(uuid.uuid4())
 
     with db() as conn:
         with conn.cursor() as cur:
@@ -113,11 +133,28 @@ def test_controlled_lease_race_stale_commit_rejected():
 
     worker_a = subprocess.Popen(a_cmd, env=a_env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
 
+    time.sleep(1)
+    if worker_a.poll() is not None:
+        worker_a_log, _ = worker_a.communicate()
+        raise AssertionError(f"worker-a exited before first claim\n{worker_a_log}")
+
+    last_seen = {"state": None}
+
     def worker_a_owns_first():
         state = fetch_job(job_id)
+        last_seen["state"] = state
         return state and state["lease_owner"] == "worker-a" and state["fencing_token"] == 1 and state["state"] == "running"
 
-    wait_until(worker_a_owns_first, timeout=20, label="worker-a to become first claimer with fencing token 1")
+    try:
+        wait_until(worker_a_owns_first, timeout=20, label="worker-a to become first claimer with fencing token 1")
+    except AssertionError:
+        worker_a.terminate()
+        worker_a_log, _ = worker_a.communicate(timeout=10)
+        raise AssertionError(
+            "Timed out waiting for worker-a first claim\n"
+            f"last db state={last_seen['state']}\n\n"
+            f"worker-a log:\n{worker_a_log}"
+        )
 
     time.sleep(lease_expiry_buffer())
 
@@ -138,5 +175,5 @@ def test_controlled_lease_race_stale_commit_rejected():
 
 
 def lease_expiry_buffer():
-    raw = os.getenv("LEASE_RACE_WAIT_SECONDS", "7")
+    raw = os.getenv("LEASE_RACE_WAIT_SECONDS", "4")
     return float(raw)

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Faultline Operations Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; }
+    h1, h2 { margin-bottom: 8px; }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    input { padding: 8px; margin-right: 8px; }
+    pre { background: #f6f6f6; padding: 12px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>Faultline Operations Dashboard</h1>
+
+  <div class="card">
+    <h2>Run Explorer</h2>
+    <input id="jobId" placeholder="job ID" />
+    <input id="worker" placeholder="worker" />
+    <input id="faultType" placeholder="fault type" />
+    <button onclick="loadRuns()">Search</button>
+    <pre id="runs"></pre>
+  </div>
+
+  <div class="card">
+    <h2>Dashboard Summary</h2>
+    <button onclick="loadDashboard()">Refresh</button>
+    <pre id="dashboard"></pre>
+  </div>
+
+  <div class="card">
+    <h2>Incident Timeline</h2>
+    <input id="timelineJobId" placeholder="job ID" />
+    <button onclick="loadTimeline()">Load Timeline</button>
+    <pre id="timeline"></pre>
+  </div>
+
+  <div class="card">
+    <h2>Race Report + Root Cause</h2>
+    <input id="reportJobId" placeholder="job ID" />
+    <button onclick="loadReport()">Load Report</button>
+    <pre id="report"></pre>
+  </div>
+
+<script>
+async function loadDashboard() {
+  const res = await fetch('/race/dashboard');
+  document.getElementById('dashboard').textContent = JSON.stringify(await res.json(), null, 2);
+}
+async function loadRuns() {
+  const jobId = document.getElementById('jobId').value;
+  const worker = document.getElementById('worker').value;
+  const faultType = document.getElementById('faultType').value;
+  const qs = new URLSearchParams();
+  if (jobId) qs.set('job_id', jobId);
+  if (worker) qs.set('worker', worker);
+  if (faultType) qs.set('fault_type', faultType);
+  const res = await fetch('/race/runs?' + qs.toString());
+  document.getElementById('runs').textContent = JSON.stringify(await res.json(), null, 2);
+}
+async function loadTimeline() {
+  const jobId = document.getElementById('timelineJobId').value;
+  const res = await fetch(`/race/runs/${jobId}/timeline`);
+  document.getElementById('timeline').textContent = JSON.stringify(await res.json(), null, 2);
+}
+async function loadReport() {
+  const jobId = document.getElementById('reportJobId').value;
+  const res = await fetch(`/race/runs/${jobId}/report`);
+  document.getElementById('report').textContent = JSON.stringify(await res.json(), null, 2);
+}
+loadDashboard();
+</script>
+</body>
+</html>

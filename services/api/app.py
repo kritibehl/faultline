@@ -1,3 +1,5 @@
+from fastapi.responses import FileResponse
+from services.api.race_routes import router as race_router
 """
 services/api/app.py
 ────────────────────
@@ -149,3 +151,10 @@ def queue_depth():
             cur.execute("SELECT state, COUNT(*) FROM jobs GROUP BY state")
             rows = cur.fetchall()
     return {row[0]: row[1] for row in rows}
+
+app.include_router(race_router)
+
+
+@app.get("/ops-dashboard")
+def ops_dashboard():
+    return FileResponse("dashboard/race_dashboard.html")
