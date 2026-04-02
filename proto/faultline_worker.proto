@@ -1,0 +1,61 @@
+syntax = "proto3";
+
+package faultline;
+
+message ClaimRequest {
+  string worker_id = 1;
+  int32 batch_size = 2;
+}
+
+message ClaimedJob {
+  string job_id = 1;
+  string job_type = 2;
+  string payload_json = 3;
+  int64 fencing_token = 4;
+  string lease_expires_at = 5;
+}
+
+message ClaimResponse {
+  repeated ClaimedJob jobs = 1;
+}
+
+message StartExecutionRequest {
+  string worker_id = 1;
+  string job_id = 2;
+  int64 fencing_token = 3;
+}
+
+message StartExecutionResponse {
+  bool accepted = 1;
+  string reason = 2;
+}
+
+message CompleteExecutionRequest {
+  string worker_id = 1;
+  string job_id = 2;
+  int64 fencing_token = 3;
+  string result_json = 4;
+}
+
+message CompleteExecutionResponse {
+  bool committed = 1;
+  string reason = 2;
+}
+
+message HeartbeatRequest {
+  string worker_id = 1;
+  string job_id = 2;
+  int64 fencing_token = 3;
+}
+
+message HeartbeatResponse {
+  bool ok = 1;
+  bool lease_valid = 2;
+}
+
+service FaultlineWorkerService {
+  rpc ClaimJobs(ClaimRequest) returns (ClaimResponse);
+  rpc StartExecution(StartExecutionRequest) returns (StartExecutionResponse);
+  rpc CompleteExecution(CompleteExecutionRequest) returns (CompleteExecutionResponse);
+  rpc Heartbeat(HeartbeatRequest) returns (HeartbeatResponse);
+}

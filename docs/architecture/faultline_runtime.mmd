@@ -1,0 +1,16 @@
+flowchart TD
+    A[Producer / API] --> B[(PostgreSQL jobs)]
+    B --> C[Claim path]
+    C --> D[Lease owner + fencing token]
+    D --> E[Worker / gRPC execution service]
+    E --> F[Workflow steps<br/>plan -> tool_call -> validation -> commit]
+    F --> G[Post-fence commit validation]
+    G --> H[(Ledger / side effect)]
+    G --> I[Reject stale write]
+    E --> J[Heartbeat / lease renew]
+    J --> D
+    D --> K[Reaper / Reconciler]
+    E --> L[OTel spans]
+    L --> M[Jaeger]
+    E --> N[Execution trace artifacts]
+    N --> O[Validation / release gating]
