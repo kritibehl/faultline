@@ -1,0 +1,7 @@
+scenario,runs,duplicate_commits,stale_commits_rejected,recovery_outcome
+healthy_execution,TBD,TBD,TBD,TBD
+lease_expiry_mid_execution,TBD,TBD,TBD,TBD
+delayed_stale_completion,TBD,TBD,TBD,TBD
+partial_partition,TBD,TBD,TBD,TBD
+grpc_latency_heartbeat,TBD,TBD,TBD,TBD
+tool_call_malformed_output,TBD,TBD,TBD,TBD
