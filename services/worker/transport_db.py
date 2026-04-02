@@ -238,3 +238,10 @@ def connect_db(*args: Any, **kwargs: Any):
         _apply_escalation()
         _refresh_state_gauges()
         raise
+
+
+def get_conn():
+    database_url = os.getenv("DATABASE_URL") or os.getenv("POSTGRES_DSN")
+    if not database_url:
+        raise RuntimeError("DATABASE_URL or POSTGRES_DSN must be set")
+    return connect_db(database_url)

@@ -10,11 +10,11 @@ Race Scenario (per run)
 ───────────────────────
     1. Worker A claims job             → fencing_token = N+1
     2. Worker A opens barrier          → signals B to start
-    3. Worker A sleeps 2.5s            → lease (1s) expires during sleep
+    3. Worker A sleeps 1.2s            → lease (1s) expires during sleep
     4. Worker B waits on barrier       → barrier now open
-    5. Worker B claims job             → fencing_token = N+2  (A's token is stale)
+    5. Worker B reclaims job           → fencing_token = N+2  (A's token is stale)
     6. Worker B executes + commits     → ledger entry (job_id, N+2) written
-    7. Worker A wakes, assert_fence()  → stale_token detected → blocked
+    7. Worker A wakes, assert_fence()  → stale_token / lease_expired detected → blocked
     8. Worker A exits with reason=stale
 
 Invariants validated per run
@@ -29,17 +29,16 @@ Invariants validated per run
 Results written to tests/results/lease_race_500_runs.txt after each run.
 """
 
-import os
-import sys
-import uuid
 import hashlib
+import os
 import subprocess
+import sys
 import time
-from typing import Optional
+import uuid
 
 import psycopg2
 
-WORKER_CMD = [sys.executable, "services/worker/worker.py"]
+WORKER_CMD = [sys.executable, "-m", "services.worker.worker"]
 TOTAL_RUNS = int(os.environ.get("RACE_RUNS", "500"))
 RESULTS_PATH = "tests/results/lease_race_500_runs.txt"
 
@@ -76,14 +75,25 @@ def _seed_job(cur, job_id: str):
     payload = "{}"
     cur.execute(
         """
-        INSERT INTO jobs (id, payload, payload_hash, state, attempts, max_attempts, next_run_at)
-        VALUES (%s, %s, %s, 'queued', 0, 5, NOW())
+        INSERT INTO jobs (
+            id,
+            payload,
+            payload_hash,
+            state,
+            attempts,
+            max_attempts,
+            lease_owner,
+            lease_expires_at,
+            fencing_token,
+            next_run_at
+        )
+        VALUES (%s, %s, %s, 'queued', 0, 5, NULL, NULL, 0, NOW())
         """,
         (job_id, payload, _payload_hash(payload)),
     )
 
 
-def _wait_state(database_url: str, job_id: str, want: str, timeout_s: float = 15) -> bool:
+def _wait_state(database_url: str, job_id: str, want: str, timeout_s: float = 10) -> bool:
     deadline = time.time() + timeout_s
     while time.time() < deadline:
         with _db(database_url) as conn:
@@ -113,7 +123,11 @@ def _job_debug(database_url: str, job_id: str) -> str:
     with _db(database_url) as conn:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT state, lease_owner, lease_expires_at, fencing_token FROM jobs WHERE id=%s",
+                """
+                SELECT state, lease_owner, lease_expires_at, fencing_token
+                FROM jobs
+                WHERE id=%s
+                """,
                 (job_id,),
             )
             return str(cur.fetchone())
@@ -160,33 +174,52 @@ def _run_once(database_url: str, run_number: int) -> dict:
 
     with _db(database_url) as conn:
         with conn.cursor() as cur:
+            # Make the harness deterministic by clearing prior state.
+            cur.execute("DELETE FROM ledger_entries")
+            cur.execute("DELETE FROM jobs")
             _reset_barrier(cur, barrier)
             _seed_job(cur, job_id)
+
+            cur.execute(
+                """
+                SELECT state, lease_owner, lease_expires_at, fencing_token
+                FROM jobs
+                WHERE id=%s
+                """,
+                (job_id,),
+            )
+            seeded_state = cur.fetchone()
+
         conn.commit()
 
     base_env = os.environ.copy()
     base_env.update({
         "DATABASE_URL": database_url,
-        "BARRIER_TIMEOUT_S": "60",
         "PYTHONUNBUFFERED": "1",
+        "PYTHONPATH": os.getcwd(),
+        "BARRIER_TIMEOUT_S": "60",
         "METRICS_ENABLED": "0",
         "AUTOPSY_LOG_PATH": "docs/autopsy/assets/logs.jsonl",
     })
 
     env_a = base_env.copy()
     env_a.update({
+        "WORKER_ID": "worker-a",
         "CLAIM_JOB_ID": job_id,
-        "LEASE_SECONDS": "1",        # short: expires during A's 2.5s sleep
+        "LEASE_SECONDS": "1",
+        "FAULTLINE_SINGLE_RUN": "1",
         "BARRIER_OPEN": barrier,
-        "WORK_SLEEP_SECONDS": "2.5",
+        "WORK_SLEEP_SECONDS": "1.2",
         "MAX_LOOPS": "3000",
         "EXIT_ON_STALE": "1",
     })
 
     env_b = base_env.copy()
     env_b.update({
+        "WORKER_ID": "worker-b",
         "CLAIM_JOB_ID": job_id,
-        "LEASE_SECONDS": "30",       # long: B always has time to commit
+        "LEASE_SECONDS": "30",
+        "FAULTLINE_SINGLE_RUN": "0",
         "BARRIER_WAIT": barrier,
         "WORK_SLEEP_SECONDS": "0",
         "MAX_LOOPS": "6000",
@@ -198,12 +231,31 @@ def _run_once(database_url: str, run_number: int) -> dict:
 
     try:
         p_a = subprocess.Popen(
-            WORKER_CMD, env=env_a,
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            text=True, bufsize=1,
+            WORKER_CMD,
+            env=env_a,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
         )
 
-        out_a_pre = _read_until(p_a, '"event": "barrier_open"', timeout_s=30)
+        out_a_claim = _read_until(p_a, '"event": "lease_acquired"', timeout_s=3)
+        if '"event": "lease_acquired"' not in out_a_claim:
+            _kill(p_a)
+            return {
+                "passed": False,
+                "stale_blocked": False,
+                "b_succeeded": False,
+                "ledger_count": 0,
+                "fencing_token": None,
+                "error": (
+                    f"Run {run_number}: Worker A never claimed job. "
+                    f"Worker A output: {out_a_claim[:2000]!r}. "
+                    f"Job state now: {_job_debug(database_url, job_id)}"
+                ),
+            }
+
+        out_a_pre = out_a_claim + _read_until(p_a, '"event": "barrier_open"', timeout_s=5)
         if '"event": "barrier_open"' not in out_a_pre:
             _kill(p_a)
             return {
@@ -211,25 +263,35 @@ def _run_once(database_url: str, run_number: int) -> dict:
                 "stale_blocked": False,
                 "b_succeeded": False,
                 "ledger_count": 0,
-                "error": f"Run {run_number}: Worker A never opened barrier",
+                "fencing_token": None,
+                "error": (
+                    f"Run {run_number}: Worker A never opened barrier. "
+                    f"Worker A output: {out_a_pre[:2000]!r}. "
+                    f"Job state now: {_job_debug(database_url, job_id)}"
+                ),
             }
 
+        time.sleep(0.2)
+
         p_b = subprocess.Popen(
-            WORKER_CMD, env=env_b,
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            text=True, bufsize=1,
+            WORKER_CMD,
+            env=env_b,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            bufsize=1,
         )
 
-        out_b_pre = _read_until(p_b, '"reason": "success"', timeout_s=60)
+        out_b_pre = _read_until(p_b, '"reason": "success"', timeout_s=8)
 
         try:
-            out_a, _ = p_a.communicate(timeout=30)
+            out_a, _ = p_a.communicate(timeout=5)
         except subprocess.TimeoutExpired:
             _kill(p_a)
             out_a = ""
 
         try:
-            out_b, _ = p_b.communicate(timeout=10)
+            out_b, _ = p_b.communicate(timeout=3)
         except subprocess.TimeoutExpired:
             _kill(p_b)
             out_b = ""
@@ -257,15 +319,17 @@ def _run_once(database_url: str, run_number: int) -> dict:
 
     parts = []
     if not stale_blocked:
-        parts.append("stale_write not blocked in A")
+        parts.append("stale write was not blocked")
     if not b_succeeded:
-        parts.append("Worker B did not exit success")
+        parts.append("worker B did not succeed")
     if not job_ok:
-        parts.append("job.state != succeeded")
+        parts.append("job did not reach succeeded")
     if count != 1:
-        parts.append(f"ledger_count={count} (want 1)")
+        parts.append(f"ledger_count={count}")
     if min_tok != max_tok:
-        parts.append(f"ledger tokens differ: min={min_tok} max={max_tok}")
+        parts.append(f"min_tok={min_tok} max_tok={max_tok}")
+    if int(min_tok or 0) < 2:
+        parts.append(f"fencing token too low: {min_tok}")
 
     return {
         "passed": passed,
@@ -273,12 +337,17 @@ def _run_once(database_url: str, run_number: int) -> dict:
         "b_succeeded": b_succeeded,
         "ledger_count": count,
         "fencing_token": max_tok,
-        "error": (f"Run {run_number}: " + ", ".join(parts)) if parts else None,
+        "error": None if passed else (
+            f"Run {run_number}: " + ", ".join(parts) +
+            f". Worker A output: {full_a[:1500]!r}. "
+            f"Worker B output: {full_b[:1500]!r}. "
+            f"Job state now: {_job_debug(database_url, job_id)}"
+        ),
     }
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 500-run harness
+# Harness
 # ─────────────────────────────────────────────────────────────────────────────
 
 def test_lease_expiry_race_is_blocked_by_fencing(database_url):
@@ -289,7 +358,7 @@ def test_lease_expiry_race_is_blocked_by_fencing(database_url):
     errors = []
 
     with open(RESULTS_PATH, "w") as f:
-        f.write(f"Faultline — lease-expiry race fencing validation\n")
+        f.write("Faultline — lease-expiry race fencing validation\n")
         f.write(f"Runs: {TOTAL_RUNS}\n")
         f.write("=" * 60 + "\n\n")
 
@@ -331,7 +400,6 @@ def test_lease_expiry_race_is_blocked_by_fencing(database_url):
                     flush=True,
                 )
 
-        # ── Summary ──────────────────────────────────────────────────────────
         summary_lines = [
             "",
             "=" * 60,
@@ -358,7 +426,6 @@ def test_lease_expiry_race_is_blocked_by_fencing(database_url):
         f.write(summary)
         print(summary)
 
-    # pytest assertions
     assert duplicate_ledger == 0, (
         f"Duplicate side effects in {duplicate_ledger}/{TOTAL_RUNS} runs. "
         f"See {RESULTS_PATH}"
