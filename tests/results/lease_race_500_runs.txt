@@ -1,12 +1,18 @@
 Faultline — lease-expiry race fencing validation
-Runs: 500
+Runs: 3
 ============================================================
 
-=== Run    1 === FAIL | stale_blocked=False b_succeeded=False ledger_entries=0 fencing_token=None
-  ERROR: Run 1: Worker A never opened barrier
-=== Run    2 === FAIL | stale_blocked=False b_succeeded=False ledger_entries=0 fencing_token=None
-  ERROR: Run 2: Worker A never opened barrier
-=== Run    3 === FAIL | stale_blocked=False b_succeeded=False ledger_entries=0 fencing_token=None
-  ERROR: Run 3: Worker A never opened barrier
-=== Run    4 === FAIL | stale_blocked=False b_succeeded=False ledger_entries=0 fencing_token=None
-  ERROR: Run 4: Worker A never opened barrier
+=== Run    1 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run    2 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+=== Run    3 === PASS | stale_blocked=True b_succeeded=True ledger_entries=1 fencing_token=2
+
+============================================================
+RESULTS
+============================================================
+Total runs            : 3
+Passed                : 3
+Failed                : 0
+Stale writes blocked  : 3/3
+Duplicate ledger entries: 0
+
+✅ ALL INVARIANTS HELD — 0 duplicate executions across 3 controlled runs

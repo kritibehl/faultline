@@ -40,7 +40,7 @@ def mark_for_retry(cur, job_id, token, attempts, max_attempts, last_error):
         """
         UPDATE jobs
         SET state='queued', lease_owner=NULL, lease_expires_at=NULL,
-            available_at=%s, last_error=%s, updated_at=NOW()
+            next_run_at=%s, last_error=%s, updated_at=NOW()
         WHERE id=%s AND fencing_token=%s
         """,
         (datetime.now(timezone.utc) + timedelta(seconds=delay), last_error, job_id, token),

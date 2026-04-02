@@ -1,3 +1,4 @@
+from common.observability.tracing import get_tracer
 """
 worker/executor.py
 ───────────────────
@@ -84,3 +85,5 @@ def check_lease_headroom(elapsed_seconds: float, lease_seconds: int, min_headroo
 # These correspond to the named points where os._exit(137) is injected.
 CRASH_POINT_AFTER_LEASE = "after_lease_acquire"
 CRASH_POINT_BEFORE_COMMIT = "before_commit"
+
+tracer = get_tracer('faultline.worker.executor')
