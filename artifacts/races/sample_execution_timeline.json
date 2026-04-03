@@ -1,0 +1,13 @@
+{
+  "job_id": "sample-job",
+  "timeline": [
+    {"event": "job_queued", "meta": {"job_id": "sample-job"}},
+    {"event": "claim_acquired", "meta": {"worker": "worker-a", "token": 1}},
+    {"event": "processing_started", "meta": {"worker": "worker-a"}},
+    {"event": "fault_detected", "meta": {"type": "worker_crash"}},
+    {"event": "lease_expired", "meta": {"job_id": "sample-job"}},
+    {"event": "retry_claim_acquired", "meta": {"worker": "worker-b", "token": 2}},
+    {"event": "processing_resumed", "meta": {"worker": "worker-b"}},
+    {"event": "success", "meta": {"job_id": "sample-job"}}
+  ]
+}

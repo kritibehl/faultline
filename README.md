@@ -1,5 +1,7 @@
 # Faultline
 
+Faultline is a distributed job execution system that guarantees correctness under failure by preventing duplicate or stale execution using lease-based coordination and fencing tokens.
+
 Backend workflow reliability system that reproduces failures, exposes execution timelines, and makes backend issues explainable through replay-aware diagnostics.
 
 
@@ -351,3 +353,42 @@ For each run, Faultline explains:
 - whether issue is platform or configuration
 
 This makes backend failures explainable, not just observable.
+
+---
+
+## Fault Handling Guarantees
+
+| Failure Type | What Happens | Guarantee |
+|---|---|---|
+| Worker crash | Lease expires and job becomes reclaimable | Job can be reclaimed without duplicate commit |
+| Network drop / transient DB issue | Retry path or reconnect logic re-attempts work | No duplicate terminal commit under fencing validation |
+| Slow worker / stale worker resumes late | New claimant advances fencing token | Stale write is blocked by token check |
+| Lease expiry during execution | Another worker may reclaim the job | Correct claimant wins; stale completion is rejected |
+| Retryable execution failure | Attempt is retried up to configured max attempts | Failure is visible and bounded by retry policy |
+
+
+---
+
+## System Behavior Under Load
+
+Faultline includes a benchmark surface for evaluating behavior across larger job volumes and multiple workers.
+
+Tracked metrics:
+- throughput
+- p50 / p95 latency
+- retries
+- duplicate commits
+- recovery after worker crash
+
+Run:
+
+```bash
+python3 benchmarks/run_load_benchmark.py
+cat artifacts/benchmarks/load_benchmark.json
+Example output format:
+
+10,000 jobs processed
+0 duplicate commits
+p95 latency: <value> ms
+recovery after worker crash: <value> sec
+
