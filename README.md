@@ -1,5 +1,8 @@
 # Faultline
 
+Backend workflow reliability system that reproduces failures, exposes execution timelines, and makes backend issues explainable through replay-aware diagnostics.
+
+
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/kritibehl/faultline/badge)](https://scorecard.dev/viewer/?uri=github.com/kritibehl/faultline)
 
 > Crash-safe distributed job queue validated across **1,500 fault-injected race reproductions with 0 duplicate commits**.
@@ -318,3 +321,33 @@ Open the dashboard at:
 
 ```bash
 /ops-dashboard
+
+---
+
+## Example Backend Workflow Failure
+
+Faultline simulates real backend workflows:
+
+- request received
+- job queued
+- worker claim acquired
+- processing started
+- fault injected (timeout / dependency failure)
+- retry triggered
+- workflow recovered or failed
+
+### Timeline View
+
+Faultline reconstructs execution as a step-by-step timeline.
+
+### Operator Explanation
+
+For each run, Faultline explains:
+
+- what failed
+- why it failed
+- whether retry is safe
+- what to inspect next
+- whether issue is platform or configuration
+
+This makes backend failures explainable, not just observable.
