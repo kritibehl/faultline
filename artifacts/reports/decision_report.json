@@ -1,0 +1,14 @@
+{
+  "scenario_name": "baseline",
+  "worker_count": 2,
+  "batch_size": 5,
+  "throughput": 96776.62,
+  "p95_latency_ms": 33.42,
+  "duplicate_commits": 0,
+  "stale_writes_prevented": 0,
+  "recovery_time_s": null,
+  "fairness_warning": true,
+  "bottleneck": "claim path",
+  "recommendation": "prefer batch_size=5 and polling_mode=wakeup_assisted",
+  "safe_for_production": true
+}

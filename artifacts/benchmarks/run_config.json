@@ -1,0 +1,43 @@
+{
+  "worker_counts": [
+    2,
+    4,
+    8,
+    12
+  ],
+  "batch_sizes": [
+    1,
+    5,
+    10,
+    25
+  ],
+  "modes": [
+    "safe",
+    "lean"
+  ],
+  "polling_modes": [
+    "fixed",
+    "adaptive",
+    "wakeup_assisted"
+  ],
+  "workloads": [
+    "uniform_short",
+    "mixed_short_long",
+    "large_payload",
+    "retry_heavy",
+    "timeout_prone",
+    "burst_enqueue",
+    "long_running_leases"
+  ],
+  "scenarios": [
+    "worker_crash_before_completion_write",
+    "worker_crash_after_result_before_commit",
+    "stale_lease_takeover",
+    "db_reconnect_failure",
+    "query_timeout_burst",
+    "intermittent_db_latency",
+    "retry_storm_under_transient_error",
+    "long_job_exceeding_nominal_lease",
+    "lease_reaper_reclaim_under_load"
+  ]
+}
