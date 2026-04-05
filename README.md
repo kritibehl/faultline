@@ -1,6 +1,8 @@
 # Faultline
 
-Faultline is a distributed job execution system that guarantees correctness under failure by preventing duplicate or stale execution using lease-based coordination and fencing tokens.
+Crash-safe distributed execution engine that preserves correctness under retries, lease expiry, worker crashes, and database faults while quantifying coordination overhead and throughput tradeoffs.
+
+**Recruiter takeaway:** She understands distributed coordination, performance tradeoffs, and correctness under failure.
 
 Backend workflow reliability system that reproduces failures, exposes execution timelines, and makes backend issues explainable through replay-aware diagnostics.
 
@@ -356,6 +358,13 @@ This makes backend failures explainable, not just observable.
 
 ---
 
+## Core Guarantees
+
+- lease expiry allows safe reclaim after worker failure
+- fencing tokens prevent stale or duplicate completion
+- retry paths preserve correctness under transient failure
+- timelines and artifacts make failures explainable
+
 ## Fault Handling Guarantees
 
 | Failure Type | What Happens | Guarantee |
@@ -391,4 +400,60 @@ Example output format:
 0 duplicate commits
 p95 latency: <value> ms
 recovery after worker crash: <value> sec
+
+
+---
+
+## What This Shows
+
+Faultline is designed to demonstrate production-minded backend and distributed systems engineering:
+
+- distributed coordination with lease-based ownership
+- correctness under retries, reclaim, and stale workers
+- performance tradeoff visibility through benchmark and recovery metrics
+- replayable debugging through timelines, race artifacts, and root-cause output
+- operator-friendly failure explanation instead of raw log-only debugging
+
+### Recruiter takeaway
+
+Faultline should communicate:
+
+- understands distributed coordination
+- reasons about correctness under failure
+- measures performance and recovery behavior
+- can turn backend failures into explainable operational evidence
+
+
+---
+
+## Benchmark Snapshot
+
+Current benchmark surface includes 1K, 5K, and 10K job runs with tracked latency, retry behavior, duplicate-commit protection, and crash recovery measurement.
+
+Current headline results:
+- 10,000 jobs benchmarked
+- 0 duplicate commits
+- p95 latency: 61.0 ms
+- worker-crash recovery: 2.4 s
+
+These numbers are intended to show system behavior and correctness packaging, alongside deterministic reclaim-race validation.
+
+
+---
+
+## Backend Workflow Reliability Example
+
+Faultline can be framed as a backend workflow reliability system for request-driven job processing:
+
+1. request received
+2. job queued
+3. worker claim acquired
+4. processing started
+5. fault occurs
+6. retry or reclaim triggered
+7. stale write blocked or retry succeeds
+8. final outcome recorded
+9. operator explanation generated
+
+This framing makes Faultline legible as a backend reliability and explainable debugging system, not just a concurrency exercise.
 
