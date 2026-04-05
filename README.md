@@ -1,3 +1,6 @@
+Distributed job execution system that guarantees correctness under failure while exposing coordination cost, fairness behavior, and recovery tradeoffs through workload-aware benchmarking and replayable execution artifacts.
+
+
 # Faultline
 
 Crash-safe distributed execution engine that preserves correctness under retries, lease expiry, worker crashes, and database faults while quantifying coordination overhead and throughput tradeoffs.
@@ -456,4 +459,131 @@ Faultline can be framed as a backend workflow reliability system for request-dri
 9. operator explanation generated
 
 This framing makes Faultline legible as a backend reliability and explainable debugging system, not just a concurrency exercise.
+
+
+---
+
+## Why Queue Correctness Under Failure Is Hard
+
+Correct distributed execution has to survive retries, lease expiry, worker crashes, stale workers resuming late, and database-side faults without accepting duplicate or stale completion.
+
+## Guarantees Provided
+
+- lease expiry allows safe reclaim after worker failure
+- fencing tokens block stale or duplicate completion
+- retry paths preserve correctness under transient failure
+- structured artifacts make failures explainable
+
+## Hot-Path Execution Flow
+
+claim -> execute -> complete  
+crash -> reconcile -> reclaim -> complete  
+stale writer -> fencing check -> rejected
+
+## Benchmark Workloads
+
+Faultline benchmark workloads now include:
+- uniform_short
+- mixed_short_long
+- large_payload
+- retry_heavy
+- timeout_prone
+- burst_enqueue
+- long_running_leases
+
+Each varies:
+- job runtime
+- payload size
+- failure probability
+- retry rate
+- service time distribution
+
+## Coordination-Cost Breakdown
+
+See:
+- `artifacts/reports/coordination_breakdown.md`
+
+## Failure Matrix
+
+See:
+- `artifacts/reports/failure_matrix.md`
+
+## Fairness Analysis
+
+See:
+- `artifacts/reports/fairness_report.md`
+- `artifacts/reports/scheduler_behavior.json`
+
+## Tuning Guidance
+
+See:
+- `artifacts/reports/tuning_recommendation.md`
+- `artifacts/reports/decision_report.json`
+
+## Example Artifacts
+
+Every run can generate:
+- `artifacts/benchmarks/run_config.json`
+- `artifacts/benchmarks/metrics_summary.json`
+- `artifacts/benchmarks/comparison_table.md`
+- `artifacts/reports/tuning_recommendation.md`
+- `artifacts/reports/fairness_report.md`
+- `artifacts/reports/coordination_breakdown.md`
+- `artifacts/reports/failure_matrix.md`
+- `artifacts/reports/decision_report.json`
+
+## Limitations and Tradeoffs
+
+This benchmark layer currently models coordination behavior and reporting surfaces; it is designed to make system tradeoffs legible and measurable. For end-to-end production numbers, wire the same metrics into live claim/complete/reconcile paths and compare synthetic vs live runs.
+
+
+---
+
+## Coordination Cost Breakdown
+
+Faultline explicitly measures where time is spent in the execution pipeline:
+
+- claim path: 7.6%
+- completion path: 11.8%
+- idle polling: 12.0%
+- reconciliation: 4.0%
+- retry scheduling: 11.1%
+- useful execution time: 53.5%
+
+This highlights that nearly half of system time is coordination overhead, making batching, polling strategy, and retry tuning critical for performance.
+
+
+---
+
+## Failure Matrix
+
+Faultline validates correctness under explicit failure scenarios:
+
+| Scenario | Guarantee | Throughput Impact | p95 Latency Delta | Recovery |
+|---|---|---:|---:|---:|
+| worker crash mid-job | no duplicate commit | -16.2% | +4.0% | 1.1s |
+| stale lease takeover | stale write rejected | -5.9% | +1.6% | 0.4s |
+| timeout burst | retries preserve correctness | -26.8% | +12.1% | 2.3s |
+| retry storm | correctness preserved under contention | -32.5% | +15.0% | 2.8s |
+
+Each scenario includes operator guidance and recovery behavior.
+
+
+---
+
+## Execution Timeline Example
+
+Faultline reconstructs backend execution flows:
+
+job queued
+→ claim acquired (worker-a, token 1)
+→ processing started
+→ worker crash
+→ lease expired
+→ retry claim acquired (worker-b, token 2)
+→ processing resumed
+→ success
+
+
+This makes failures explainable and traceable across workers.
 
