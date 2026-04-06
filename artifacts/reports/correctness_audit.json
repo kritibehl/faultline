@@ -1,0 +1,10 @@
+{
+  "total_runs": 9,
+  "violations_detected": 0,
+  "near_miss_races_detected": 1,
+  "correctness_heatmap": {
+    "stale_write_attempt": 1,
+    "lease_reclaim": 1
+  },
+  "details": []
+}

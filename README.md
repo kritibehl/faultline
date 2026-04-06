@@ -405,3 +405,29 @@ To make the reclaim-race behavior easier to inspect and reason about, the repo i
 - `docs/case_studies/reclaim_race.md` — a walkthrough of the reclaim race and why stale writers are rejected
 
 These artifacts are meant to show not just that the system works, but why the correctness rule holds under adversarial timing.
+---
+
+## Global Correctness Auditor
+
+Faultline includes a correctness auditor that scans historical execution artifacts and verifies that system-wide correctness guarantees are preserved.
+
+### What it detects
+
+- duplicate commit violations (should remain zero)
+- stale write attempts (near-miss race conditions)
+- lease reclaim events
+- retry-induced contention patterns
+
+### Example Output
+
+- violations detected: 0  
+- near-miss races detected: N  
+
+### Why this matters
+
+Instead of reacting to user-visible inconsistencies, Faultline proactively detects correctness risks across distributed workflows before they manifest as failures.
+
+See:
+- `artifacts/reports/correctness_audit.md`
+- `artifacts/reports/correctness_audit.json`
+
