@@ -1,0 +1,14 @@
+{
+  "job_id": "0c39fff8-25c8-4288-9c5c-b4a701141fb4",
+  "worker_a_log": "{\"event\": \"lease_acquired\", \"ts\": \"2026-04-02T22:00:04.421976\", \"job_id\": \"0c39fff8-25c8-4288-9c5c-b4a701141fb4\", \"token\": 1, \"lease_expires_at\": \"2026-04-02 22:00:34.412757\", \"forced\": true, \"attempts\": 0, \"max_attempts\": 3}\n{\"event\": \"execution_started\", \"ts\": \"2026-04-02T22:00:04.424116\", \"job_id\": \"0c39fff8-25c8-4288-9c5c-b4a701141fb4\", \"token\": 1, \"attempts\": 0, \"max_attempts\": 3}\n{\"event\": \"commit_ok\", \"ts\": \"2026-04-02T22:00:12.458036\", \"job_id\": \"0c39fff8-25c8-4288-9c5c-b4a701141fb4\", \"token\": 1, \"duration_s\": 8.033}\n{\"event\": \"worker_exit\", \"ts\": \"2026-04-02T22:00:12.460200\", \"reason\": \"success\"}\n",
+  "worker_b_log": "Traceback (most recent call last):\n  File \"<frozen runpy>\", line 198, in _run_module_as_main\n  File \"<frozen runpy>\", line 88, in _run_code\n  File \"/Users/kritibehl/faultline/services/worker/worker.py\", line 367, in <module>\n    start_http_server(METRICS_PORT)\n  File \"/Users/kritibehl/faultline/.venv/lib/python3.12/site-packages/prometheus_client/exposition.py\", line 221, in start_wsgi_server\n    httpd = make_server(addr, port, app, TmpServer, handler_class=_SilentHandler)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/wsgiref/simple_server.py\", line 154, in make_server\n    server = server_class((host, port), handler_class)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/socketserver.py\", line 457, in __init__\n    self.server_bind()\n  File \"/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/wsgiref/simple_server.py\", line 50, in server_bind\n    HTTPServer.server_bind(self)\n  File \"/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/http/server.py\", line 136, in server_bind\n    socketserver.TCPServer.server_bind(self)\n  File \"/Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/socketserver.py\", line 473, in server_bind\n    self.socket.bind(self.server_address)\nOSError: [Errno 48] Address already in use\n",
+  "final_state": {
+    "id": "0c39fff8-25c8-4288-9c5c-b4a701141fb4",
+    "state": "succeeded",
+    "lease_owner": null,
+    "fencing_token": 1,
+    "lease_expires_at": null,
+    "attempts": 0,
+    "last_error": null
+  }
+}

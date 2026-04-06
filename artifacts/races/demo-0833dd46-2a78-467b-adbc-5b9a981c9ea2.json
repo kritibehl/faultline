@@ -1,0 +1,58 @@
+{
+  "job_id": "0833dd46-2a78-467b-adbc-5b9a981c9ea2",
+  "timeline": [
+    {
+      "ts": 1775177394.192,
+      "event": "request_received",
+      "meta": {}
+    },
+    {
+      "ts": 1775177394.192,
+      "event": "job_queued",
+      "meta": {}
+    },
+    {
+      "ts": 1775177394.192,
+      "event": "claim_acquired",
+      "meta": {
+        "worker": "worker-a",
+        "token": 1
+      }
+    },
+    {
+      "ts": 1775177394.192,
+      "event": "processing_started",
+      "meta": {}
+    },
+    {
+      "ts": 1775177395.193,
+      "event": "fault_injected",
+      "meta": {
+        "type": "timeout"
+      }
+    },
+    {
+      "ts": 1775177395.193,
+      "event": "retry_triggered",
+      "meta": {}
+    },
+    {
+      "ts": 1775177395.193,
+      "event": "claim_acquired",
+      "meta": {
+        "worker": "worker-b",
+        "token": 2
+      }
+    },
+    {
+      "ts": 1775177395.193,
+      "event": "processing_resumed",
+      "meta": {}
+    },
+    {
+      "ts": 1775177395.193,
+      "event": "completed",
+      "meta": {}
+    }
+  ]
+}

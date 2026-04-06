@@ -1,0 +1,14 @@
+{
+  "job_id": "d98f6b99-ec7f-4b09-a4de-ecabb9879556",
+  "worker_a_log": "{\"event\": \"lease_acquired\", \"ts\": \"2026-04-02T22:10:18.352764\", \"job_id\": \"d98f6b99-ec7f-4b09-a4de-ecabb9879556\", \"token\": 1, \"lease_expires_at\": \"2026-04-02 22:10:21.348466\", \"forced\": true, \"attempts\": 0, \"max_attempts\": 3}\n{\"event\": \"execution_started\", \"ts\": \"2026-04-02T22:10:18.354448\", \"job_id\": \"d98f6b99-ec7f-4b09-a4de-ecabb9879556\", \"token\": 1, \"attempts\": 0, \"max_attempts\": 3}\n{\"event\": \"stale_write_blocked\", \"ts\": \"2026-04-02T22:10:26.370027\", \"job_id\": \"d98f6b99-ec7f-4b09-a4de-ecabb9879556\", \"stale_token\": 1, \"current_token\": 2, \"reason\": \"token_mismatch\"}\n{\"event\": \"worker_exit\", \"ts\": \"2026-04-02T22:10:26.373098\", \"reason\": \"stale\"}\n",
+  "worker_b_log": "{\"event\": \"lease_acquired\", \"ts\": \"2026-04-02T22:10:23.217777\", \"job_id\": \"d98f6b99-ec7f-4b09-a4de-ecabb9879556\", \"token\": 2, \"lease_expires_at\": \"2026-04-02 22:10:26.211278\", \"forced\": true, \"attempts\": 0, \"max_attempts\": 3}\n{\"event\": \"execution_started\", \"ts\": \"2026-04-02T22:10:23.219167\", \"job_id\": \"d98f6b99-ec7f-4b09-a4de-ecabb9879556\", \"token\": 2, \"attempts\": 0, \"max_attempts\": 3}\n{\"event\": \"commit_ok\", \"ts\": \"2026-04-02T22:10:23.222480\", \"job_id\": \"d98f6b99-ec7f-4b09-a4de-ecabb9879556\", \"token\": 2, \"duration_s\": 0.003}\n{\"event\": \"worker_exit\", \"ts\": \"2026-04-02T22:10:23.223119\", \"reason\": \"success\"}\n",
+  "final_state": {
+    "id": "d98f6b99-ec7f-4b09-a4de-ecabb9879556",
+    "state": "succeeded",
+    "lease_owner": null,
+    "fencing_token": 2,
+    "lease_expires_at": null,
+    "attempts": 0,
+    "last_error": null
+  }
+}

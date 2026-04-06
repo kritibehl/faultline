@@ -1,0 +1,15 @@
+# Coordination Cost Metrics
+
+Required metrics:
+- faultline_claim_query_seconds
+- faultline_complete_query_seconds
+- faultline_reconcile_seconds
+- faultline_lease_renewal_seconds
+- faultline_claim_conflicts_total
+- faultline_empty_poll_cycles_total
+- faultline_db_round_trips_total
+- faultline_queue_wait_seconds
+- faultline_job_end_to_end_seconds
+- faultline_retry_scheduled_total
+- faultline_stale_write_rejections_total
+- faultline_duplicate_commit_attempts_total
