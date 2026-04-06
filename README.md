@@ -395,3 +395,13 @@ faultline/
 - Priority lanes with per-lane fairness guarantees
 - Cross-worker coordination cost model for larger worker counts
 - Visual execution timeline artifact for reclaim-race sequences
+
+
+## Formal Spec and Case Study
+
+To make the reclaim-race behavior easier to inspect and reason about, the repo includes:
+
+- `formal-spec/` — a minimal TLA+ model for fencing-token lease progression and stale-writer exclusion
+- `docs/case_studies/reclaim_race.md` — a walkthrough of the reclaim race and why stale writers are rejected
+
+These artifacts are meant to show not just that the system works, but why the correctness rule holds under adversarial timing.
