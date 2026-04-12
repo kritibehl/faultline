@@ -1,0 +1,8 @@
+{
+  "system": "faultline",
+  "fault_pct": 20,
+  "returncode": 0,
+  "stdout": "............                                                             [100%]\n12 passed in 70.40s (0:01:10)\n",
+  "stderr": "",
+  "duplicate_commit_rate_percent": 0.0
+}

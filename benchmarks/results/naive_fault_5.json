@@ -1,0 +1,15 @@
+{
+  "system": "naive_queue",
+  "job_count": 200,
+  "worker_count": 8,
+  "fault_pct": 5,
+  "completed": true,
+  "succeeded": 200,
+  "failed": 0,
+  "queued": 0,
+  "running": 0,
+  "duplicate_jobs": 2,
+  "duplicate_entries": 2,
+  "missing_jobs": 0,
+  "duplicate_commit_rate_percent": 1.0
+}
