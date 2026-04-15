@@ -1,3 +1,32 @@
+
+## Faultline++: Distributed Execution Correctness Framework
+
+Faultline is evolving beyond a queue implementation into a reusable correctness-oriented execution framework.
+
+### Framework-grade surface
+- Python SDK
+- minimal Go client
+- tenant-aware enqueue / worker registration contracts
+- external side-effect safety guidance
+- operator tuning recommendations
+- invariant validation and correctness scoring
+
+### Why this matters
+This moves Faultline toward:
+- backend / distributed systems
+- platform / frameworks
+- operator tooling
+- correctness-under-failure infrastructure
+
+See:
+- [Faultline++ roadmap](docs/FAULTLINE_PLUS_PLUS.md)
+- [Public API / SDK surface](docs/PUBLIC_API_SURFACE.md)
+- [Service boundary model](docs/SERVICE_BOUNDARY.md)
+- [Formal invariants](docs/INVARIANTS.md)
+- [Adoption guidance](docs/ADOPTION_MODEL.md)
+- [Correctness score model](docs/dashboard/CORRECTNESS_SCORE.md)
+
+
 <div align="center">
 
 # Faultline
@@ -138,6 +167,7 @@ Reconciliation           4.0%  ██░░░░░░░░░░░░░░�
 
 ### Decision Report (stale lease takeover)
 
+<<<<<<< HEAD
 ```json
 {
   "scenario": "stale_lease_takeover",
@@ -152,6 +182,35 @@ Reconciliation           4.0%  ██░░░░░░░░░░░░░░�
   "recommendation": "increase batch size, enable adaptive polling",
   "safe_for_production": true
 }
+=======
+## Coordination Cost
+
+
+## Tuning Guidance
+
+Key operational knobs:
+- batch_size
+- lease_duration
+- poll_interval
+- retry_backoff
+- reconciler_interval
+
+What each one trades:
+- larger batch_size lowers claim overhead but can worsen short-job starvation
+- longer lease_duration reduces premature reclaim but increases crash recovery lag
+- shorter poll_interval improves recovery time but increases coordination overhead
+ Breakdown
+
+Nearly **46% of execution time is coordination overhead** — making scheduling strategy and batching first-class system concerns, not premature optimization.
+
+```
+Useful execution time       53.5%  ████████████████████████████░░░░░░░░░
+Idle polling overhead       12.0%  ██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+Completion path             11.8%  █████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+Retry scheduling            11.1%  █████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+Claim path                   7.6%  ███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+Reconciliation               4.0%  ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
+>>>>>>> ca33a00 (feat: evolve Faultline into framework-grade correctness platform with SDK, invariants, tuning, and adoption model)
 ```
 
 ---
@@ -267,6 +326,17 @@ These boundaries are documented explicitly in [DESIGN.md](DESIGN.md).
 
 ---
 
+
+## Failure Drill Gallery
+
+Representative artifacts:
+- stale lease takeover report
+- retry storm report
+- fairness report
+- correctness audit
+- tuning recommendation
+
+
 ## Quickstart
 
 ```bash
@@ -293,7 +363,27 @@ open http://localhost:9090
 
 ## Stack
 
+<<<<<<< HEAD
 Python · PostgreSQL · Prometheus · OpenTelemetry · Docker Compose · Alembic
+=======
+
+## Invariants
+
+Faultline maintains these invariants:
+1. At most one valid commit per lease epoch
+2. Lower fencing token commits must be rejected once ownership advances
+3. Reconciliation must converge incomplete work to a reclaimable state
+4. Duplicate submission must not create duplicate committed side effects within the fenced path
+
+
+**PostgreSQL as coordination layer, not a message broker.** PostgreSQL's transactional guarantees enforce correctness at the database boundary without distributed consensus. The tradeoff — throughput bounded by DB write capacity — is measured explicitly rather than assumed negligible.
+
+**Fencing tokens over distributed locks.** Tokens are monotonically increasing per lease epoch. Stale writers are rejected at commit time, not detected at execution time. This avoids thundering-herd lock contention under crash-heavy workloads.
+
+**Reconciler over heartbeats.** The reconciler periodically reclaims jobs with expired leases. Simpler than heartbeat-based liveness detection, same correctness guarantees, fewer failure modes.
+
+**Artifact-first design.** Every benchmark and failure scenario produces structured, operator-readable output. Correctness and performance claims are evidence-backed, not asserted.
+>>>>>>> ca33a00 (feat: evolve Faultline into framework-grade correctness platform with SDK, invariants, tuning, and adoption model)
 
 ---
 

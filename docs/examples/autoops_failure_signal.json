@@ -1,0 +1,12 @@
+{
+  "failure_family": "stale_worker_race",
+  "severity": "high",
+  "safe_to_operate": false,
+  "evidence": {
+    "job_id": "job-123",
+    "stale_fencing_token": 1,
+    "current_fencing_token": 2,
+    "duplicate_commits_detected": 1
+  },
+  "recommended_action": "investigate reclaim timing, lease sizing, and stale-worker protection boundaries"
+}
