@@ -81,6 +81,18 @@ No distributed locks. No heartbeat consensus. No application-layer deduplication
 
 ## Benchmark: Faultline vs Naive Queue
 
+
+## Benchmark Visualization
+
+Faultline vs naive queue under injected failures:
+
+![Faultline vs Naive Benchmark](benchmarks/results/faultline_vs_naive.png)
+
+Key result:
+- Faultline: 0.0% duplicate commits
+- Naive: 1.0–2.5% duplicate commits under failure
+
+
 **The core question:** what happens when workers crash, leases expire, and stale workers attempt late commits?
 
 ### Setup
@@ -393,3 +405,20 @@ Faultline maintains these invariants:
 - [DetTrace](https://github.com/kritibehl/dettrace) — deterministic replay for concurrency failures
 - [Postmortem Atlas](https://github.com/kritibehl/postmortem-atlas) — real production outages, structured and analyzed
 - [AutoOps-Insight](https://github.com/kritibehl/AutoOps-Insight) — CI failure intelligence and incident triage
+
+
+## Failure Story: Stale Worker Race
+
+1. Worker A claims job and starts execution  
+2. Worker A stalls (network delay / GC pause)  
+3. Lease expires  
+4. Worker B claims the same job and completes it  
+5. Worker A wakes up and tries to commit  
+
+**Naive system:**
+- Accepts A’s commit → duplicate side effects → corruption  
+
+**Faultline:**
+- Rejects A’s commit via fencing token  
+- Only B’s result is valid  
+
