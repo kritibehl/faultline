@@ -1,44 +1,72 @@
-<div align="center">
-
 # Faultline — Crash-Safe Distributed Job Execution with Stale-Write Rejection
 
-**Proves distributed job correctness under failure — not just under normal conditions.**
+**Faultline prevents stale-worker corruption in distributed job execution.**
 
-[![Python](https://img.shields.io/badge/Python-3.11-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Coordination%20Layer-336791?style=flat-square&logo=postgresql&logoColor=white)](https://postgresql.org)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker&logoColor=white)](https://docker.com)
-[![Prometheus](https://img.shields.io/badge/Prometheus-Metrics-E6522C?style=flat-square&logo=prometheus&logoColor=white)](https://prometheus.io)
-
-</div>
+`Python` · `PostgreSQL` · `Prometheus` · `Docker Compose`
 
 ---
 
-## Key Result
+**In one line:** Lease expiry tells another worker it may claim the job. It does not stop the old worker from writing late. Fencing tokens fix the write boundary — enforced at the database, not the application.
+
+---
+
+## Duplicate Commit Rate: Faultline vs Naive Queue
 
 ```
-Duplicate commit rate under injected failure:
+  Fault    Naive Queue          Faultline
+  Rate     Duplicate Rate       Duplicate Rate
+  ──────────────────────────────────────────────
+   5%      ██░░░░░░░░  1.0%     ░░░░░░░░░░  0.0%  ✓
+  10%      █████░░░░░  2.5%     ░░░░░░░░░░  0.0%  ✓
+  20%      █████░░░░░  2.5%     ░░░░░░░░░░  0.0%  ✓
 
-  Faultline:    0.0%
-  Naive queue:  1.0–2.5%
+  200 jobs · 8 workers · 1,500+ failure scenarios · 0 invariant violations
 ```
 
 ---
 
-## The Problem
+## Run in 30 Seconds
 
-Stale workers can commit after losing ownership.
-
-A worker claims a job. It stalls — crash, GC pause, network partition. The lease expires. Another worker reclaims the job and finishes it. The first worker recovers, finishes executing, and commits.
-
-**Two workers. One job. Two committed results. No error. No alert.**
-
-Lease timeouts alone do not fix this. A timed-out lease prevents a *new* claim — it does not stop a *stale* worker that already holds a reference from committing late.
+```bash
+git clone https://github.com/kritibehl/faultline
+cd faultline
+docker compose up -d --build && make migrate
+make drills                                  # run failure scenarios
+./scripts/run_real_benchmark_comparison.sh   # Faultline vs naive queue
+```
 
 ---
 
-## The Fix
+## Why This Project Matters in Hiring Terms
 
-Faultline enforces commit validity using fencing tokens at the DB boundary.
+- Shows distributed systems correctness thinking: fencing tokens, lease semantics, database-boundary enforcement
+- Shows failure engineering: 1,500+ injected scenarios, measured recovery times, zero invariant violations
+- Shows production tradeoff analysis: coordination overhead quantified, fairness impact measured
+- Relevant to: backend platform, distributed infrastructure, SRE, systems correctness
+
+---
+
+## Proof, Up Front
+
+| Metric | Result |
+|---|---|
+| Duplicate commit rate — Faultline, 5–20% injected faults | **0.0%** |
+| Duplicate commit rate — naive queue, same conditions | **1.0–2.5%** |
+| Jobs tested | 200 |
+| Workers | 8 |
+| Failure scenarios validated | 1,500+ |
+| Invariant violations | **0** |
+| Coordination overhead (worst case, measured) | 46.5% of total runtime |
+
+![Faultline vs Naive Queue Benchmark](benchmarks/results/faultline_vs_naive.png)
+
+---
+
+## The 60-Second Explanation
+
+A worker claims a job and starts executing. It stalls — network partition, GC pause, crash. The lease expires. Another worker reclaims the job and finishes it. The first worker recovers, finishes executing, and tries to commit.
+
+Lease expiry tells the *next* worker it may claim the job. It does not stop the *old* worker from writing late. That's the gap. Fencing tokens fix the write boundary: every commit attempt carries a token, and the database rejects any token that isn't the current one.
 
 ```
 Worker A claims job → fencing_token = 7
@@ -46,92 +74,23 @@ Network partition  → lease expires
 Worker B reclaims  → fencing_token = 8
 Worker B commits   → ledger entry (job_42, token=8) written ✓
 Worker A recovers  → attempts commit with token=7
-Fencing check      → token=7 < current token=8 → REJECTED at DB boundary ✗
+Fencing check      → token 7 < current token 8 → REJECTED at DB boundary ✗
 
-Result: exactly one ledger entry. zero duplicates.
+Result: exactly one ledger entry. Zero duplicates.
 ```
 
-No distributed locks. No heartbeat consensus. No application-layer deduplication. Correctness enforced at commit time.
+No distributed locks. No heartbeat consensus. No application-layer deduplication. The `UNIQUE(job_id, fencing_token)` constraint on the ledger table makes this enforced at the database, not assumed at the application.
 
 ---
 
-## Benchmark
+## What Faultline Does
 
-![Faultline vs Naive Benchmark](benchmarks/results/faultline_vs_naive.png)
-
-| Fault rate | Faultline duplicate rate | Naive duplicate rate |
-|---|---|---|
-| 5% | **0.0%** | 1.0% |
-| 10% | **0.0%** | 2.5% |
-| 20% | **0.0%** | 2.5% |
-
-```bash
-./scripts/run_real_benchmark_comparison.sh
-```
-
----
-
-## What Faultline Does That Typical Queues Don't
-
-| Failure mode | Typical queue | Faultline |
-|---|---|---|
-| Stale writer after crash | Duplicate commit possible | Rejected via fencing token at DB boundary |
-| Concurrent reclaim race | Race condition risk | Deterministic: higher token wins, lower rejected |
-| Retry producing duplicate | At-least-once semantics | Idempotent via `UNIQUE(job_id, fencing_token)` |
-| Partial write + crash | Inconsistent state | Reconciler converges to correct terminal state |
-| Coordination overhead | Unmeasured | **Measured: 46.5% of runtime in worst case** |
-
----
-
-## Validated Across 1,500+ Failure Scenarios
-
-| Scenario | Guarantee held | Throughput impact | p95 delta | Recovery |
-|---|---|---|---|---|
-| Worker crash mid-execution | No duplicate commit | −16.2% | +4.0% | 1.1s |
-| Stale lease takeover | Stale write rejected | −5.9% | +1.6% | 0.4s |
-| Timeout burst | Retries preserve correctness | −26.8% | +12.1% | 2.3s |
-| Retry storm | Correctness under contention | −32.5% | +15.0% | 2.8s |
-| Duplicate submission | Idempotency enforced | ~0% | ~0% | — |
-| Partial write + crash | Reconciler converges | minimal | minimal | 0.8s |
-
-**Zero duplicate commits across all scenarios in the fenced execution path.**
-
----
-
-## Decision Report (stale lease takeover)
-
-```json
-{
-  "scenario": "stale_lease_takeover",
-  "workers": 8,
-  "batch_size": 10,
-  "duplicate_commits": 0,
-  "stale_writes_prevented": true,
-  "throughput_impact_pct": -5.9,
-  "p95_latency_delta_pct": 1.6,
-  "recovery_time_seconds": 0.4,
-  "bottleneck": "claim_path",
-  "recommendation": "increase batch size, enable adaptive polling",
-  "safe_for_production": true
-}
-```
-
----
-
-## Coordination Cost: The Hidden Story
-
-Nearly **46% of execution time is coordination overhead** — making scheduling strategy and batching first-class engineering decisions, not premature optimization.
-
-```
-Useful execution        53.5%  ████████████████████████████░░░░░░░░░
-Idle polling            12.0%  ██████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-Completion path         11.8%  █████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-Retry scheduling        11.1%  █████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-Claim path               7.6%  ███░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-Reconciliation           4.0%  ██░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░
-```
-
-Increasing batch size from 1 to 10 reduced claim-path overhead from 18.3% to 7.6% of total runtime — while introducing measurable starvation for short jobs in mixed workloads. The tradeoff is real and quantified.
+- **Rejects** stale writes at the database boundary using monotonically increasing fencing tokens
+- **Prevents** duplicate commits without distributed locks or heartbeat consensus
+- **Validates** correctness across 1,500+ injected failure scenarios: crashes, lease takeovers, retry storms, partial writes
+- **Measures** coordination overhead explicitly — claim path, idle polling, reconciliation — not treated as negligible
+- **Quantifies** fairness tradeoffs: short-job starvation at `batch_size=10`, measured and reported
+- **Reconciles** incomplete state after crash, converging to correct terminal state without manual intervention
 
 ---
 
@@ -163,40 +122,116 @@ Increasing batch size from 1 to 10 reduced claim-path overhead from 18.3% to 7.6
 └────────────────────────────────────────────────────────────────┘
 ```
 
+**Naive queue vs Faultline — what changes:**
+
+```
+Naive queue:
+  claim → execute → commit
+                      ↑
+              stale worker can reach this
+              even after lease expires
+
+Faultline:
+  claim → execute → fencing check → commit (if current token)
+                         ↑
+                 stale writer is stopped here
+                 at the DB boundary, not the app layer
+```
+
 ---
 
-## Quickstart
+## Evidence
+
+| Scenario | Guarantee | Throughput impact | p95 delta | Recovery |
+|---|---|---|---|---|
+| Worker crash mid-execution | No duplicate commit | −16.2% | +4.0% | 1.1s |
+| Stale lease takeover | Stale write rejected | −5.9% | +1.6% | 0.4s |
+| Timeout burst | Retries preserve correctness | −26.8% | +12.1% | 2.3s |
+| Retry storm | Correctness under contention | −32.5% | +15.0% | 2.8s |
+| Duplicate submission | Idempotency enforced | ~0% | ~0% | — |
+| Partial write + crash | Reconciler converges | minimal | minimal | 0.8s |
+
+**Zero duplicate commits across all scenarios.**
+
+**Benchmark — Faultline vs naive queue (200 jobs, 8 workers):**
+
+| Fault rate | Faultline duplicate rate | Naive duplicate rate |
+|---|---|---|
+| 5% | **0.0%** | 1.0% |
+| 10% | **0.0%** | 2.5% |
+| 20% | **0.0%** | 2.5% |
+
+---
+
+## Coordination Cost: Measured, Not Assumed
+
+```
+Useful execution        53.5%  ████████████████████████████
+Idle polling            12.0%  ██████
+Completion path         11.8%  █████
+Retry scheduling        11.1%  █████
+Claim path               7.6%  ███
+Reconciliation           4.0%  ██
+```
+
+Increasing batch size 1 → 10 reduced claim-path overhead from 18.3% to 7.6% of total runtime — but introduced measurable short-job starvation in mixed workloads. That tradeoff is real, quantified, and documented.
+
+---
+
+## Quick Demo
 
 ```bash
 docker compose up -d --build
 make migrate
 curl http://localhost:8000/health
-
-# Run failure drills
-make drills
-
-# Run benchmark comparison
-./scripts/run_real_benchmark_comparison.sh
-
-# View metrics
-open http://localhost:9090
+make drills                                        # run failure scenarios
+./scripts/run_real_benchmark_comparison.sh         # Faultline vs naive queue
 ```
 
 ---
 
-## Fairness Under Mixed Workloads
+## Example Output
 
+**Decision report — stale lease takeover:**
+```json
+{
+  "scenario": "stale_lease_takeover",
+  "workers": 8,
+  "batch_size": 10,
+  "duplicate_commits": 0,
+  "stale_writes_prevented": true,
+  "throughput_impact_pct": -5.9,
+  "p95_latency_delta_pct": 1.6,
+  "recovery_time_seconds": 0.4,
+  "bottleneck": "claim_path",
+  "recommendation": "increase batch size, enable adaptive polling",
+  "safe_for_production": true
+}
+```
+
+**Fairness report — mixed workload, batch_size=10:**
 ```json
 {
   "workload": "mixed_short_long",
-  "workers": 8,
-  "batch_size": 10,
   "median_wait_ms": { "short": 42, "long": 280 },
   "max_wait_ms": 1840,
   "starvation_count": 3,
   "short_job_penalty_pct": 12.4,
   "finding": "Long jobs acquired disproportionate worker slots at batch_size=10"
 }
+```
+
+---
+
+## Full Setup
+
+```bash
+docker compose up -d --build
+make migrate
+curl http://localhost:8000/health
+make drills
+./scripts/run_real_benchmark_comparison.sh
+open http://localhost:9090   # Prometheus metrics
 ```
 
 ---
@@ -220,52 +255,45 @@ Prometheus metrics:
 artifacts/reports/
 ├── decision_report.json          # safe_for_production · bottleneck · recommendation
 ├── failure_matrix.md             # scenario × guarantee × throughput × recovery
-├── coordination_breakdown.md     # claim / poll / complete / reconcile breakdown
+├── coordination_breakdown.md     # claim / poll / complete / reconcile overhead
 ├── fairness_report.md            # wait distribution · starvation · short-job penalty
-├── correctness_audit.md          # violations=0, stale write attempts
+├── correctness_audit.md          # violations=0, stale write attempts logged
 └── tuning_recommendation.md      # batch size · poll strategy · retry backoff
 ```
 
 ---
 
-## Key Design Decisions
+## Why This Matters
 
-**PostgreSQL as coordination layer, not a message broker.** Transactional guarantees enforce correctness at the database boundary without distributed consensus. The tradeoff — throughput bounded by DB write capacity — is measured explicitly rather than assumed negligible.
+Every distributed system that processes jobs eventually hits this failure class. Worker crashes don't surface stale writes immediately — they show up as billing double-charges, inventory miscounts, notification floods, or audit records that don't reconcile.
 
-**Fencing tokens over distributed locks.** Tokens are monotonically increasing per lease epoch. Stale writers are rejected at commit time, not detected at execution time. Avoids thundering-herd lock contention under crash-heavy workloads.
-
-**`FOR UPDATE SKIP LOCKED` over `LISTEN/NOTIFY`.** Avoids blocking claim contention at the PostgreSQL level. The benchmark quantifies the idle polling cost directly.
-
-**Reconciler over heartbeats.** Simpler than heartbeat-based liveness detection, same correctness guarantees, fewer failure modes.
+Fencing tokens over distributed locks was a deliberate choice. Tokens are monotonically increasing per lease epoch. A stale writer is rejected at commit time, not detected at execution time. This avoids thundering-herd lock contention under crash-heavy workloads and keeps correctness enforcement at the database — where it can't be bypassed by application-layer bugs.
 
 ---
 
-## What Faultline Does Not Protect Against
+## Limitations
 
-- Byzantine faults (a worker fabricating a fencing token)
-- PostgreSQL coordinator crash without external HA
-- Exactly-once *side effects* if the job's external action is not idempotent
-
-These boundaries are documented explicitly in [DESIGN.md](DESIGN.md).
-
----
-
-## Why This Matters in Production
-
-Every distributed system that processes jobs, events, or tasks eventually hits this class of failure. Worker crashes don't surface stale writes immediately — they show up as billing double-charges, inventory miscounts, notification floods, or audit records that don't reconcile. Most systems handle this with retry logic and hope. Faultline handles it with database-boundary enforcement: the stale worker cannot physically commit, regardless of what the application layer does.
-
----
-
-## Scope and Limitations
-
-- Guarantees correctness at the database commit boundary, not exactly-once for arbitrary external side effects
-- Coordination requires PostgreSQL; not designed for broker-based queues
+- Does not protect against Byzantine faults (a worker fabricating a fencing token)
+- Requires PostgreSQL; not designed for broker-based queues
 - Benchmark uses simulated fault injection, not production traffic
-- Reconciliation currently runs on a polling interval, not event-triggered
+- Reconciliation runs on a polling interval, not event-triggered
+- Exactly-once semantics apply at the commit boundary; external side effects require idempotent job design
 
 ---
 
-## Signals For
+## Interview Notes
+
+**Design decision:** Fencing tokens over distributed locks. Correctness at the DB boundary is stronger than coordination at the application layer — a stale worker can't commit regardless of what it believes about its own state.
+
+**Hard problem:** Getting `FOR UPDATE SKIP LOCKED` right under concurrent reclaim pressure. Naive implementation produces starvation at high worker counts; batch-claim reduces contention but introduces fairness tradeoffs that had to be measured.
+
+**Tradeoff:** Batch size vs short-job fairness. `batch_size=10` cuts claim overhead from 18.3% to 7.6%, but long jobs starve short ones in mixed workloads. The right value depends on workload shape — which means measuring, not guessing.
+
+**What I'd build next:** Event-triggered reconciliation. Polling-based reconciliation introduces unnecessary recovery latency when the failure is immediately detectable. A `LISTEN/NOTIFY`-driven reconciler would cut median recovery time significantly.
+
+---
+
+## Relevant To
 
 `Backend Engineering` · `Distributed Systems` · `Platform / Infrastructure` · `SRE` · `Systems Correctness`
 
