@@ -66,7 +66,7 @@ make drills                                  # run failure scenarios
 
 A worker claims a job and starts executing. It stalls — network partition, GC pause, crash. The lease expires. Another worker reclaims the job and finishes it. The first worker recovers, finishes executing, and tries to commit.
 
-Lease expiry tells the *next* worker it may claim the job. It does not stop the *old* worker from writing late. That's the gap. Fencing tokens fix the write boundary: every commit attempt carries a token, and the database rejects any token that isn't the current one.
+Lease expiry tells the *next* worker it may claim the job. It does not stop the *old* worker from writing late. That's the gap. Fencing tokens fix the write boundary: every commit attempt carries a token and the database rejects any token that isn't the current one.
 
 ```
 Worker A claims job → fencing_token = 7
@@ -265,7 +265,7 @@ artifacts/reports/
 
 ## Why This Matters
 
-Every distributed system that processes jobs eventually hits this failure class. Worker crashes don't surface stale writes immediately — they show up as billing double-charges, inventory miscounts, notification floods, or audit records that don't reconcile.
+Every distributed system that processes jobs eventually hits this failure class. Worker crashes don't surface stale writes immediately — they show up as billing double-charges, inventory miscounts, notification floods or audit records that don't reconcile.
 
 Fencing tokens over distributed locks was a deliberate choice. Tokens are monotonically increasing per lease epoch. A stale writer is rejected at commit time, not detected at execution time. This avoids thundering-herd lock contention under crash-heavy workloads and keeps correctness enforcement at the database — where it can't be bypassed by application-layer bugs.
 
