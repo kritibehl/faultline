@@ -1,0 +1,6 @@
+{
+  "failure_case": "duplicate_commit_prevented",
+  "expected_behavior": "only one commit log entry exists for the job",
+  "observed_result": "duplicate commit prevented",
+  "metric": "faultline_duplicate_commit_total"
+}

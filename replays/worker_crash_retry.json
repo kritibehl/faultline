@@ -1,0 +1,6 @@
+{
+  "failure_case": "worker_crash_retry",
+  "expected_behavior": "crashed worker lease expires and job becomes reclaimable",
+  "observed_result": "job retried without accepting stale commit",
+  "metric": "faultline_retry_total"
+}

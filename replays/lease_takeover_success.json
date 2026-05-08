@@ -1,0 +1,6 @@
+{
+  "failure_case": "lease_takeover_success",
+  "expected_behavior": "worker B reclaims expired lease and advances fencing token",
+  "observed_result": "lease takeover succeeds",
+  "metric": "faultline_lease_takeover_total"
+}

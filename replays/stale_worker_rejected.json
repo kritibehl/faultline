@@ -1,0 +1,6 @@
+{
+  "failure_case": "stale_worker_rejected",
+  "expected_behavior": "worker A late commit is rejected after worker B advances fencing token",
+  "observed_result": "stale write rejected",
+  "metric": "faultline_stale_write_rejected_total"
+}

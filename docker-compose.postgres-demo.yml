@@ -1,0 +1,12 @@
+services:
+  faultline-postgres-demo:
+    image: postgres:15
+    container_name: faultline-postgres-demo
+    environment:
+      POSTGRES_USER: faultline
+      POSTGRES_PASSWORD: faultline
+      POSTGRES_DB: faultline_demo
+    ports:
+      - "55432:5432"
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
