@@ -1,0 +1,29 @@
+name: Faultline CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest requests psycopg2-binary matplotlib
+      - name: Smoke test docs/helpers
+        run: |
+          python examples/replay_stale_worker.py
+          python - <<'PY'
+          from metrics.prometheus_metrics import FaultlineMetrics
+          from tracing.otel_trace import new_trace_id
+          print(FaultlineMetrics().render_prometheus())
+          print(new_trace_id())
+          PY
