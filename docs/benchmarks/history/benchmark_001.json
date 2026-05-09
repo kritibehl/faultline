@@ -1,0 +1,17 @@
+{
+  "fault_rates_percent": [
+    5,
+    10,
+    20
+  ],
+  "faultline_duplicate_commit_rate_percent": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "naive_duplicate_commit_rate_percent": [
+    1.0,
+    2.5,
+    2.5
+  ]
+}

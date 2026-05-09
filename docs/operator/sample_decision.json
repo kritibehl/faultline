@@ -1,0 +1,8 @@
+{
+  "safe_to_operate": true,
+  "failure_family": "stale_worker_race",
+  "severity": "high",
+  "reason": "stale workers attempted commits but fencing-token validation rejected them",
+  "recommended_action": "review lease duration and worker pause behavior",
+  "release_action": "review"
+}

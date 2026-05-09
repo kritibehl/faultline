@@ -1,0 +1,9 @@
+{
+  "recommended_batch_size": 10,
+  "recommended_poll_interval_ms": 100,
+  "recommended_lease_duration_seconds": 60,
+  "reasons": [
+    "lease takeovers observed; increase lease duration to reduce premature reclaim",
+    "claim latency observed; use batching to reduce coordinator round trips"
+  ]
+}
