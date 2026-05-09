@@ -1,0 +1,19 @@
+{
+  "profiles": [
+    {
+      "name": "short_jobs_high_concurrency",
+      "recommended_batch_size": 10,
+      "risk": "coordination contention"
+    },
+    {
+      "name": "mixed_latency_jobs",
+      "recommended_batch_size": 5,
+      "risk": "starvation risk"
+    },
+    {
+      "name": "retry_heavy_pipeline",
+      "recommended_poll_interval_ms": 250,
+      "risk": "retry amplification"
+    }
+  ]
+}
