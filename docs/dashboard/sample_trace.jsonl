@@ -1,0 +1,5 @@
+{"trace_id": "0aac82ae5e0f4adfb011b80f1f4bc5c7", "phase": "claim_job", "job_id": "job-1", "worker_id": "worker-a", "lease_epoch": 1, "fencing_token": 1, "timestamp": "2026-05-09T02:20:19.964542+00:00"}
+{"trace_id": "0aac82ae5e0f4adfb011b80f1f4bc5c7", "phase": "acquire_lease", "job_id": "job-1", "worker_id": "worker-a", "lease_epoch": 1, "fencing_token": 1, "timestamp": "2026-05-09T02:20:19.964820+00:00"}
+{"trace_id": "0aac82ae5e0f4adfb011b80f1f4bc5c7", "phase": "lease_takeover", "job_id": "job-1", "worker_id": "worker-b", "lease_epoch": 2, "fencing_token": 2, "timestamp": "2026-05-09T02:20:19.964824+00:00"}
+{"trace_id": "0aac82ae5e0f4adfb011b80f1f4bc5c7", "phase": "commit_result", "job_id": "job-1", "worker_id": "worker-b", "lease_epoch": 2, "fencing_token": 2, "timestamp": "2026-05-09T02:20:19.964825+00:00"}
+{"trace_id": "0aac82ae5e0f4adfb011b80f1f4bc5c7", "phase": "reject_stale_write", "job_id": "job-1", "worker_id": "worker-a", "lease_epoch": 1, "fencing_token": 1, "timestamp": "2026-05-09T02:20:19.964827+00:00"}

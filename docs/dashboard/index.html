@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Faultline Benchmark Dashboard</title>
+</head>
+<body>
+  <h1>Faultline Benchmark Dashboard</h1>
+  <p><strong>Faultline:</strong> 0.0% duplicate commits under 5–20% injected failures.</p>
+  <p><strong>Naive lease-only baseline:</strong> 1.0–2.5% duplicate commits.</p>
+
+  <h2>Benchmark Chart</h2>
+  <img src="../../benchmarks/results/faultline_vs_naive.png" width="720" />
+
+  <h2>Replay Cases</h2>
+  <ul>
+    <li>stale_worker_rejected</li>
+    <li>lease_takeover_success</li>
+    <li>duplicate_commit_prevented</li>
+    <li>worker_crash_retry</li>
+  </ul>
+</body>
+</html>
