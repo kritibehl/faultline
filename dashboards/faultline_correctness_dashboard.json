@@ -1,0 +1,23 @@
+{
+  "title": "Faultline Correctness Dashboard",
+  "panels": [
+    {
+      "title": "Stale Write Rejections",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "faultline_stale_write_rejected_total"
+        }
+      ]
+    },
+    {
+      "title": "Lease Takeovers",
+      "type": "graph",
+      "targets": [
+        {
+          "expr": "faultline_lease_takeover_total"
+        }
+      ]
+    }
+  ]
+}

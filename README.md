@@ -311,3 +311,16 @@ Python · PostgreSQL · Prometheus · OpenTelemetry · Docker Compose · Alembic
 - [DetTrace](https://github.com/kritibehl/dettrace) — deterministic replay for concurrency failures
 - [AutoOps-Insight](https://github.com/kritibehl/AutoOps-Insight) — CI failure intelligence and incident triage
 - [Postmortem Atlas](https://github.com/kritibehl/postmortem-atlas) — real production outages, structured and analyzed
+
+
+## Observability and Replay Tooling
+
+Faultline includes:
+
+- Prometheus-compatible metrics endpoint
+- OpenTelemetry-style trace exports
+- replayable failure artifacts
+- benchmark dashboards
+- structured stale-write rejection signals
+- replay validation tooling
+
