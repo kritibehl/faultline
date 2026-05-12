@@ -1,0 +1,37 @@
+{
+  "replay_case": "async_failure_recovery",
+  "timeline": [
+    {
+      "step": 1,
+      "phase": "claim_job",
+      "worker": "worker-a",
+      "fencing_token": 1
+    },
+    {
+      "step": 2,
+      "phase": "dependency_timeout",
+      "worker": "worker-a",
+      "action": "schedule_retry"
+    },
+    {
+      "step": 3,
+      "phase": "retry_queue",
+      "state": "queued",
+      "next_run_at": "backoff+jitter"
+    },
+    {
+      "step": 4,
+      "phase": "reclaim_job",
+      "worker": "worker-b",
+      "fencing_token": 2
+    },
+    {
+      "step": 5,
+      "phase": "commit_result",
+      "worker": "worker-b",
+      "result": "success"
+    }
+  ],
+  "expected_behavior": "retry path advances fencing token and rejects any stale worker commit from earlier attempts",
+  "observed_result": "async replay recovery preserves commit correctness"
+}

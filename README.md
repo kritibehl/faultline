@@ -324,3 +324,25 @@ Faultline includes:
 - structured stale-write rejection signals
 - replay validation tooling
 
+
+
+## Operational Backend Artifacts
+
+Faultline includes backend/infra realism artifacts for:
+
+- PostgreSQL slow-query and lock diagnostics
+- connection-pool diagnostics
+- transaction retry examples
+- migration notes
+- async retry queue workflows
+- dead-letter queue design
+- async replay recovery
+- OTEL Collector configuration
+- Jaeger-compatible trace examples
+- trace correlation documentation
+
+Directories:
+- `postgres_ops/`
+- `async_runtime/`
+- `otel/`
+

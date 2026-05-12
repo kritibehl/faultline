@@ -1,0 +1,33 @@
+{
+  "trace_id": "trace-demo-1",
+  "spans": [
+    {
+      "span_name": "claim_job",
+      "job_id": "job-1",
+      "worker_id": "worker-a",
+      "lease_epoch": 1,
+      "fencing_token": 1
+    },
+    {
+      "span_name": "lease_takeover",
+      "job_id": "job-1",
+      "worker_id": "worker-b",
+      "lease_epoch": 2,
+      "fencing_token": 2
+    },
+    {
+      "span_name": "commit_result",
+      "job_id": "job-1",
+      "worker_id": "worker-b",
+      "lease_epoch": 2,
+      "fencing_token": 2
+    },
+    {
+      "span_name": "reject_stale_write",
+      "job_id": "job-1",
+      "worker_id": "worker-a",
+      "lease_epoch": 1,
+      "fencing_token": 1
+    }
+  ]
+}

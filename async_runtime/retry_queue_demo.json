@@ -1,0 +1,31 @@
+{
+  "workflow": "faultline_retry_queue_demo",
+  "description": "retry queue behavior for transient worker failures",
+  "states": [
+    {
+      "state": "running",
+      "event": "worker_error",
+      "action": "record failure and increment attempt"
+    },
+    {
+      "state": "queued",
+      "event": "retry_scheduled",
+      "action": "set next_run_at using retry backoff"
+    },
+    {
+      "state": "running",
+      "event": "worker_reclaims",
+      "action": "advance fencing token"
+    },
+    {
+      "state": "succeeded",
+      "event": "commit_validated",
+      "action": "commit only if fencing token is current"
+    }
+  ],
+  "metrics": [
+    "faultline_retry_total",
+    "faultline_claim_latency_ms",
+    "faultline_commit_latency_ms"
+  ]
+}

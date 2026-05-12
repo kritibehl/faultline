@@ -1,0 +1,36 @@
+{
+  "component": "faultline_postgres_pool_diagnostics",
+  "signals": [
+    {
+      "name": "active_connections",
+      "description": "number of active database connections used by workers and reconcilers",
+      "risk_when_high": "pool exhaustion or coordinator pressure"
+    },
+    {
+      "name": "idle_in_transaction",
+      "description": "connections holding transactions open without progress",
+      "risk_when_high": "lock retention and reclaim delay"
+    },
+    {
+      "name": "claim_latency_ms",
+      "description": "time spent acquiring a job lease",
+      "risk_when_high": "claim-path contention"
+    },
+    {
+      "name": "commit_latency_ms",
+      "description": "time spent validating fencing token and writing commit log",
+      "risk_when_high": "commit boundary contention"
+    }
+  ],
+  "example_queries": {
+    "pool_state": "SELECT state, count(*) FROM pg_stat_activity GROUP BY state;",
+    "idle_in_transaction": "SELECT pid, now() - xact_start AS duration, query FROM pg_stat_activity WHERE state = 'idle in transaction';",
+    "worker_connections": "SELECT application_name, count(*) FROM pg_stat_activity GROUP BY application_name;"
+  },
+  "operator_actions": [
+    "increase pool size only if database CPU and lock waits are healthy",
+    "reduce worker concurrency when lock waits dominate",
+    "use batch claiming to reduce round trips",
+    "increase lease duration when workers consistently exceed lease window"
+  ]
+}
