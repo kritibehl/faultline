@@ -1,0 +1,80 @@
+{
+  "title": "Faultline Runtime Health Dashboard",
+  "uid": "faultline-runtime-health",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "10s",
+  "tags": ["faultline", "distributed-systems", "correctness", "leases"],
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Duplicate Risk",
+      "gridPos": {"x": 0, "y": 0, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "faultline_duplicate_risk_total",
+          "legendFormat": "duplicate-risk paths"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Expired Leases",
+      "gridPos": {"x": 12, "y": 0, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "faultline_expired_leases_total",
+          "legendFormat": "expired leases"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Stale Worker Rejections",
+      "gridPos": {"x": 0, "y": 8, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "faultline_stale_write_rejected_total",
+          "legendFormat": "stale-write rejections"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Retry Queue Growth",
+      "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
+      "targets": [
+        {
+          "expr": "faultline_retry_total",
+          "legendFormat": "retries"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Safe To Operate",
+      "gridPos": {"x": 0, "y": 16, "w": 8, "h": 4},
+      "targets": [
+        {
+          "expr": "faultline_safe_to_operate",
+          "legendFormat": "safe"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Claim / Commit Latency",
+      "gridPos": {"x": 8, "y": 16, "w": 16, "h": 6},
+      "targets": [
+        {
+          "expr": "faultline_claim_latency_ms",
+          "legendFormat": "claim latency"
+        },
+        {
+          "expr": "faultline_commit_latency_ms",
+          "legendFormat": "commit latency"
+        }
+      ]
+    }
+  ]
+}
