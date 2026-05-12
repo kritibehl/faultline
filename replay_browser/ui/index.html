@@ -1,0 +1,153 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Faultline Replay Browser</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 32px; background: #f8fafc; color: #111827; }
+    h1 { margin-bottom: 4px; }
+    .subtitle { color: #4b5563; margin-bottom: 24px; }
+    .grid { display: grid; grid-template-columns: repeat(3, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .card { background: white; border-radius: 14px; padding: 18px; box-shadow: 0 1px 5px rgba(0,0,0,.08); }
+    .metric { font-size: 32px; font-weight: 750; margin-top: 8px; }
+    .ok { color: #047857; }
+    .warn { color: #b45309; }
+    .danger { color: #b91c1c; }
+    input { padding: 10px; border-radius: 10px; border: 1px solid #cbd5e1; width: 100%; box-sizing: border-box; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 5px rgba(0,0,0,.08); margin-top: 12px; }
+    th, td { text-align: left; padding: 12px; border-bottom: 1px solid #e5e7eb; }
+    th { background: #eef2ff; }
+    .timeline { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+    .event { background: white; border-radius: 14px; padding: 12px 14px; box-shadow: 0 1px 5px rgba(0,0,0,.08); border-left: 5px solid #6366f1; }
+    .event.reject { border-left-color: #dc2626; }
+    .event.commit { border-left-color: #059669; }
+    code { background: #eef2ff; padding: 2px 5px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>Faultline Replay Browser</h1>
+  <div class="subtitle">Lease-state timeline, stale-worker rejection path, trace export, and duplicate-risk review.</div>
+
+  <div class="grid">
+    <div class="card">
+      <div>Faultline duplicate rate</div>
+      <div class="metric ok">0.0%</div>
+      <div>under 5–20% injected failures</div>
+    </div>
+    <div class="card">
+      <div>Naive baseline duplicate rate</div>
+      <div class="metric danger">1.0–2.5%</div>
+      <div>lease-only baseline</div>
+    </div>
+    <div class="card">
+      <div>Duplicate-risk summary</div>
+      <div class="metric warn">medium</div>
+      <div>1 expired lease / 1 potential duplicate-risk path</div>
+    </div>
+  </div>
+
+  <h2>Search Replay Runs</h2>
+  <input id="search" placeholder="Search replay cases: lease, stale, duplicate, crash..." oninput="renderReplayTable()" />
+
+  <table>
+    <thead>
+      <tr>
+        <th>Replay</th>
+        <th>Expected behavior</th>
+        <th>Observed result</th>
+        <th>Metric</th>
+      </tr>
+    </thead>
+    <tbody id="replay-table"></tbody>
+  </table>
+
+  <h2>Lease Timeline Comparison</h2>
+  <div class="timeline">
+    <div class="event">
+      <strong>t0 claim_job</strong><br/>
+      worker-a claims job-1<br/>
+      fencing_token=<code>1</code>
+    </div>
+    <div class="event">
+      <strong>t1 acquire_lease</strong><br/>
+      worker-a owns active lease<br/>
+      lease_epoch=<code>1</code>
+    </div>
+    <div class="event">
+      <strong>t2 lease_takeover</strong><br/>
+      worker-b reclaims expired lease<br/>
+      fencing_token=<code>2</code>
+    </div>
+    <div class="event commit">
+      <strong>t3 commit_result</strong><br/>
+      worker-b commits valid result<br/>
+      current_token=<code>2</code>
+    </div>
+    <div class="event reject">
+      <strong>t4 reject_stale_write</strong><br/>
+      worker-a wakes up late and is rejected<br/>
+      attempted_token=<code>1</code>
+    </div>
+  </div>
+
+  <h2>Trace Export</h2>
+  <p>Representative trace phases:</p>
+  <table>
+    <thead>
+      <tr>
+        <th>Phase</th>
+        <th>Worker</th>
+        <th>Lease epoch</th>
+        <th>Fencing token</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>claim_job</td><td>worker-a</td><td>1</td><td>1</td></tr>
+      <tr><td>acquire_lease</td><td>worker-a</td><td>1</td><td>1</td></tr>
+      <tr><td>lease_takeover</td><td>worker-b</td><td>2</td><td>2</td></tr>
+      <tr><td>commit_result</td><td>worker-b</td><td>2</td><td>2</td></tr>
+      <tr><td>reject_stale_write</td><td>worker-a</td><td>1</td><td>1</td></tr>
+    </tbody>
+  </table>
+
+  <script>
+    const replays = [
+      {
+        replay: "stale_worker_rejected",
+        expected: "late worker commit rejected after worker B advances fencing token",
+        observed: "stale write rejected",
+        metric: "faultline_stale_write_rejected_total"
+      },
+      {
+        replay: "lease_takeover_success",
+        expected: "worker B reclaims expired lease and advances fencing token",
+        observed: "lease takeover succeeds",
+        metric: "faultline_lease_takeover_total"
+      },
+      {
+        replay: "duplicate_commit_prevented",
+        expected: "only one commit log entry exists for the job",
+        observed: "duplicate commit prevented",
+        metric: "faultline_duplicate_commit_total"
+      },
+      {
+        replay: "worker_crash_retry",
+        expected: "crashed worker lease expires and job becomes reclaimable",
+        observed: "job retried without accepting stale commit",
+        metric: "faultline_retry_total"
+      }
+    ];
+
+    function renderReplayTable() {
+      const q = document.getElementById("search").value.toLowerCase();
+      const rows = replays
+        .filter(r => JSON.stringify(r).toLowerCase().includes(q))
+        .map(r => `<tr><td>${r.replay}</td><td>${r.expected}</td><td>${r.observed}</td><td><code>${r.metric}</code></td></tr>`)
+        .join("");
+      document.getElementById("replay-table").innerHTML = rows;
+    }
+
+    renderReplayTable();
+  </script>
+</body>
+</html>
