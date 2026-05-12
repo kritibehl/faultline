@@ -1,0 +1,13 @@
+{
+  "query": "lease",
+  "matches": [
+    {
+      "file": "worker_crash_retry.json",
+      "failure_case": "worker_crash_retry"
+    },
+    {
+      "file": "lease_takeover_success.json",
+      "failure_case": "lease_takeover_success"
+    }
+  ]
+}

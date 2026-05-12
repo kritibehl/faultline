@@ -1,0 +1,20 @@
+{
+  "title": "Lease Timeline View",
+  "panels": [
+    {
+      "name": "worker_a_lease",
+      "timeline": [
+        {"t": 0, "event": "claim_job"},
+        {"t": 1, "event": "acquire_lease"},
+        {"t": 4, "event": "stale_commit_rejected"}
+      ]
+    },
+    {
+      "name": "worker_b_lease",
+      "timeline": [
+        {"t": 2, "event": "lease_takeover"},
+        {"t": 3, "event": "commit_result"}
+      ]
+    }
+  ]
+}

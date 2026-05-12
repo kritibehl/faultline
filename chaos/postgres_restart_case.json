@@ -1,0 +1,6 @@
+{
+  "scenario": "postgres_restart_case",
+  "failure": "database restart during active lease ownership",
+  "expected_behavior": "workers retry and reconciler reclaims incomplete jobs",
+  "risk": "temporary coordination interruption"
+}

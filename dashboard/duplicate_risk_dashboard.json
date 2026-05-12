@@ -1,0 +1,18 @@
+{
+  "title": "Duplicate Risk Dashboard",
+  "metrics": [
+    {
+      "name": "duplicate_commit_rate",
+      "faultline": 0.0,
+      "naive_baseline": 2.5
+    },
+    {
+      "name": "expired_leases",
+      "value": 1
+    },
+    {
+      "name": "safe_to_operate",
+      "value": true
+    }
+  ]
+}

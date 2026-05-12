@@ -1,0 +1,22 @@
+{
+  "left": "duplicate_commit_prevented.json",
+  "right": "lease_takeover_success.json",
+  "diff": {
+    "expected_behavior": {
+      "left": "only one commit log entry exists for the job",
+      "right": "worker B reclaims expired lease and advances fencing token"
+    },
+    "failure_case": {
+      "left": "duplicate_commit_prevented",
+      "right": "lease_takeover_success"
+    },
+    "metric": {
+      "left": "faultline_duplicate_commit_total",
+      "right": "faultline_lease_takeover_total"
+    },
+    "observed_result": {
+      "left": "duplicate commit prevented",
+      "right": "lease takeover succeeds"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "regions": [
+    {
+      "name": "us-east",
+      "workers": 4,
+      "latency_ms": 10
+    },
+    {
+      "name": "us-west",
+      "workers": 3,
+      "latency_ms": 40
+    }
+  ],
+  "events": [
+    {
+      "type": "lease_migration",
+      "from": "us-east",
+      "to": "us-west"
+    },
+    {
+      "type": "degraded_node_routing",
+      "region": "us-west"
+    }
+  ]
+}

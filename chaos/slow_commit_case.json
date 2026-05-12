@@ -1,0 +1,6 @@
+{
+  "scenario": "slow_commit_case",
+  "failure": "commit latency spike",
+  "expected_behavior": "lease ownership preserved until timeout boundary",
+  "risk": "lease reclaim race"
+}

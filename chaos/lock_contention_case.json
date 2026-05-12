@@ -1,0 +1,6 @@
+{
+  "scenario": "lock_contention_case",
+  "failure": "high contention on claim/update path",
+  "expected_behavior": "coordination overhead increases without correctness violation",
+  "risk": "throughput degradation"
+}
