@@ -364,3 +364,19 @@ See:
 - `benchmarks/retry_queue_growth_report.md`
 - `benchmarks/load_test_summary.md`
 
+
+
+## Go Inspector Walkthrough
+
+Faultline includes a small Go backend service for reviewer-friendly operational inspection:
+
+- `/health`
+- `/leases`
+- `/metrics`
+- `/trace/export`
+- lease-risk summary
+- duplicate-risk summary
+- worker-state dashboard
+
+See [`docs/go_inspector_walkthrough.md`](docs/go_inspector_walkthrough.md).
+
