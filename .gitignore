@@ -32,3 +32,6 @@ venv/
 
 .integration_backup/
 .backup_pe_upgrade/
+
+# Go build artifacts
+cmd/faultline-inspector/faultline-inspector
