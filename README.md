@@ -346,3 +346,21 @@ Directories:
 - `async_runtime/`
 - `otel/`
 
+
+
+## Failure Load Test Report
+
+Faultline includes load-test style runtime contention artifacts covering:
+
+- worker profiles: 8 / 16 / 32
+- retry queue growth
+- lease contention events
+- stale-worker rejection count
+- queue delay p50 / p95
+- duplicate commit rate under contention
+
+See:
+- `benchmarks/lease_contention_load_test.json`
+- `benchmarks/retry_queue_growth_report.md`
+- `benchmarks/load_test_summary.md`
+
