@@ -1,0 +1,45 @@
+openapi: 3.0.3
+info:
+  title: Faultline Inspector API
+  version: 0.1.0
+  description: Go inspector API for lease-state, duplicate-risk, metrics, and trace export review.
+servers:
+  - url: http://localhost:8088
+paths:
+  /health:
+    get:
+      summary: Health and lease-risk summary
+      responses:
+        "200":
+          description: Inspector summary
+  /leases:
+    get:
+      summary: Lease-state inspection
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Lease summary
+        "401":
+          description: Unauthorized
+  /metrics:
+    get:
+      summary: Prometheus-compatible metrics
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Metrics text
+  /trace/export:
+    get:
+      summary: Export sample trace for stale-worker reconstruction
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Trace export
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer

@@ -380,3 +380,25 @@ Faultline includes a small Go backend service for reviewer-friendly operational 
 
 See [`docs/go_inspector_walkthrough.md`](docs/go_inspector_walkthrough.md).
 
+
+
+## Kubernetes, Helm, OpenAPI, and Inspector Auth
+
+Faultline includes platform packaging artifacts for the Go inspector service:
+
+- Kubernetes deployment/service manifests
+- Helm chart
+- optional bearer-token protection for operational endpoints
+- OpenAPI documentation
+- PostgreSQL schema diagram
+- stale-worker corruption case study
+
+See:
+- `k8s/`
+- `helm/faultline/`
+- `docs/openapi/faultline-inspector-openapi.yaml`
+- `docs/schema/postgres_schema_diagram.md`
+- `docs/case_studies/stale_worker_corruption.md`
+
+Safe claim: these are deployable platform artifacts and demo auth controls, not a production Kubernetes platform or enterprise RBAC system.
+

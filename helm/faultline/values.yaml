@@ -1,0 +1,18 @@
+replicaCount: 1
+
+image:
+  repository: faultline-inspector
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8088
+
+env:
+  databaseUrlSecretName: faultline-postgres
+  databaseUrlSecretKey: database_url
+  inspectorTokenSecretName: faultline-inspector-auth
+  inspectorTokenSecretKey: token
+
+resources: {}

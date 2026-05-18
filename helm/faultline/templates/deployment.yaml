@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-inspector
+  labels:
+    app: {{ .Release.Name }}-inspector
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-inspector
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-inspector
+    spec:
+      containers:
+        - name: inspector
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.service.port }}
+          env:
+            - name: PORT
+              value: "{{ .Values.service.port }}"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.env.databaseUrlSecretName }}
+                  key: {{ .Values.env.databaseUrlSecretKey }}
+            - name: INSPECTOR_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.env.inspectorTokenSecretName }}
+                  key: {{ .Values.env.inspectorTokenSecretKey }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.service.port }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.service.port }}

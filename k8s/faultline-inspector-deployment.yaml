@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: faultline-inspector
+  labels:
+    app: faultline-inspector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: faultline-inspector
+  template:
+    metadata:
+      labels:
+        app: faultline-inspector
+    spec:
+      containers:
+        - name: faultline-inspector
+          image: faultline-inspector:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8088
+          env:
+            - name: PORT
+              value: "8088"
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: faultline-postgres
+                  key: database_url
+            - name: INSPECTOR_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: faultline-inspector-auth
+                  key: token
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8088
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8088
+            initialDelaySeconds: 10
+            periodSeconds: 20
