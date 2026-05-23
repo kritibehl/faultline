@@ -402,3 +402,23 @@ See:
 
 Safe claim: these are deployable platform artifacts and demo auth controls, not a production Kubernetes platform or enterprise RBAC system.
 
+
+
+## Backend / Platform Integration Artifacts
+
+Faultline includes additional backend-platform artifacts for:
+
+- Kafka / RabbitMQ / NATS event-ingestion design
+- Redis locking and Redlock tradeoff discussion
+- PostgreSQL migration and indexing examples
+- Prometheus / Grafana / Jaeger / Loki observability stack artifact
+- k6 load-test script for inspector endpoints
+
+See:
+- `event_runtime/`
+- `redis_coordination/`
+- `migrations/`
+- `observability/`
+- `load_tests/`
+- `docs/platform/backend_platform_additions.md`
+

@@ -1,0 +1,13 @@
+{
+  "event_source": "nats_or_kafka_or_rabbitmq",
+  "faultline_contract": {
+    "required_fields": ["event_id", "job_type", "payload", "idempotency_key"],
+    "correctness_boundary": "postgresql_fencing_token_commit",
+    "safe_replay": true
+  },
+  "notes": [
+    "brokers provide delivery",
+    "Faultline provides commit-validity protection",
+    "external side effects still require idempotency or outbox"
+  ]
+}
