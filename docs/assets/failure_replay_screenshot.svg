@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="520" viewBox="0 0 1000 520">
+  <rect width="1000" height="520" fill="#f8fafc"/>
+  <text x="40" y="55" font-family="Arial" font-size="30" font-weight="700" fill="#111827">Faultline Failure Replay</text>
+  <text x="40" y="88" font-family="Arial" font-size="16" fill="#4b5563">Stale-worker race reconstructed from trace events</text>
+  <rect x="40" y="120" width="920" height="80" rx="14" fill="#ffffff" stroke="#e5e7eb"/>
+  <text x="65" y="155" font-family="Arial" font-size="18" font-weight="700" fill="#111827">t0 claim_job</text>
+  <text x="65" y="180" font-family="Arial" font-size="15" fill="#374151">worker-a claims job-1 with fencing_token=1</text>
+  <rect x="40" y="215" width="920" height="80" rx="14" fill="#ffffff" stroke="#e5e7eb"/>
+  <text x="65" y="250" font-family="Arial" font-size="18" font-weight="700" fill="#111827">t1 lease_takeover</text>
+  <text x="65" y="275" font-family="Arial" font-size="15" fill="#374151">worker-b reclaims expired lease and advances fencing_token=2</text>
+  <rect x="40" y="310" width="920" height="80" rx="14" fill="#ecfdf5" stroke="#10b981"/>
+  <text x="65" y="345" font-family="Arial" font-size="18" font-weight="700" fill="#065f46">t2 commit_result</text>
+  <text x="65" y="370" font-family="Arial" font-size="15" fill="#065f46">worker-b commits successfully with current token=2</text>
+  <rect x="40" y="405" width="920" height="80" rx="14" fill="#fef2f2" stroke="#ef4444"/>
+  <text x="65" y="440" font-family="Arial" font-size="18" font-weight="700" fill="#991b1b">t3 reject_stale_write</text>
+  <text x="65" y="465" font-family="Arial" font-size="15" fill="#991b1b">worker-a wakes up late with token=1 and is rejected at PostgreSQL boundary</text>
+</svg>

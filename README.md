@@ -422,3 +422,18 @@ See:
 - `load_tests/`
 - `docs/platform/backend_platform_additions.md`
 
+
+
+## Platform Walkthrough
+
+Faultline includes missing platform artifacts now closed out:
+
+- observability Docker Compose stack
+- Flyway-style migration examples
+- k6 inspector API load test
+- Go inspector OpenAPI spec
+- failure replay screenshot artifact
+- platform walkthrough doc
+
+See [`docs/platform_walkthrough.md`](docs/platform_walkthrough.md).
+

@@ -1,0 +1,45 @@
+openapi: 3.0.3
+info:
+  title: Faultline Go Inspector API
+  version: 0.1.0
+  description: API contract for Faultline's Go operational inspector.
+servers:
+  - url: http://localhost:8088
+paths:
+  /health:
+    get:
+      summary: Health and duplicate-risk summary
+      responses:
+        "200":
+          description: Lease risk summary
+  /leases:
+    get:
+      summary: Inspect PostgreSQL-backed lease state
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Lease state summary
+        "401":
+          description: Unauthorized
+  /metrics:
+    get:
+      summary: Prometheus-compatible metrics
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Runtime metrics
+  /trace/export:
+    get:
+      summary: Export trace events for stale-worker reconstruction
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Trace event export
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
