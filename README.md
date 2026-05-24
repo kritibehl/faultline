@@ -437,3 +437,23 @@ Faultline includes missing platform artifacts now closed out:
 
 See [`docs/platform_walkthrough.md`](docs/platform_walkthrough.md).
 
+
+## Demo and Roadmap
+
+Run the local demo:
+
+    make demo
+
+Artifacts:
+
+- `docs/demo/terminal_demo_walkthrough.md`
+- `ROADMAP.md`
+
+The demo validates:
+
+- replay workflows
+- benchmark comparison
+- metrics export
+- trace export
+- stale-worker rejection paths
+- Go inspector operational endpoints
