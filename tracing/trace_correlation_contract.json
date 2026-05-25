@@ -1,0 +1,19 @@
+{
+  "trace_name": "faultline_stale_worker_replay",
+  "correlation_fields": [
+    "trace_id",
+    "job_id",
+    "worker_id",
+    "lease_epoch",
+    "fencing_token"
+  ],
+  "phases": [
+    "claim_job",
+    "acquire_lease",
+    "execute_job",
+    "lease_takeover",
+    "commit_result",
+    "reject_stale_write"
+  ],
+  "root_cause_pattern": "worker resumes after lease ownership advanced"
+}

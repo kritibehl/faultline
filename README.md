@@ -463,3 +463,22 @@ The demo validates:
 
 ![Faultline Architecture](docs/diagrams/faultline_architecture.svg)
 
+
+## Service Contracts, Event Replay, and Auth Artifacts
+
+Faultline includes backend/platform artifacts for:
+
+- gRPC/protobuf contracts between worker, inspector, and auditor services
+- Kafka / Redis Streams event-replay design
+- PostgreSQL `FOR UPDATE SKIP LOCKED` and transaction-isolation notes
+- connection-pool diagnostic report
+- OTEL / Jaeger trace-correlation examples
+- API-key / RBAC policy artifacts for inspector endpoints
+
+See:
+- `proto/faultline.proto`
+- `event_stream/`
+- `postgres_ops/transaction_isolation_notes.md`
+- `postgres_ops/connection_pool_report.md`
+- `tracing/trace_correlation_contract.json`
+- `auth/`

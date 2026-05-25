@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package faultline.v1;
+
+service WorkerService {
+  rpc ClaimJob(ClaimJobRequest) returns (ClaimJobResponse);
+  rpc CompleteJob(CompleteJobRequest) returns (CompleteJobResponse);
+}
+
+service InspectorService {
+  rpc GetLeaseHealth(LeaseHealthRequest) returns (LeaseHealthResponse);
+}
+
+service AuditorService {
+  rpc ValidateInvariants(ValidateInvariantsRequest) returns (ValidateInvariantsResponse);
+}
+
+message ClaimJobRequest {
+  string worker_id = 1;
+  int32 batch_size = 2;
+}
+
+message ClaimJobResponse {
+  string job_id = 1;
+  int64 fencing_token = 2;
+  string lease_expires_at = 3;
+}
+
+message CompleteJobRequest {
+  string job_id = 1;
+  string worker_id = 2;
+  int64 submitted_fencing_token = 3;
+  string result_json = 4;
+}
+
+message CompleteJobResponse {
+  bool committed = 1;
+  bool stale_write_rejected = 2;
+  string reason = 3;
+}
+
+message LeaseHealthRequest {}
+
+message LeaseHealthResponse {
+  int32 total_jobs = 1;
+  int32 expired_leases = 2;
+  int32 duplicate_risk = 3;
+  bool safe_to_operate = 4;
+}
+
+message ValidateInvariantsRequest {}
+
+message ValidateInvariantsResponse {
+  int32 correctness_score = 1;
+  repeated string violations = 2;
+}

@@ -1,0 +1,23 @@
+{
+  "stream_name": "faultline.job.events",
+  "supported_backends": ["kafka", "redis_streams"],
+  "events": [
+    "job_enqueued",
+    "claim_job",
+    "acquire_lease",
+    "lease_takeover",
+    "retry_job",
+    "commit_result",
+    "reject_stale_write"
+  ],
+  "required_fields": [
+    "event_id",
+    "trace_id",
+    "job_id",
+    "worker_id",
+    "lease_epoch",
+    "fencing_token",
+    "timestamp"
+  ],
+  "correctness_boundary": "PostgreSQL fencing-token commit validation"
+}
