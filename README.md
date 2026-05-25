@@ -457,3 +457,9 @@ The demo validates:
 - trace export
 - stale-worker rejection paths
 - Go inspector operational endpoints
+
+
+## Architecture Diagram
+
+![Faultline Architecture](docs/diagrams/faultline_architecture.svg)
+
