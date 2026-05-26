@@ -482,3 +482,19 @@ See:
 - `postgres_ops/connection_pool_report.md`
 - `tracing/trace_correlation_contract.json`
 - `auth/`
+
+## Linux and PostgreSQL Reliability Diagnostics
+
+Faultline includes operational diagnostics for backend/platform review:
+
+- connection-pool stress testing
+- PostgreSQL lock-contention analysis
+- slow-query and `EXPLAIN ANALYZE` notes
+- index verification guidance
+- Linux process/resource debugging workflows
+- worker runtime debugging checklist
+
+See:
+- `scripts/ops/connection_pool_stress.py`
+- `ops_diagnostics/postgres/`
+- `ops_diagnostics/linux/`
