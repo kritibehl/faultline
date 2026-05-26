@@ -1,0 +1,19 @@
+{
+  "visual_pack": "faultline_worker_stress_benchmark_visuals",
+  "worker_profiles": [
+    10,
+    25,
+    50,
+    100
+  ],
+  "charts": [
+    "throughput_vs_workers.png",
+    "retry_amplification_vs_workers.png",
+    "queue_depth_vs_workers.png",
+    "stale_write_prevention_vs_workers.png",
+    "lease_contention_vs_workers.png",
+    "duplicate_commit_prevention_vs_workers.png"
+  ],
+  "key_takeaway": "as worker count rises, contention/retries/backlog increase while duplicate commit rate remains 0.0%",
+  "safe_claim": "synthetic operational benchmark visualization pack, not production-scale benchmark"
+}
