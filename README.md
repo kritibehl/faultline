@@ -518,3 +518,19 @@ Artifacts:
 - `monitoring/operational_metrics.py`
 - `monitoring/operational_dashboard.svg`
 - `scripts/runtime/process_monitor.sh`
+
+## Operational Visualizations
+
+Faultline includes:
+
+- worker lifecycle visualization
+- stale-worker rejection flow
+- benchmark visualization pack
+- operational dashboard artifacts
+- inspector endpoint screenshots
+
+Visual artifacts:
+- `docs/visuals/worker_lifecycle.svg`
+- `docs/visuals/stale_worker_rejection_flow.svg`
+- `reports/ops/benchmark_visuals/`
+- `monitoring/operational_dashboard.svg`

@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="520" viewBox="0 0 1500 520">
+  <rect width="1500" height="520" fill="#ffffff"/>
+
+  <text x="40" y="55" font-family="Arial" font-size="34" font-weight="700" fill="#111827">
+    Stale-Worker Rejection Flow
+  </text>
+
+  <text x="40" y="90" font-family="Arial" font-size="18" fill="#475569">
+    Faultline prevents late stale commits using PostgreSQL fencing-token validation
+  </text>
+
+  <text x="100" y="170" font-family="Arial" font-size="24" font-weight="700" fill="#2563eb">Worker A</text>
+  <line x1="250" y1="160" x2="1350" y2="160" stroke="#2563eb" stroke-width="5"/>
+
+  <text x="100" y="340" font-family="Arial" font-size="24" font-weight="700" fill="#16a34a">Worker B</text>
+  <line x1="250" y1="330" x2="1350" y2="330" stroke="#16a34a" stroke-width="5"/>
+
+  <circle cx="350" cy="160" r="16" fill="#2563eb"/>
+  <text x="300" y="130" font-family="Arial" font-size="18" fill="#1e3a8a">claim token=1</text>
+
+  <circle cx="600" cy="160" r="16" fill="#f59e0b"/>
+  <text x="540" y="130" font-family="Arial" font-size="18" fill="#92400e">worker stalls</text>
+
+  <circle cx="760" cy="330" r="16" fill="#16a34a"/>
+  <text x="690" y="300" font-family="Arial" font-size="18" fill="#166534">takeover token=2</text>
+
+  <circle cx="980" cy="330" r="16" fill="#16a34a"/>
+  <text x="930" y="300" font-family="Arial" font-size="18" fill="#166534">valid commit</text>
+
+  <circle cx="1120" cy="160" r="16" fill="#dc2626"/>
+  <text x="1030" y="130" font-family="Arial" font-size="18" fill="#991b1b">late stale commit</text>
+
+  <rect x="1180" y="210" width="240" height="90" rx="18" fill="#111827"/>
+  <text x="1215" y="250" font-family="Arial" font-size="22" fill="#f8fafc">
+    token=1 rejected
+  </text>
+  <text x="1215" y="280" font-family="Arial" font-size="18" fill="#cbd5e1">
+    token=2 accepted
+  </text>
+
+  <line x1="1120" y1="175" x2="1200" y2="220" stroke="#dc2626" stroke-width="4"/>
+</svg>

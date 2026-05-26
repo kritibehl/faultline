@@ -1,0 +1,21 @@
+$ curl http://localhost:8088/health
+
+{
+  "total_jobs": 200,
+  "running_jobs": 3,
+  "queued_jobs": 0,
+  "failed_jobs": 0,
+  "succeeded_jobs": 197,
+  "expired_leases": 1,
+  "potential_duplicate_risk": 1,
+  "lease_risk": "medium",
+  "safe_to_operate": true
+}
+
+$ curl http://localhost:8088/metrics
+
+faultline_total_jobs 200
+faultline_running_jobs 3
+faultline_expired_leases_total 1
+faultline_duplicate_risk_total 1
+faultline_safe_to_operate 1
