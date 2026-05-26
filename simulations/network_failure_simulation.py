@@ -1,0 +1,45 @@
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+scenarios = [
+    {
+        "scenario": "partial_partition",
+        "worker_timeout_rate": 0.35,
+        "retry_growth": 12,
+        "stale_rejections": 7,
+        "expected_behavior": "workers on degraded path retry; stale commits are rejected"
+    },
+    {
+        "scenario": "packet_delay",
+        "latency_ms_p95": 420,
+        "retry_growth": 9,
+        "stale_rejections": 5,
+        "expected_behavior": "lease churn increases; fencing-token boundary preserves correctness"
+    },
+    {
+        "scenario": "dns_service_discovery_failure",
+        "connection_failures": 18,
+        "retry_growth": 14,
+        "stale_rejections": 3,
+        "expected_behavior": "failed workers retry or enter review path"
+    },
+    {
+        "scenario": "retry_storm",
+        "retry_growth": 31,
+        "queue_backlog": 87,
+        "stale_rejections": 11,
+        "expected_behavior": "operator review triggered before duplicate commits are accepted"
+    }
+]
+
+out = {
+    "simulation": "network_failure_simulation",
+    "safe_claim": "lightweight network-failure simulation artifact, not kernel-level packet injection",
+    "scenarios": scenarios
+}
+
+Path("reports/ops").mkdir(parents=True, exist_ok=True)
+Path("reports/ops/network_failure_simulation.json").write_text(json.dumps(out, indent=2))
+print(json.dumps(out, indent=2))

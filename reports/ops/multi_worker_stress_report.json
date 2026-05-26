@@ -1,0 +1,50 @@
+{
+  "simulation": "multi_worker_stress",
+  "safe_claim": "synthetic operational stress simulation, not production load test",
+  "runs": [
+    {
+      "workers": 10,
+      "lease_churn_events": 4,
+      "contention_events": 3,
+      "retry_amplification_factor": 1.12,
+      "worker_crash_injections": 1,
+      "queue_backlog": 17,
+      "throughput_jobs_per_sec": 205.33,
+      "stale_worker_rejections": 2,
+      "duplicate_commit_rate_percent": 0.0
+    },
+    {
+      "workers": 25,
+      "lease_churn_events": 11,
+      "contention_events": 9,
+      "retry_amplification_factor": 1.31,
+      "worker_crash_injections": 1,
+      "queue_backlog": 42,
+      "throughput_jobs_per_sec": 186.67,
+      "stale_worker_rejections": 7,
+      "duplicate_commit_rate_percent": 0.0
+    },
+    {
+      "workers": 50,
+      "lease_churn_events": 22,
+      "contention_events": 19,
+      "retry_amplification_factor": 1.62,
+      "worker_crash_injections": 2,
+      "queue_backlog": 85,
+      "throughput_jobs_per_sec": 162.11,
+      "stale_worker_rejections": 14,
+      "duplicate_commit_rate_percent": 0.0
+    },
+    {
+      "workers": 100,
+      "lease_churn_events": 45,
+      "contention_events": 38,
+      "retry_amplification_factor": 2.25,
+      "worker_crash_injections": 5,
+      "queue_backlog": 170,
+      "throughput_jobs_per_sec": 128.33,
+      "stale_worker_rejections": 28,
+      "duplicate_commit_rate_percent": 0.0
+    }
+  ]
+}

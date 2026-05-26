@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="620" viewBox="0 0 1100 620">
+  <rect width="1100" height="620" fill="#0f172a"/>
+  <text x="40" y="55" font-family="Arial" font-size="30" font-weight="700" fill="#f8fafc">Faultline Operational Dashboard</text>
+  <text x="40" y="85" font-family="Arial" font-size="16" fill="#cbd5e1">Worker stress, queue depth, stale-worker rejection, and DB retry signals</text>
+
+  <rect x="40" y="120" width="240" height="120" rx="16" fill="#1e293b"/>
+  <text x="65" y="155" font-family="Arial" font-size="16" fill="#cbd5e1">Active Workers</text>
+  <text x="65" y="205" font-family="Arial" font-size="44" font-weight="700" fill="#38bdf8">25</text>
+
+  <rect x="310" y="120" width="240" height="120" rx="16" fill="#1e293b"/>
+  <text x="335" y="155" font-family="Arial" font-size="16" fill="#cbd5e1">Queue Depth</text>
+  <text x="335" y="205" font-family="Arial" font-size="44" font-weight="700" fill="#fbbf24">42</text>
+
+  <rect x="580" y="120" width="240" height="120" rx="16" fill="#1e293b"/>
+  <text x="605" y="155" font-family="Arial" font-size="16" fill="#cbd5e1">Expired Leases</text>
+  <text x="605" y="205" font-family="Arial" font-size="44" font-weight="700" fill="#fb7185">3</text>
+
+  <rect x="850" y="120" width="210" height="120" rx="16" fill="#1e293b"/>
+  <text x="875" y="155" font-family="Arial" font-size="16" fill="#cbd5e1">DB Retries</text>
+  <text x="875" y="205" font-family="Arial" font-size="44" font-weight="700" fill="#a78bfa">6</text>
+
+  <rect x="40" y="290" width="500" height="250" rx="16" fill="#1e293b"/>
+  <text x="65" y="325" font-family="Arial" font-size="18" font-weight="700" fill="#f8fafc">Contention Growth</text>
+  <polyline points="80,500 170,455 260,420 350,370 470,330" fill="none" stroke="#38bdf8" stroke-width="5"/>
+  <text x="80" y="525" font-family="Arial" font-size="13" fill="#cbd5e1">10</text>
+  <text x="455" y="525" font-family="Arial" font-size="13" fill="#cbd5e1">100 workers</text>
+
+  <rect x="580" y="290" width="480" height="250" rx="16" fill="#1e293b"/>
+  <text x="605" y="325" font-family="Arial" font-size="18" font-weight="700" fill="#f8fafc">Stale Rejection Path</text>
+  <text x="620" y="370" font-family="Arial" font-size="16" fill="#cbd5e1">claim_job → lease_takeover → commit_result → reject_stale_write</text>
+  <text x="620" y="420" font-family="Arial" font-size="16" fill="#cbd5e1">duplicate_commit_rate = 0.0%</text>
+  <text x="620" y="455" font-family="Arial" font-size="16" fill="#cbd5e1">safe_to_operate = review under high contention</text>
+</svg>

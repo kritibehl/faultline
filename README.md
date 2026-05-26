@@ -498,3 +498,23 @@ See:
 - `scripts/ops/connection_pool_stress.py`
 - `ops_diagnostics/postgres/`
 - `ops_diagnostics/linux/`
+
+## Operational Stress and Runtime Observability
+
+Faultline includes operational backend simulations and observability artifacts for:
+
+- 10/25/50/100-worker stress simulation
+- lease churn and contention growth
+- retry amplification and queue backlog growth
+- worker crash injection modeling
+- operational Prometheus counters
+- Linux process/runtime debugging
+- network failure simulation for partial partition, packet delay, timeout, retry storm, and DNS failure cases
+
+Artifacts:
+- `simulations/multi_worker_stress.py`
+- `simulations/network_failure_simulation.py`
+- `reports/ops/`
+- `monitoring/operational_metrics.py`
+- `monitoring/operational_dashboard.svg`
+- `scripts/runtime/process_monitor.sh`
