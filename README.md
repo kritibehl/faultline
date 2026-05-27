@@ -573,3 +573,16 @@ See:
 - `customer_operational_reviews/`
 - `aws_queue_design/`
 - `operational_runbooks/`
+
+## Incident Operations Layer
+
+Faultline includes incident-review workflows for operational excellence:
+
+- incident review template
+- customer-impact escalation guidance
+- retry-storm analysis
+- replay reconstruction walkthrough
+- operational recovery timeline
+
+See:
+- `incident_operations/`
