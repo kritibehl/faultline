@@ -534,3 +534,22 @@ Visual artifacts:
 - `docs/visuals/stale_worker_rejection_flow.svg`
 - `reports/ops/benchmark_visuals/`
 - `monitoring/operational_dashboard.svg`
+
+## AWS Data Services Alignment Artifacts
+
+Faultline includes design and runbook artifacts for AWS-style resilient backend/data-service review:
+
+- distributed storage tradeoffs
+- database consistency and retry behavior
+- cost/resilience tradeoffs
+- customer workload scenarios
+- DynamoDB-style lease-table design
+- SQS-style retry queue design
+- idempotency-key workflows
+- stale-worker and duplicate-risk runbooks
+- PostgreSQL lock-contention runbook
+
+See:
+- `aws_data_services_alignment/`
+- `no_sql_queue_design/`
+- `operational_runbooks/`
