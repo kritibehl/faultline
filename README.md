@@ -586,3 +586,19 @@ Faultline includes incident-review workflows for operational excellence:
 
 See:
 - `incident_operations/`
+
+## Queue Worker Recovery Demo
+
+Faultline includes a small queue-runtime demo showing:
+
+- SQS-style retry queue behavior
+- DynamoDB-style lease-table simulation
+- idempotency-key duplicate prevention
+- lease takeover
+- stale-worker commit rejection
+
+Artifacts:
+- `queue_runtime/worker_retry_queue.py`
+- `queue_runtime/lease_table_simulator.py`
+- `queue_runtime/idempotency_key_demo.py`
+- `tests/test_queue_recovery.py`
