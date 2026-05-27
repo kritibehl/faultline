@@ -2,18 +2,18 @@
 
 ## Symptoms
 
-- duplicate-risk count rises
+- duplicate-risk count increases
 - retry amplification increases
-- queue backlog grows
-- stale-worker rejection events increase
+- queue depth grows
+- stale-worker rejections increase
 
 ## Triage
 
 1. Confirm duplicate commit rate remains 0.0%.
-2. Inspect stale-worker rejection traces.
-3. Check retry growth and queue depth.
-4. Review idempotency key behavior.
+2. Inspect stale-write rejection events.
+3. Review retry growth and queue delay.
+4. Validate idempotency-key behavior.
 
-## Operator decision
+## Decision
 
-If duplicate risk rises but commits are rejected, continue with monitoring. If commit validation is unavailable, fail closed or pause unsafe processing.
+If duplicate-risk is rising but stale commits are rejected, continue monitoring. If commit validation cannot run, pause unsafe processing or fail closed.

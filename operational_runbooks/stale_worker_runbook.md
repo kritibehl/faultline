@@ -1,11 +1,11 @@
-# Stale Worker Recovery Runbook
+# Stale Worker Runbook
 
 ## Symptoms
 
-- expired lease count increases
 - stale-write rejection count increases
-- trace contains `reject_stale_write`
-- worker resumes after lease takeover
+- worker resumes after lease expiry
+- trace shows `reject_stale_write`
+- lease owner changed before late commit
 
 ## Triage
 
@@ -13,10 +13,10 @@
 2. Check `/metrics`.
 3. Inspect trace export.
 4. Confirm current fencing token.
-5. Verify stale worker commit was rejected.
+5. Verify stale commit was rejected.
 
 ## Recovery
 
-- keep job committed by current owner
-- terminate or restart stale worker if stuck
-- tune lease duration if premature expiry is common
+- restart stuck worker if needed
+- tune lease duration if false takeovers are common
+- preserve replay artifacts for incident review

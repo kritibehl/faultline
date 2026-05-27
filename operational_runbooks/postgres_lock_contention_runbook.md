@@ -4,8 +4,9 @@
 
 - claim latency rises
 - commit latency rises
-- retries increase
-- pool pressure increases
+- active DB connections increase
+- retry queue grows
+- worker throughput drops
 
 ## Diagnostic SQL
 
@@ -18,7 +19,7 @@ FROM pg_locks
 GROUP BY relation, mode, granted;
 Mitigation
 reduce worker concurrency
-increase batch size carefully
+inspect long-running transactions
 verify lease-expiry indexes
 tune retry backoff
-inspect long-running transactions
+increase batch size carefully

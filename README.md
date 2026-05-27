@@ -553,3 +553,23 @@ See:
 - `aws_data_services_alignment/`
 - `no_sql_queue_design/`
 - `operational_runbooks/`
+
+## AWS Data Services / Backend Distributed Systems Proof
+
+Faultline includes AWS-style backend/data-service review artifacts:
+
+- customer operational reviews
+- retry amplification review
+- availability vs consistency review
+- operational cost notes
+- SQS-style retry queue design
+- DynamoDB-style lease table design
+- idempotency-key workflow design
+- stale-worker, duplicate-risk, PostgreSQL contention, and customer-impact runbooks
+
+Safe claim: these are AWS-style design and operational review artifacts, not deployed AWS service integrations.
+
+See:
+- `customer_operational_reviews/`
+- `aws_queue_design/`
+- `operational_runbooks/`
