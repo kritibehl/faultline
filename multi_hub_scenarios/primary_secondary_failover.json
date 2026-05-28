@@ -1,0 +1,15 @@
+{
+  "scenario": "primary_secondary_failover",
+  "primary_hub": "hub-primary",
+  "secondary_hub": "hub-secondary",
+  "events": [
+    {"phase": "primary_active", "hub": "hub-primary", "hub_epoch": 1},
+    {"phase": "primary_unavailable", "reason": "network_drop"},
+    {"phase": "secondary_promoted", "hub": "hub-secondary", "hub_epoch": 2}
+  ],
+  "expected": {
+    "failover_completed": true,
+    "active_hub": "hub-secondary",
+    "hub_epoch": 2
+  }
+}

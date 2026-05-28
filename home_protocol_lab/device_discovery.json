@@ -1,0 +1,10 @@
+{
+  "scenario": "device_discovery",
+  "device_id": "light-kitchen-1",
+  "phases": ["advertise", "discover", "capability_read"],
+  "expected": {
+    "device_discovered": true,
+    "capabilities": ["power", "brightness"],
+    "protocol_state": "discovered"
+  }
+}

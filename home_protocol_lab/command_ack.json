@@ -1,0 +1,18 @@
+{
+  "scenario": "command_ack",
+  "device_id": "light-bedroom-1",
+  "command": {
+    "command_id": "cmd-ack-001",
+    "target_state": {
+      "power": "off"
+    }
+  },
+  "ack": {
+    "command_id": "cmd-ack-001",
+    "status": "applied"
+  },
+  "expected": {
+    "command_acknowledged": true,
+    "ack_matches_command": true
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "scenario": "attribute_sync",
+  "device_id": "thermostat-hallway-1",
+  "initial_attributes": {
+    "temperature_f": 70,
+    "mode": "heat",
+    "attribute_epoch": 3
+  },
+  "reported_attributes": {
+    "temperature_f": 72,
+    "mode": "heat",
+    "attribute_epoch": 4
+  },
+  "expected": {
+    "attribute_synced": true,
+    "final_epoch": 4,
+    "final_temperature_f": 72
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "scenario": "device_pairing",
+  "device_id": "lock-front-door-1",
+  "phases": ["pair_request", "pair_confirm", "trust_established"],
+  "expected": {
+    "device_paired": true,
+    "trust_state": "paired",
+    "controller_authorized": true
+  }
+}
