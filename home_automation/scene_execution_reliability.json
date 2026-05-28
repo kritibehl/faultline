@@ -1,0 +1,26 @@
+{
+  "pack_name": "home_automation_scene_execution_reliability",
+  "scenarios": [
+    {
+      "scenario_id": "scene-001",
+      "description": "Duplicate scene command replay",
+      "expected_behavior": "duplicate command rejected",
+      "observed_behavior": "duplicate command rejected",
+      "status": "PASS"
+    },
+    {
+      "scenario_id": "scene-002",
+      "description": "Multi-device scene replay after controller retry",
+      "expected_behavior": "idempotent scene execution",
+      "observed_behavior": "all accessory states converged once",
+      "status": "PASS"
+    },
+    {
+      "scenario_id": "scene-003",
+      "description": "Stale controller command after accessory reconnect",
+      "expected_behavior": "stale command rejected",
+      "observed_behavior": "stale command rejected using command epoch",
+      "status": "PASS"
+    }
+  ]
+}
