@@ -618,3 +618,22 @@ Safe claim: these are HomeKit-style distributed reliability simulations, not App
 See:
 - `home_automation_scenarios/`
 - `docs/home_automation_protocol_reliability.md`
+
+## Home Protocol Lab
+
+Faultline includes HomeKit-style protocol reliability simulations covering:
+
+- device discovery
+- device pairing
+- attribute sync
+- command acknowledgement
+- state reconciliation
+- packet loss, delayed ack, duplicate ack, and reordered command handling
+- primary/secondary hub failover
+- stale hub rejoin rejection
+
+Safe claim: this is a HomeKit-style reliability lab, not a HomeKit/Matter/Thread implementation.
+
+See:
+- `home_protocol_lab/`
+- `multi_hub_scenarios/`

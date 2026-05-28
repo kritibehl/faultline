@@ -94,3 +94,18 @@ duplicate command prevention
 Reliability takeaway
 
 Home automation reliability requires the same distributed-systems discipline as backend worker execution: state versioning, stale-write rejection, deduplication, acknowledgement tracking, and replayable recovery.
+
+## Home Protocol Lab Extension
+
+Faultline also includes a home protocol lab covering:
+
+- device discovery
+- device pairing
+- attribute synchronization
+- command acknowledgements
+- state reconciliation
+- network degradation handling
+- primary/secondary hub failover
+- stale hub rejoin rejection
+
+This extends the controller-accessory reliability model beyond command replay into protocol lifecycle behavior.

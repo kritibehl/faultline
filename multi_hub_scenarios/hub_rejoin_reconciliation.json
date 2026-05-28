@@ -1,0 +1,15 @@
+{
+  "scenario": "hub_rejoin_reconciliation",
+  "primary_hub": "hub-primary",
+  "secondary_hub": "hub-secondary",
+  "events": [
+    {"phase": "secondary_active", "hub_epoch": 2},
+    {"phase": "primary_rejoins", "stale_hub_epoch": 1},
+    {"phase": "stale_primary_write_rejected", "current_hub_epoch": 2}
+  ],
+  "expected": {
+    "rejoin_handled": true,
+    "stale_hub_write_rejected": true,
+    "active_hub_epoch": 2
+  }
+}

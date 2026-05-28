@@ -1,0 +1,33 @@
+{
+  "scenario": "network_degradation",
+  "device_id": "light-kitchen-1",
+  "events": [
+    {
+      "phase": "packet_loss",
+      "drop_percent": 20,
+      "expected_behavior": "retry_command"
+    },
+    {
+      "phase": "delayed_ack",
+      "delay_ms": 450,
+      "expected_behavior": "preserve_command_epoch"
+    },
+    {
+      "phase": "duplicate_ack",
+      "command_id": "cmd-net-001",
+      "expected_behavior": "deduplicate_ack"
+    },
+    {
+      "phase": "reordered_command",
+      "older_command_epoch": 3,
+      "current_device_epoch": 4,
+      "expected_behavior": "reject_stale_command"
+    }
+  ],
+  "expected": {
+    "packet_loss_handled": true,
+    "delayed_ack_handled": true,
+    "duplicate_ack_prevented": true,
+    "reordered_command_rejected": true
+  }
+}

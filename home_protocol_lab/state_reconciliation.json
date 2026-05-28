@@ -1,0 +1,20 @@
+{
+  "scenario": "state_reconciliation",
+  "device_id": "garage-door-1",
+  "controller_state": {
+    "open": false,
+    "epoch": 8
+  },
+  "device_state": {
+    "open": true,
+    "epoch": 9
+  },
+  "expected": {
+    "reconciled": true,
+    "authoritative_state": {
+      "open": true,
+      "epoch": 9
+    },
+    "stale_controller_state_rejected": true
+  }
+}
