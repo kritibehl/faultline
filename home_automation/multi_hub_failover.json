@@ -1,0 +1,13 @@
+{
+  "pack_name": "multi_hub_failover",
+  "scenario": {
+    "primary_hub": "hub-a",
+    "secondary_hub": "hub-b",
+    "failure": "primary hub loses accessory connectivity",
+    "expected_behavior": "secondary hub takes over after state reconciliation",
+    "observed_behavior": "secondary hub replayed only safe pending commands",
+    "duplicate_commands_prevented": true,
+    "stale_commands_rejected": true,
+    "status": "PASS"
+  }
+}

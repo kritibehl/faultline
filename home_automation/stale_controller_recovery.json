@@ -1,0 +1,15 @@
+{
+  "pack_name": "stale_controller_recovery",
+  "failure": {
+    "trigger": "controller sends command with expired epoch",
+    "expected_result": "reject stale command",
+    "observed_result": "reject stale command",
+    "recovery_path": [
+      "detect stale epoch",
+      "reject write",
+      "refresh accessory state",
+      "retry with current epoch"
+    ],
+    "status": "PASS"
+  }
+}

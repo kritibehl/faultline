@@ -1,0 +1,19 @@
+{
+  "pack_name": "accessory_state_reconciliation",
+  "checks": [
+    {
+      "check_id": "state-001",
+      "condition": "accessory offline during scene execution",
+      "recovery": "state reconciled after reconnect",
+      "first_divergence_index": 4,
+      "status": "PASS"
+    },
+    {
+      "check_id": "state-002",
+      "condition": "controller has stale accessory state",
+      "recovery": "controller refreshes state before applying command",
+      "first_divergence_index": 2,
+      "status": "PASS"
+    }
+  ]
+}
