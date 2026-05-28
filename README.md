@@ -637,3 +637,21 @@ Safe claim: this is a HomeKit-style reliability lab, not a HomeKit/Matter/Thread
 See:
 - `home_protocol_lab/`
 - `multi_hub_scenarios/`
+
+## Home Protocol Metrics and Dashboard
+
+Faultline includes HomeKit-style reliability metrics and a static dashboard artifact tracking:
+
+- pairing success rate
+- acknowledgement latency
+- recovery time
+- duplicate commands prevented
+- stale commands rejected
+- failover duration
+- devices online/offline
+- reconnects and pairing events
+
+Artifacts:
+- `home_protocol_metrics/home_protocol_metrics.json`
+- `home_protocol_metrics/home_protocol_metrics_summary.md`
+- `home_automation_dashboard/home_automation_dashboard.html`
