@@ -1,0 +1,50 @@
+{
+  "scenario": "accessory_offline_reconnect",
+  "description": "Accessory goes offline during command execution and reconnects with state reconciliation.",
+  "controller_id": "controller-home-1",
+  "accessory_id": "light-kitchen-1",
+  "initial_state": {
+    "power": "off",
+    "brightness": 0,
+    "accessory_epoch": 1
+  },
+  "events": [
+    {
+      "phase": "controller_command",
+      "command_id": "cmd-001",
+      "controller_epoch": 1,
+      "target_state": {
+        "power": "on",
+        "brightness": 70
+      }
+    },
+    {
+      "phase": "accessory_offline",
+      "reason": "network_drop"
+    },
+    {
+      "phase": "accessory_reconnect",
+      "reported_state": {
+        "power": "off",
+        "brightness": 0,
+        "accessory_epoch": 1
+      }
+    },
+    {
+      "phase": "state_reconciliation",
+      "expected_state": {
+        "power": "on",
+        "brightness": 70,
+        "accessory_epoch": 2
+      }
+    }
+  ],
+  "expected_result": {
+    "recovered": true,
+    "final_state": {
+      "power": "on",
+      "brightness": 70,
+      "accessory_epoch": 2
+    }
+  }
+}

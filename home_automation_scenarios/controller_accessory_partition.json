@@ -1,0 +1,40 @@
+{
+  "scenario": "controller_accessory_partition",
+  "description": "Controller and accessory are partitioned; stale writes are rejected after reconnect.",
+  "controller_id": "controller-home-1",
+  "accessory_id": "garage-door-1",
+  "initial_state": {
+    "open": false,
+    "accessory_epoch": 10
+  },
+  "events": [
+    {
+      "phase": "network_partition",
+      "controller_epoch": 10
+    },
+    {
+      "phase": "accessory_state_changed_locally",
+      "accessory_epoch": 11,
+      "state": {
+        "open": true
+      }
+    },
+    {
+      "phase": "controller_reconnect",
+      "controller_epoch": 10
+    },
+    {
+      "phase": "stale_controller_write_rejected",
+      "submitted_epoch": 10,
+      "current_accessory_epoch": 11
+    }
+  ],
+  "expected_result": {
+    "partition_handled": true,
+    "stale_write_rejected": true,
+    "final_state": {
+      "open": true,
+      "accessory_epoch": 11
+    }
+  }
+}

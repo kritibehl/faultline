@@ -1,0 +1,38 @@
+{
+  "scenario": "multi_device_scene_replay",
+  "description": "Replay validates a multi-device scene across independent accessory acknowledgements.",
+  "controller_id": "controller-home-1",
+  "scene_id": "scene-goodnight-1",
+  "events": [
+    {
+      "phase": "scene_start",
+      "command_id": "cmd-030"
+    },
+    {
+      "phase": "accessory_ack",
+      "accessory_id": "light-bedroom-1",
+      "state": {
+        "power": "off"
+      }
+    },
+    {
+      "phase": "accessory_ack",
+      "accessory_id": "lock-front-door-1",
+      "state": {
+        "locked": true
+      }
+    },
+    {
+      "phase": "accessory_ack",
+      "accessory_id": "thermostat-hallway-1",
+      "state": {
+        "temperature_f": 68
+      }
+    }
+  ],
+  "expected_result": {
+    "multi_device_replay_validated": true,
+    "ack_count": 3,
+    "missing_ack_count": 0
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "scenario": "duplicate_scene_command",
+  "description": "Duplicate scene command is replayed and must not execute twice.",
+  "controller_id": "controller-home-1",
+  "scene_id": "scene-evening-1",
+  "idempotency_key": "scene-evening-1:cmd-020",
+  "accessories": [
+    {
+      "accessory_id": "light-living-room-1",
+      "target_state": {
+        "power": "on",
+        "brightness": 40
+      }
+    },
+    {
+      "accessory_id": "thermostat-hallway-1",
+      "target_state": {
+        "temperature_f": 72
+      }
+    }
+  ],
+  "events": [
+    {
+      "phase": "scene_command_apply",
+      "command_id": "cmd-020"
+    },
+    {
+      "phase": "duplicate_scene_command",
+      "command_id": "cmd-020"
+    }
+  ],
+  "expected_result": {
+    "duplicate_prevented": true,
+    "scene_apply_count": 1
+  }
+}

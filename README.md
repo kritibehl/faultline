@@ -602,3 +602,19 @@ Artifacts:
 - `queue_runtime/lease_table_simulator.py`
 - `queue_runtime/idempotency_key_demo.py`
 - `tests/test_queue_recovery.py`
+
+## Home Automation Reliability Scenarios
+
+Faultline includes HomeKit-style distributed accessory simulations covering:
+
+- offline accessory reconnect recovery
+- stale controller command rejection
+- duplicate scene prevention
+- multi-device scene replay validation
+- controller/accessory partition recovery
+
+Safe claim: these are HomeKit-style distributed reliability simulations, not Apple HomeKit protocol implementations.
+
+See:
+- `home_automation_scenarios/`
+- `docs/home_automation_protocol_reliability.md`

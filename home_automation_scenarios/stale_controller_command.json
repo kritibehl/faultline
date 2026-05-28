@@ -1,0 +1,42 @@
+{
+  "scenario": "stale_controller_command",
+  "description": "Older controller command arrives after accessory epoch advanced.",
+  "controller_id": "controller-home-1",
+  "accessory_id": "lock-front-door-1",
+  "initial_state": {
+    "locked": true,
+    "accessory_epoch": 5
+  },
+  "events": [
+    {
+      "phase": "current_command",
+      "command_id": "cmd-010",
+      "controller_epoch": 5,
+      "target_state": {
+        "locked": false
+      }
+    },
+    {
+      "phase": "state_advanced",
+      "accessory_epoch": 6,
+      "state": {
+        "locked": false
+      }
+    },
+    {
+      "phase": "stale_command_arrives",
+      "command_id": "cmd-009",
+      "controller_epoch": 4,
+      "target_state": {
+        "locked": true
+      }
+    }
+  ],
+  "expected_result": {
+    "stale_command_rejected": true,
+    "final_state": {
+      "locked": false,
+      "accessory_epoch": 6
+    }
+  }
+}
