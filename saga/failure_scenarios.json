@@ -1,0 +1,17 @@
+{
+  "workflow": "payment_inventory_shipping",
+  "steps": [
+    "reserve_inventory",
+    "charge_payment",
+    "create_shipping_label"
+  ],
+  "failure": {
+    "failed_step": "create_shipping_label",
+    "reason": "shipping_provider_timeout"
+  },
+  "expected_compensations": [
+    "refund_payment",
+    "release_inventory"
+  ],
+  "expected_final_state": "consistent"
+}

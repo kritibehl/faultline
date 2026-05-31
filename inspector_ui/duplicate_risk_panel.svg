@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="360" viewBox="0 0 900 360">
+  <rect width="900" height="360" fill="#0f172a"/>
+  <text x="40" y="55" font-family="Arial" font-size="28" font-weight="700" fill="#f8fafc">Duplicate Risk Panel</text>
+  <rect x="50" y="100" width="180" height="110" rx="16" fill="#1e293b"/>
+  <text x="75" y="135" font-family="Arial" font-size="15" fill="#cbd5e1">Duplicate Risk</text>
+  <text x="75" y="185" font-family="Arial" font-size="42" font-weight="700" fill="#f97316">1</text>
+  <rect x="260" y="100" width="220" height="110" rx="16" fill="#1e293b"/>
+  <text x="285" y="135" font-family="Arial" font-size="15" fill="#cbd5e1">Stale Rejections</text>
+  <text x="285" y="185" font-family="Arial" font-size="42" font-weight="700" fill="#22c55e">7</text>
+  <rect x="510" y="100" width="220" height="110" rx="16" fill="#1e293b"/>
+  <text x="535" y="135" font-family="Arial" font-size="15" fill="#cbd5e1">Retry Queue</text>
+  <text x="535" y="185" font-family="Arial" font-size="42" font-weight="700" fill="#38bdf8">42</text>
+  <text x="50" y="275" font-family="Arial" font-size="18" fill="#cbd5e1">Status: stale writes rejected, duplicate commits prevented, operator review recommended under retry growth.</text>
+</svg>

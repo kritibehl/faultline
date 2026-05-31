@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Faultline Lease Timeline Debugger</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f8fafc; color: #0f172a; padding: 32px; }
+    h1 { margin-bottom: 6px; }
+    .timeline { margin-top: 30px; display: grid; gap: 18px; }
+    .event { background: white; border-left: 8px solid #2563eb; padding: 18px; border-radius: 12px; box-shadow: 0 8px 20px rgba(15,23,42,.08); }
+    .reject { border-left-color: #dc2626; }
+    .ok { border-left-color: #16a34a; }
+    .warn { border-left-color: #f59e0b; }
+    code { background: #e2e8f0; padding: 2px 6px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>Faultline Lease Timeline Debugger</h1>
+  <p>Worker heartbeats, lease takeover, stale-token rejection, retry queue, and duplicate-risk timeline.</p>
+
+  <div class="timeline">
+    <div class="event">
+      <strong>t0 — worker-a heartbeat</strong>
+      <p><code>job-1</code> claimed with fencing token <code>1</code>.</p>
+    </div>
+    <div class="event warn">
+      <strong>t1 — worker-a stalls</strong>
+      <p>Lease expires; duplicate-risk window opens.</p>
+    </div>
+    <div class="event ok">
+      <strong>t2 — worker-b takeover</strong>
+      <p>Lease owner advances; fencing token becomes <code>2</code>.</p>
+    </div>
+    <div class="event ok">
+      <strong>t3 — worker-b commit accepted</strong>
+      <p>Current token <code>2</code> matches submitted token.</p>
+    </div>
+    <div class="event reject">
+      <strong>t4 — worker-a stale commit rejected</strong>
+      <p>Submitted token <code>1</code> rejected because current token is <code>2</code>.</p>
+    </div>
+  </div>
+</body>
+</html>

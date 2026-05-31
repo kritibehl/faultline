@@ -655,3 +655,19 @@ Artifacts:
 - `home_protocol_metrics/home_protocol_metrics.json`
 - `home_protocol_metrics/home_protocol_metrics_summary.md`
 - `home_automation_dashboard/home_automation_dashboard.html`
+
+## Transactional Outbox, Saga Compensation, and Lease Debugger
+
+Faultline includes backend-correctness infrastructure artifacts for:
+
+- PostgreSQL transactional outbox design
+- idempotency-key duplicate suppression
+- replayable event delivery
+- saga-style compensation workflow
+- lease-state visual debugger
+- stale-worker rejection and duplicate-risk panels
+
+Artifacts:
+- `outbox/`
+- `saga/`
+- `inspector_ui/`
