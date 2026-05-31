@@ -671,3 +671,17 @@ Artifacts:
 - `outbox/`
 - `saga/`
 - `inspector_ui/`
+
+## Dead Letter Queue and Consistency Auditor
+
+Faultline includes production-style backend recovery and audit artifacts:
+
+- dead letter queue simulation for poison jobs
+- bounded recovery vs manual review workflow
+- nightly consistency audit across job, event, and outbox records
+- orphan, duplicate, and inconsistency detection
+
+Artifacts:
+- `dlq/`
+- `consistency_auditor/`
+- `tests/test_dlq_consistency_auditor.py`
