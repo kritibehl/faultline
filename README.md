@@ -685,3 +685,16 @@ Artifacts:
 - `dlq/`
 - `consistency_auditor/`
 - `tests/test_dlq_consistency_auditor.py`
+
+## Trace Explorer, Dependency Graph, and Incident Timeline
+
+Faultline includes platform/SRE artifacts for:
+
+- distributed trace journey across producer, queue, worker, database, outbox, and inspector services
+- service dependency graph with upstream/downstream and failure blast-radius notes
+- incident timeline reconstruction with root cause, recovery actions, and final consistency status
+
+Artifacts:
+- `trace_explorer/`
+- `service_dependency_graph/`
+- `incident_timeline/`

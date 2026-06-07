@@ -1,0 +1,29 @@
+{
+  "service": "faultline_worker_service",
+  "upstream": [
+    "producer_api",
+    "queue_runtime",
+    "retry_scheduler"
+  ],
+  "downstream": [
+    "postgres",
+    "outbox",
+    "inspector",
+    "metrics_exporter"
+  ],
+  "critical_dependencies": [
+    {
+      "dependency": "postgres",
+      "reason": "fencing-token validation and commit correctness"
+    },
+    {
+      "dependency": "outbox",
+      "reason": "replayable event delivery"
+    }
+  ],
+  "failure_blast_radius": {
+    "postgres_unavailable": "pause unsafe commits or fail closed",
+    "outbox_unavailable": "commit may succeed but delivery must be replayed",
+    "metrics_exporter_unavailable": "runtime visibility degraded"
+  }
+}
