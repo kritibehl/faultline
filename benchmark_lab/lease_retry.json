@@ -1,0 +1,7 @@
+{
+  "strategy": "lease_retry",
+  "duplicate_rate": 1.2,
+  "stale_write_rate": 0.9,
+  "recovery_time_ms": 165,
+  "consistency_failures": 5
+}

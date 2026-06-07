@@ -1,0 +1,7 @@
+{
+  "strategy": "lease_fencing",
+  "duplicate_rate": 0.0,
+  "stale_write_rate": 0.0,
+  "recovery_time_ms": 155,
+  "consistency_failures": 0
+}

@@ -1,0 +1,32 @@
+{
+  "models": [
+    {
+      "model": "lease_only",
+      "consistency": "weak",
+      "availability": "high",
+      "duplicate_risk": "medium",
+      "reconciliation_required": true
+    },
+    {
+      "model": "lease_plus_retry",
+      "consistency": "medium",
+      "availability": "high",
+      "duplicate_risk": "low-medium",
+      "reconciliation_required": true
+    },
+    {
+      "model": "lease_plus_fencing",
+      "consistency": "strong at commit boundary",
+      "availability": "database-bound",
+      "duplicate_risk": "low",
+      "reconciliation_required": false
+    },
+    {
+      "model": "idempotent_workflow",
+      "consistency": "application-level",
+      "availability": "high",
+      "duplicate_risk": "low if keys are stable",
+      "reconciliation_required": true
+    }
+  ]
+}

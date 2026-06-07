@@ -1,0 +1,27 @@
+{
+  "simulation": "capacity_contention",
+  "profiles": [
+    {
+      "workers": 10,
+      "throughput_jobs_per_sec": 205,
+      "lease_contention_events": 3,
+      "retry_amplification": 1.12,
+      "queue_backlog": 17
+    },
+    {
+      "workers": 100,
+      "throughput_jobs_per_sec": 128,
+      "lease_contention_events": 38,
+      "retry_amplification": 2.25,
+      "queue_backlog": 170
+    },
+    {
+      "workers": 1000,
+      "throughput_jobs_per_sec": 74,
+      "lease_contention_events": 410,
+      "retry_amplification": 8.9,
+      "queue_backlog": 1900
+    }
+  ],
+  "takeaway": "contention and retry amplification increase sharply as worker count grows"
+}

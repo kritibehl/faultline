@@ -1,0 +1,7 @@
+{
+  "workers": 100,
+  "throughput_jobs_per_sec": 128,
+  "lease_contention_events": 38,
+  "retry_amplification": 2.25,
+  "queue_backlog": 170
+}

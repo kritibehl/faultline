@@ -1,0 +1,7 @@
+{
+  "strategy": "lease_only",
+  "duplicate_rate": 2.3,
+  "stale_write_rate": 1.8,
+  "recovery_time_ms": 140,
+  "consistency_failures": 11
+}

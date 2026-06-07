@@ -1,0 +1,22 @@
+{
+  "pairing_success_rate": 1.0,
+  "avg_ack_latency_ms": 32,
+  "p95_ack_latency_ms": 58,
+  "avg_recovery_time_ms": 420,
+  "p95_recovery_time_ms": 690,
+  "duplicate_commands_prevented": 12,
+  "stale_commands_rejected": 7,
+  "failover_duration_ms": 850,
+  "devices_online": 8,
+  "devices_offline": 1,
+  "pairing_events": 5,
+  "failovers": 2,
+  "reconnects": 4,
+  "network_degradation_events": {
+    "packet_loss": 3,
+    "delayed_ack": 4,
+    "duplicate_ack": 2,
+    "reordered_command": 2
+  },
+  "safe_claim": "synthetic HomeKit-style protocol reliability metrics, not Apple HomeKit telemetry"
+}

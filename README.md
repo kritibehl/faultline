@@ -220,6 +220,7 @@ make report  # full report
 
 ---
 
+<<<<<<< HEAD
 ## Repository Map
 
 ```
@@ -234,3 +235,370 @@ faultline/
 ├── docs/             Architecture diagrams + screenshots
 └── reports/          Benchmark outputs
 ```
+=======
+## Related
+
+- [KubePulse](https://github.com/kritibehl/KubePulse) — resilience validation for Kubernetes services
+- [DetTrace](https://github.com/kritibehl/dettrace) — deterministic replay for concurrency failures
+- [AutoOps-Insight](https://github.com/kritibehl/AutoOps-Insight) — CI failure intelligence and incident triage
+- [Postmortem Atlas](https://github.com/kritibehl/postmortem-atlas) — real production outages, structured and analyzed
+
+
+## Observability and Replay Tooling
+
+Faultline includes:
+
+- Prometheus-compatible metrics endpoint
+- OpenTelemetry-style trace exports
+- replayable failure artifacts
+- benchmark dashboards
+- structured stale-write rejection signals
+- replay validation tooling
+
+
+
+## Operational Backend Artifacts
+
+Faultline includes backend/infra realism artifacts for:
+
+- PostgreSQL slow-query and lock diagnostics
+- connection-pool diagnostics
+- transaction retry examples
+- migration notes
+- async retry queue workflows
+- dead-letter queue design
+- async replay recovery
+- OTEL Collector configuration
+- Jaeger-compatible trace examples
+- trace correlation documentation
+
+Directories:
+- `postgres_ops/`
+- `async_runtime/`
+- `otel/`
+
+
+
+## Failure Load Test Report
+
+Faultline includes load-test style runtime contention artifacts covering:
+
+- worker profiles: 8 / 16 / 32
+- retry queue growth
+- lease contention events
+- stale-worker rejection count
+- queue delay p50 / p95
+- duplicate commit rate under contention
+
+See:
+- `benchmarks/lease_contention_load_test.json`
+- `benchmarks/retry_queue_growth_report.md`
+- `benchmarks/load_test_summary.md`
+
+
+
+## Go Inspector Walkthrough
+
+Faultline includes a small Go backend service for reviewer-friendly operational inspection:
+
+- `/health`
+- `/leases`
+- `/metrics`
+- `/trace/export`
+- lease-risk summary
+- duplicate-risk summary
+- worker-state dashboard
+
+See [`docs/go_inspector_walkthrough.md`](docs/go_inspector_walkthrough.md).
+
+
+
+## Kubernetes, Helm, OpenAPI, and Inspector Auth
+
+Faultline includes platform packaging artifacts for the Go inspector service:
+
+- Kubernetes deployment/service manifests
+- Helm chart
+- optional bearer-token protection for operational endpoints
+- OpenAPI documentation
+- PostgreSQL schema diagram
+- stale-worker corruption case study
+
+See:
+- `k8s/`
+- `helm/faultline/`
+- `docs/openapi/faultline-inspector-openapi.yaml`
+- `docs/schema/postgres_schema_diagram.md`
+- `docs/case_studies/stale_worker_corruption.md`
+
+Safe claim: these are deployable platform artifacts and demo auth controls, not a production Kubernetes platform or enterprise RBAC system.
+
+
+
+## Backend / Platform Integration Artifacts
+
+Faultline includes additional backend-platform artifacts for:
+
+- Kafka / RabbitMQ / NATS event-ingestion design
+- Redis locking and Redlock tradeoff discussion
+- PostgreSQL migration and indexing examples
+- Prometheus / Grafana / Jaeger / Loki observability stack artifact
+- k6 load-test script for inspector endpoints
+
+See:
+- `event_runtime/`
+- `redis_coordination/`
+- `migrations/`
+- `observability/`
+- `load_tests/`
+- `docs/platform/backend_platform_additions.md`
+
+
+
+## Platform Walkthrough
+
+Faultline includes missing platform artifacts now closed out:
+
+- observability Docker Compose stack
+- Flyway-style migration examples
+- k6 inspector API load test
+- Go inspector OpenAPI spec
+- failure replay screenshot artifact
+- platform walkthrough doc
+
+See [`docs/platform_walkthrough.md`](docs/platform_walkthrough.md).
+
+
+## Demo and Roadmap
+
+Run the local demo:
+
+    make demo
+
+Artifacts:
+
+- `docs/demo/terminal_demo_walkthrough.md`
+- `ROADMAP.md`
+
+The demo validates:
+
+- replay workflows
+- benchmark comparison
+- metrics export
+- trace export
+- stale-worker rejection paths
+- Go inspector operational endpoints
+
+
+## Architecture Diagram
+
+![Faultline Architecture](docs/diagrams/faultline_architecture.svg)
+
+
+## Service Contracts, Event Replay, and Auth Artifacts
+
+Faultline includes backend/platform artifacts for:
+
+- gRPC/protobuf contracts between worker, inspector, and auditor services
+- Kafka / Redis Streams event-replay design
+- PostgreSQL `FOR UPDATE SKIP LOCKED` and transaction-isolation notes
+- connection-pool diagnostic report
+- OTEL / Jaeger trace-correlation examples
+- API-key / RBAC policy artifacts for inspector endpoints
+
+See:
+- `proto/faultline.proto`
+- `event_stream/`
+- `postgres_ops/transaction_isolation_notes.md`
+- `postgres_ops/connection_pool_report.md`
+- `tracing/trace_correlation_contract.json`
+- `auth/`
+
+## Linux and PostgreSQL Reliability Diagnostics
+
+Faultline includes operational diagnostics for backend/platform review:
+
+- connection-pool stress testing
+- PostgreSQL lock-contention analysis
+- slow-query and `EXPLAIN ANALYZE` notes
+- index verification guidance
+- Linux process/resource debugging workflows
+- worker runtime debugging checklist
+
+See:
+- `scripts/ops/connection_pool_stress.py`
+- `ops_diagnostics/postgres/`
+- `ops_diagnostics/linux/`
+
+## Operational Stress and Runtime Observability
+
+Faultline includes operational backend simulations and observability artifacts for:
+
+- 10/25/50/100-worker stress simulation
+- lease churn and contention growth
+- retry amplification and queue backlog growth
+- worker crash injection modeling
+- operational Prometheus counters
+- Linux process/runtime debugging
+- network failure simulation for partial partition, packet delay, timeout, retry storm, and DNS failure cases
+
+Artifacts:
+- `simulations/multi_worker_stress.py`
+- `simulations/network_failure_simulation.py`
+- `reports/ops/`
+- `monitoring/operational_metrics.py`
+- `monitoring/operational_dashboard.svg`
+- `scripts/runtime/process_monitor.sh`
+
+## Operational Visualizations
+
+Faultline includes:
+
+- worker lifecycle visualization
+- stale-worker rejection flow
+- benchmark visualization pack
+- operational dashboard artifacts
+- inspector endpoint screenshots
+
+Visual artifacts:
+- `docs/visuals/worker_lifecycle.svg`
+- `docs/visuals/stale_worker_rejection_flow.svg`
+- `reports/ops/benchmark_visuals/`
+- `monitoring/operational_dashboard.svg`
+
+## AWS Data Services Alignment Artifacts
+
+Faultline includes design and runbook artifacts for AWS-style resilient backend/data-service review:
+
+- distributed storage tradeoffs
+- database consistency and retry behavior
+- cost/resilience tradeoffs
+- customer workload scenarios
+- DynamoDB-style lease-table design
+- SQS-style retry queue design
+- idempotency-key workflows
+- stale-worker and duplicate-risk runbooks
+- PostgreSQL lock-contention runbook
+
+See:
+- `aws_data_services_alignment/`
+- `no_sql_queue_design/`
+- `operational_runbooks/`
+
+## AWS Data Services / Backend Distributed Systems Proof
+
+Faultline includes AWS-style backend/data-service review artifacts:
+
+- customer operational reviews
+- retry amplification review
+- availability vs consistency review
+- operational cost notes
+- SQS-style retry queue design
+- DynamoDB-style lease table design
+- idempotency-key workflow design
+- stale-worker, duplicate-risk, PostgreSQL contention, and customer-impact runbooks
+
+Safe claim: these are AWS-style design and operational review artifacts, not deployed AWS service integrations.
+
+See:
+- `customer_operational_reviews/`
+- `aws_queue_design/`
+- `operational_runbooks/`
+
+## Incident Operations Layer
+
+Faultline includes incident-review workflows for operational excellence:
+
+- incident review template
+- customer-impact escalation guidance
+- retry-storm analysis
+- replay reconstruction walkthrough
+- operational recovery timeline
+
+See:
+- `incident_operations/`
+
+## Queue Worker Recovery Demo
+
+Faultline includes a small queue-runtime demo showing:
+
+- SQS-style retry queue behavior
+- DynamoDB-style lease-table simulation
+- idempotency-key duplicate prevention
+- lease takeover
+- stale-worker commit rejection
+
+Artifacts:
+- `queue_runtime/worker_retry_queue.py`
+- `queue_runtime/lease_table_simulator.py`
+- `queue_runtime/idempotency_key_demo.py`
+- `tests/test_queue_recovery.py`
+
+## Home Automation Reliability Scenarios
+
+Faultline includes HomeKit-style distributed accessory simulations covering:
+
+- offline accessory reconnect recovery
+- stale controller command rejection
+- duplicate scene prevention
+- multi-device scene replay validation
+- controller/accessory partition recovery
+
+Safe claim: these are HomeKit-style distributed reliability simulations, not Apple HomeKit protocol implementations.
+
+See:
+- `home_automation_scenarios/`
+- `docs/home_automation_protocol_reliability.md`
+
+## Home Protocol Lab
+
+Faultline includes HomeKit-style protocol reliability simulations covering:
+
+- device discovery
+- device pairing
+- attribute sync
+- command acknowledgement
+- state reconciliation
+- packet loss, delayed ack, duplicate ack, and reordered command handling
+- primary/secondary hub failover
+- stale hub rejoin rejection
+
+Safe claim: this is a HomeKit-style reliability lab, not a HomeKit/Matter/Thread implementation.
+
+See:
+- `home_protocol_lab/`
+- `multi_hub_scenarios/`
+
+## Home Protocol Metrics and Dashboard
+
+Faultline includes HomeKit-style reliability metrics and a static dashboard artifact tracking:
+
+- pairing success rate
+- acknowledgement latency
+- recovery time
+- duplicate commands prevented
+- stale commands rejected
+- failover duration
+- devices online/offline
+- reconnects and pairing events
+
+Artifacts:
+- `home_protocol_metrics/home_protocol_metrics.json`
+- `home_protocol_metrics/home_protocol_metrics_summary.md`
+- `home_automation_dashboard/home_automation_dashboard.html`
+>>>>>>> 6a6a0ab (feat: add HomeKit-style protocol metrics and reliability dashboard)
+
+## Distributed Systems Engineering Lab
+
+Faultline includes comparison and governance artifacts for distributed execution design:
+
+- correctness benchmark lab comparing lease-only, lease+retry, and lease+fencing strategies
+- reliability governance scorecard with consistency, recovery, and release-readiness signals
+- capacity and contention simulator for 10/100/1000-worker profiles
+- consistency explorer comparing lease-only, retry, fencing, and idempotent workflow tradeoffs
+
+Artifacts:
+- `benchmark_lab/`
+- `governance/`
+- `capacity_lab/`
+- `consistency_explorer/`
