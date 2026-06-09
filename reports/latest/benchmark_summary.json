@@ -1,0 +1,9 @@
+{
+  "project": "Faultline",
+  "duplicate_commit_rate": 0.0,
+  "failures_injected": 1500,
+  "event_transactions_validated": 500,
+  "lost_events": 0,
+  "stale_writes_prevented": true,
+  "release_decision": "PASS"
+}
