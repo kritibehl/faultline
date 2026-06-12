@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1300" height="520" viewBox="0 0 1300 520">
+<rect width="1300" height="520" fill="#f8fafc"/>
+<text x="40" y="55" font-family="Arial" font-size="32" font-weight="700" fill="#111827">Kafka-Style Event Flow</text>
+<text x="40" y="88" font-family="Arial" font-size="17" fill="#475569">Faultline distributed job events from submission to replay and inspection</text>
+
+<g font-family="Arial"> <rect x="50" y="170" width="180" height="90" rx="16" fill="#ffffff" stroke="#cbd5e1"/> <text x="86" y="222" font-size="18" font-weight="700" fill="#111827">producer_api</text>
+<rect x="285" y="170" width="190" height="90" rx="16" fill="#eff6ff" stroke="#60a5fa"/>
+<text x="320" y="222" font-size="18" font-weight="700" fill="#1d4ed8">job.events</text>
+
+<rect x="530" y="170" width="190" height="90" rx="16" fill="#ffffff" stroke="#cbd5e1"/>
+<text x="565" y="222" font-size="18" font-weight="700" fill="#111827">worker_service</text>
+
+<rect x="775" y="170" width="190" height="90" rx="16" fill="#ecfdf5" stroke="#22c55e"/>
+<text x="815" y="222" font-size="18" font-weight="700" fill="#166534">outbox</text>
+
+<rect x="1020" y="170" width="210" height="90" rx="16" fill="#fff7ed" stroke="#f97316"/>
+<text x="1064" y="222" font-size="18" font-weight="700" fill="#9a3412">inspector</text>
+
+<line x1="230" y1="215" x2="285" y2="215" stroke="#64748b" stroke-width="4"/>
+<line x1="475" y1="215" x2="530" y2="215" stroke="#64748b" stroke-width="4"/>
+<line x1="720" y1="215" x2="775" y2="215" stroke="#64748b" stroke-width="4"/>
+<line x1="965" y1="215" x2="1020" y2="215" stroke="#64748b" stroke-width="4"/>
+
+<text x="255" y="150" font-size="15" fill="#475569">job.submitted</text>
+<text x="490" y="150" font-size="15" fill="#475569">job.claimed</text>
+<text x="720" y="150" font-size="15" fill="#475569">job.completed</text>
+<text x="950" y="150" font-size="15" fill="#475569">outbox.replayed</text>
+
+<rect x="355" y="330" width="590" height="75" rx="16" fill="#111827"/>
+<text x="390" y="375" font-size="20" fill="#f8fafc">stale_write.rejected events make replay and audit visible</text>
+</g> </svg> EOF

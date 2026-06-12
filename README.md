@@ -182,3 +182,35 @@ make test
 ```json
 { "stale_risk": "low", "active_workers": 8, "stale_rejections_last_5m": 0 }
 ```
+
+## Incident Replay Console
+
+Faultline includes an incident replay console for distributed job failures:
+
+- stale-worker late commit
+- lease takeover
+- retry storm
+- partial write / outbox replay
+- duplicate-risk scoring
+- recovery recommendations
+
+Artifacts:
+- `incident_replay_console/replay_console.py`
+- `incident_replay_console/incident_replay_console.html`
+- `incident_replay_console/incident_replay_report.json`
+
+## Design Technology / Backend Infra Alignment
+
+Faultline includes backend/platform artifacts aligned with Go/gRPC and event-driven infrastructure review:
+
+- gRPC-style service contract example
+- Kafka-style job-event flow diagram
+- service ownership map
+- runbook for debugging failed distributed job execution
+
+Safe claim: these are backend design artifacts and examples, not production gRPC/Kafka deployments.
+
+Artifacts:
+- `design_tech_alignment/grpc/`
+- `design_tech_alignment/event_flow/`
+- `design_tech_alignment/runbooks/`
