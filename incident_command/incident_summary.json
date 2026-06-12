@@ -1,0 +1,9 @@
+{
+  "severity": "sev2",
+  "customer_impact": 1832,
+  "mitigation": "traffic_reroute",
+  "recovery_time_min": 18,
+  "root_cause": "retry_storm_after_partial_dependency_failure",
+  "current_status": "mitigated",
+  "owner": "incident_commander"
+}

@@ -214,3 +214,26 @@ Artifacts:
 - `design_tech_alignment/grpc/`
 - `design_tech_alignment/event_flow/`
 - `design_tech_alignment/runbooks/`
+
+## Incident Commander Mode
+
+Faultline includes Incident Commander Mode for operational ownership review:
+
+- incident bridge notes
+- executive update
+- customer impact summary
+- postmortem
+- structured incident command report
+
+Example output:
+
+```json
+{
+  "severity": "sev2",
+  "customer_impact": 1832,
+  "mitigation": "traffic_reroute",
+  "recovery_time_min": 18
+}
+Artifacts:
+
+incident_command/

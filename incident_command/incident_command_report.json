@@ -1,0 +1,17 @@
+{
+  "mode": "incident_commander",
+  "severity": "sev2",
+  "customer_impact": 1832,
+  "mitigation": "traffic_reroute",
+  "recovery_time_min": 18,
+  "correctness_status": {
+    "duplicate_commits": 0,
+    "stale_writes_accepted": 0,
+    "fencing_validation": "enforced"
+  },
+  "next_actions": [
+    "tune_retry_backoff",
+    "add_retry_amplification_alert",
+    "document_traffic_reroute_playbook"
+  ]
+}
