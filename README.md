@@ -237,3 +237,24 @@ Example output:
 Artifacts:
 
 incident_command/
+
+## Event Warehouse Analytics
+
+Faultline includes an event warehouse model for backend reliability analytics:
+
+- `dim_services`
+- `fact_events`
+- `fact_failures`
+
+SQL analytics cover:
+
+- duplicate commit rate
+- stale-write rejection rate
+- failure recovery time
+- service-level customer impact
+
+Artifacts:
+- `event_warehouse/schema.sql`
+- `event_warehouse/sample_data.sql`
+- `event_warehouse/sql/`
+- `event_warehouse/reports/`

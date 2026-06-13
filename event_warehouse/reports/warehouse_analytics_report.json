@@ -1,0 +1,20 @@
+{
+  "warehouse": "faultline_event_warehouse",
+  "tables": [
+    "dim_services",
+    "fact_events",
+    "fact_failures"
+  ],
+  "analytics": {
+    "duplicate_rate_percent": 0.0,
+    "stale_write_rejection_rate_percent": 40.0,
+    "avg_failure_recovery_time_ms": 26000,
+    "sev2_customer_impact": 1832
+  },
+  "queries": [
+    "duplicate_rate.sql",
+    "stale_write_rate.sql",
+    "failure_recovery_time.sql",
+    "service_failure_summary.sql"
+  ]
+}
