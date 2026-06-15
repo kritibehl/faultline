@@ -235,9 +235,6 @@ Example output:
   "recovery_time_min": 18
 }
 ```
-Artifacts:
-
-incident_command/
 
 ## Event Warehouse Analytics
 
