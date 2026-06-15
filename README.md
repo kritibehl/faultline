@@ -10,9 +10,9 @@
 
 ## Why This Exists
 
-**Problem:** Lease-based job systems allow stale workers to commit after crash recovery — causing double-charges, miscounts, and audit failures. Lease expiry stops the *next* worker from waiting. It does not stop the *old* worker from writing late.
+**Problem:** Lease-based job systems allow stale workers to commit after crash recovery — causing double-charges, miscounts and audit failures. Lease expiry stops the *next* worker from waiting. It does not stop the *old* worker from writing late.
 
-**Impact:** Stale commits corrupt ledgers, trigger duplicate payments, and produce invariant violations that are hard to detect and expensive to fix.
+**Impact:** Stale commits corrupt ledgers, trigger duplicate payments and produce invariant violations that are hard to detect and expensive to fix.
 
 **Proof:** Faultline rejects stale writes at the database boundary using fencing tokens. Validated across 1,500+ injected failure scenarios — crash, lease takeover, retry storm, duplicate submission — with 0 duplicate commits and 0 invariant violations.
 
