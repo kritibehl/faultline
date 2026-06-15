@@ -234,6 +234,7 @@ Example output:
   "mitigation": "traffic_reroute",
   "recovery_time_min": 18
 }
+```
 Artifacts:
 
 incident_command/
