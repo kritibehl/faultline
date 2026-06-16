@@ -256,3 +256,16 @@ Artifacts:
 - `event_warehouse/sample_data.sql`
 - `event_warehouse/sql/`
 - `event_warehouse/reports/`
+
+## Distributed Runtime Debugging
+
+Faultline provides debugging workflows for:
+
+- worker lifecycle tracing
+- stale-worker rejection
+- lease takeover behavior
+- retry storm diagnosis
+- duplicate-commit prevention
+- inspector APIs for runtime state review
+
+These workflows frame Faultline as distributed execution debugging infrastructure for backend and platform systems.
