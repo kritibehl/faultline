@@ -1,0 +1,11 @@
+profile: partial_partition
+description: Worker loses DB reachability while continuing local execution.
+fault:
+  affected_worker: worker-a
+  dependency: postgres
+  duration_ms: 18000
+expected_recovery:
+  stale_writes_rejected: 1
+  duplicate_commits: 0
+  recovery_time_ms: 18000
+  final_state: consistent

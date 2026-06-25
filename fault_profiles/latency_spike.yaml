@@ -1,0 +1,11 @@
+profile: latency_spike
+description: Database latency spike delays heartbeat and commit path.
+fault:
+  dependency: postgres
+  added_latency_ms: 750
+  duration_ms: 20000
+expected_recovery:
+  stale_writes_rejected: 1
+  duplicate_commits: 0
+  p95_commit_latency_ms: 890
+  final_state: consistent

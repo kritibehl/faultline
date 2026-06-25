@@ -297,3 +297,26 @@ fault_profiles/high_latency.yaml
 reports/network_partition_correctness_report.md
 reports/partition_recovery_timeline.md
 docs/network_fault_model.md
+
+## Network Fault Recovery and Failover Lab
+
+Faultline includes network-fault recovery profiles for:
+
+- DNS failure
+- partial partition
+- latency spike
+- worker disconnect
+
+Key proof:
+
+- stale writes rejected
+- duplicate commits remain zero
+- recovery timelines explainable
+
+Faultline also includes a small Linux networking failover lab for baseline reachability, simulated route degradation, restoration, and recovery-time reporting.
+
+Artifacts:
+- `fault_profiles/`
+- `reports/network_fault_recovery_report.md`
+- `reports/network_fault_recovery_report.json`
+- `network_failover_lab/`

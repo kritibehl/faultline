@@ -1,0 +1,16 @@
+{
+  "suite": "network_fault_recovery",
+  "profiles": [
+    "dns_failure",
+    "partial_partition",
+    "latency_spike",
+    "worker_disconnect"
+  ],
+  "results": {
+    "duplicate_commits": 0,
+    "stale_writes_rejected": 3,
+    "safe_recovery": true,
+    "recovery_timelines_explainable": true
+  },
+  "claim": "Faultline validates safe recovery under network partitions, DNS failures, latency spikes, and worker disconnects."
+}

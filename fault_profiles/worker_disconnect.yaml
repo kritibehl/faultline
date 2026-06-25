@@ -1,0 +1,11 @@
+profile: worker_disconnect
+description: Worker disconnects during active lease and later resumes.
+fault:
+  affected_worker: worker-a
+  disconnect_ms: 15000
+expected_recovery:
+  lease_expires: true
+  reclaimed_by: worker-b
+  stale_writes_rejected: 1
+  duplicate_commits: 0
+  final_state: consistent
