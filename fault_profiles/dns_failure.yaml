@@ -1,0 +1,17 @@
+profile: dns_failure
+description: Worker cannot resolve database/service dependency during claim or commit path.
+fault:
+  type: dns_resolution_failure
+  affected_worker: worker-a
+  dependency: postgres.service.local
+  duration_ms: 12000
+expected_behavior:
+  - claim or heartbeat fails
+  - retry path activates
+  - no unsafe commit accepted
+  - lease can be reclaimed after expiry
+metrics:
+  duplicate_commits: 0
+  stale_writes_rejected: 0
+  dns_failure_recovery_time_ms: 12000
+safe_claim: simulated DNS failure profile, not production DNS outage

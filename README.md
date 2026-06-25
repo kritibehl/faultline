@@ -269,3 +269,31 @@ Faultline provides debugging workflows for:
 - inspector APIs for runtime state review
 
 These workflows frame Faultline as distributed execution debugging infrastructure for backend and platform systems.
+
+## Network Partition Correctness
+
+Faultline includes simulated network-fault profiles for distributed correctness validation:
+
+- network partition
+- DNS failure
+- high latency
+- worker disconnect / lease expiry
+- stale-worker rejection after partition recovery
+
+Key result:
+
+```json
+{
+  "duplicate_commits": 0,
+  "stale_writes_rejected": 1,
+  "partition_recovery_time_ms": 18000,
+  "final_state": "consistent"
+}
+Artifacts:
+
+fault_profiles/network_partition.yaml
+fault_profiles/dns_failure.yaml
+fault_profiles/high_latency.yaml
+reports/network_partition_correctness_report.md
+reports/partition_recovery_timeline.md
+docs/network_fault_model.md

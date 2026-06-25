@@ -1,0 +1,18 @@
+profile: network_partition
+description: Worker loses database/network access during active lease.
+fault:
+  type: partial_partition
+  affected_worker: worker-a
+  dependency: postgres
+  duration_ms: 18000
+expected_behavior:
+  - worker-a heartbeat stops
+  - lease expires safely
+  - worker-b reclaims job
+  - fencing token advances
+  - worker-a stale commit rejected after partition heals
+metrics:
+  duplicate_commits: 0
+  stale_writes_rejected: 1
+  partition_recovery_time_ms: 18000
+safe_claim: simulated network partition profile, not production chaos injection

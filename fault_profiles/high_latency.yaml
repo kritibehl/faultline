@@ -1,0 +1,18 @@
+profile: high_latency
+description: Dependency latency causes delayed heartbeat and retry amplification risk.
+fault:
+  type: latency_injection
+  affected_dependency: postgres
+  added_latency_ms: 750
+  duration_ms: 20000
+expected_behavior:
+  - commit latency increases
+  - retry amplification risk increases
+  - stale writes still rejected by fencing token
+  - duplicate commits remain zero
+metrics:
+  duplicate_commits: 0
+  stale_writes_rejected: 1
+  p95_commit_latency_ms: 890
+  partition_recovery_time_ms: 20000
+safe_claim: simulated latency injection profile, not production traffic benchmark
