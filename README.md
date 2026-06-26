@@ -289,6 +289,7 @@ Key result:
   "partition_recovery_time_ms": 18000,
   "final_state": "consistent"
 }
+```
 Artifacts:
 
 fault_profiles/network_partition.yaml
