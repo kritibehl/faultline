@@ -290,14 +290,6 @@ Key result:
   "final_state": "consistent"
 }
 ```
-Artifacts:
-
-fault_profiles/network_partition.yaml
-fault_profiles/dns_failure.yaml
-fault_profiles/high_latency.yaml
-reports/network_partition_correctness_report.md
-reports/partition_recovery_timeline.md
-docs/network_fault_model.md
 
 ## Network Fault Recovery and Failover Lab
 
