@@ -314,7 +314,7 @@ Key proof:
 - duplicate commits remain zero
 - recovery timelines explainable
 
-Faultline also includes a small Linux networking failover lab for baseline reachability, simulated route degradation, restoration, and recovery-time reporting.
+Faultline also includes a small Linux networking failover lab for baseline reachability, simulated route degradation, restoration and recovery-time reporting.
 
 Artifacts:
 - `fault_profiles/`
