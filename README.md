@@ -110,3 +110,28 @@ make report
 ---
 
 [github.com/kritibehl/faultline](https://github.com/kritibehl/faultline)
+
+## AWS-Style Readiness and Java Health Client
+
+Faultline includes AWS-style deployment-readiness evidence and a small Java health-check client.
+
+Readiness evidence covers:
+
+- Docker-style build plan
+- service health checks
+- metrics exposure
+- CI/CD validation
+- failure simulation
+- rollback and remediation guidance
+
+Java client covers:
+
+- HTTP health check
+- timeout handling
+- JSON response parsing
+- CI-friendly exit code
+- dependency-free test
+
+Artifacts:
+- `reports/aws_infra_readiness_report.md`
+- `java_health_check_client/`
