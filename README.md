@@ -135,3 +135,17 @@ Java client covers:
 Artifacts:
 - `reports/aws_infra_readiness_report.md`
 - `java_health_check_client/`
+
+## Network Reliability
+
+Faultline includes network reliability artifacts covering:
+
+- DNS failure handling
+- TCP timeout analysis
+- HTTP retry behavior
+- TLS-like handshake failure classification
+- service degradation playbooks
+- live-site RCA documentation
+
+Artifacts:
+- `network_reliability/`
