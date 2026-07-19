@@ -149,3 +149,25 @@ Faultline includes network reliability artifacts covering:
 
 Artifacts:
 - `network_reliability/`
+
+## Concurrency Scaling and Contention
+
+Faultline includes deterministic worker-scaling analysis across 1, 2, 4, 8, and 16 workers.
+
+Measured signals include:
+
+- throughput
+- p95 queue wait time
+- lease-acquisition contention
+- retry amplification
+- recovery latency under load
+- connection-pool utilization
+- fairness and starvation
+- duplicate-commit prevention
+
+Artifacts:
+- `concurrency_lab/concurrency_scaling_results.json`
+- `reports/concurrency_scaling_report.md`
+- `reports/concurrency_throughput_curve.png`
+
+Safe claim: this is an in-repo concurrency simulation, not a production traffic benchmark.
