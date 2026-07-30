@@ -137,3 +137,7 @@ autopsy-lease-race:
 .PHONY: help up down restart logs migrate test clean \
         drill-01 drill-02 drill-03 drill-all \
         lease-race lease-race-500 lease-race-log autopsy-lease-race
+
+.PHONY: correctness-demo
+correctness-demo:
+	PYTHONPATH=. python3 scripts/correctness_demo.py

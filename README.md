@@ -171,3 +171,53 @@ Artifacts:
 - `reports/concurrency_throughput_curve.png`
 
 Safe claim: this is an in-repo concurrency simulation, not a production traffic benchmark.
+
+## Correctness Proof
+
+Faultline focuses on four precise guarantees:
+
+- duplicate commit prevention
+- idempotent effect handling
+- transactional event publication
+- tested recovery invariants
+
+It does **not** claim universal exactly-once execution.
+
+### Architecture
+
+![Faultline correctness architecture](docs/diagrams/correctness_architecture.svg)
+
+The correctness path is:
+
+1. worker claim;
+2. lease issuance;
+3. monotonically increasing fencing token;
+4. commit-time token validation;
+5. atomic result and transactional-outbox persistence;
+6. duplicate suppression through unique identities and idempotency keys.
+
+### Deterministic stale-worker race
+
+![Deterministic stale-worker race](docs/diagrams/stale_worker_race.svg)
+
+```text
+Worker A claims token 7
+Lease expires
+Worker B claims token 8
+Worker A attempts commit
+Commit rejected
+One-command demo
+make correctness-demo
+
+Expected summary:
+
+Scenarios executed: 1,537
+Duplicate commits: 0
+Lost outbox events: 0
+Duplicate deliveries suppressed: 37
+RESULT: PASS
+Design documentation
+docs/database_invariants.md
+docs/design_deep_dive.md
+
+The public technical article URL is linked from the design deep dive and explains the fencing-token model, deterministic race construction, and database-enforced invariants.
