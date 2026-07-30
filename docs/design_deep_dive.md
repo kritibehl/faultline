@@ -16,7 +16,7 @@ Faultline's correctness design focuses on database-enforced ownership and recove
 
 The accompanying technical article explains fencing tokens, deterministic races, and database-enforced correctness invariants:
 
-**Article:** `REPLACE_WITH_PUBLIC_ARTICLE_URL`
+**Article:** Public design deep dive link will be added here.
 
 ## Supporting repository artifacts
 
