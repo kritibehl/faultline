@@ -9,5 +9,5 @@ redis==5.0.8
 
 prometheus-client==0.20.0
 
-pydantic==2.8.2
+pydantic==2.12.5
 python-dotenv==1.0.1
