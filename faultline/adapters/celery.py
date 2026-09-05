@@ -9,6 +9,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from faultline.history import HistoryEvent, now_iso, write_jsonl
+from faultline.adapters.base import AdapterCapabilities
+from faultline.invariants.effects import at_most_one_effect
 
 
 COMPOSE = "integrations/celery/docker-compose.yml"
@@ -16,6 +18,15 @@ COMPOSE = "integrations/celery/docker-compose.yml"
 WORKER_A = "faultline-celery-worker-a"
 WORKER_B = "faultline-celery-worker-b"
 POSTGRES = "faultline-celery-postgres"
+
+
+CAPABILITIES = AdapterCapabilities(
+    process_pause=True,
+    process_kill=True,
+    broker_disconnect=True,
+    redelivery=True,
+    visibility_expiry=True,
+)
 
 
 class RunError(RuntimeError):
@@ -266,6 +277,17 @@ def inject_continue(container: str) -> None:
     )
 
 
+def best_effort_recover_worker_a() -> None:
+    """Never leave the test worker frozen after runner failure."""
+    run(
+        "docker",
+        "kill",
+        "--signal=SIGCONT",
+        WORKER_A,
+        check=False,
+    )
+
+
 def run_race(mode: str) -> tuple[dict[str, object], Path]:
     if mode not in {"unsafe", "fenced"}:
         raise ValueError("mode must be unsafe or fenced")
@@ -395,7 +417,8 @@ def run_race(mode: str) -> tuple[dict[str, object], Path]:
 
     committed_effects = len(effects)
 
-    invariant_pass = committed_effects <= 1
+    invariant = at_most_one_effect(committed_effects)
+    invariant_pass = invariant.passed
 
     database_events = parse_attempt_history(job_id)
 
@@ -420,7 +443,9 @@ def run_race(mode: str) -> tuple[dict[str, object], Path]:
         "fault": "SIGSTOP/SIGCONT",
         "broker": "Redis",
         "database": "PostgreSQL",
-        "invariant": "at-most-one-effect",
+        "invariant": invariant.name,
+        "invariant_observed": invariant.observed,
+        "invariant_limit": invariant.limit,
         "committed_effects": committed_effects,
         "effects": effects,
         "stale_rejections": rejections,

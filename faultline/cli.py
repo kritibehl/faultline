@@ -4,7 +4,11 @@ import argparse
 import json
 import sys
 
-from faultline.adapters.celery import RunError, run_race
+from faultline.adapters.celery import (
+    RunError,
+    best_effort_recover_worker_a,
+    run_race,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -64,6 +68,9 @@ def main() -> int:
     except KeyboardInterrupt:
         print("\nInterrupted.", file=sys.stderr)
         return 130
+
+    finally:
+        best_effort_recover_worker_a()
 
     return 2
 
