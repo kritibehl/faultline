@@ -2,24 +2,30 @@
   "framework": "faultline",
   "adapter": "celery",
   "mode": "unsafe",
-  "job_id": "payment-unsafe-e9c78be3",
-  "fault": "SIGSTOP/SIGCONT",
+  "job_id": "payment-unsafe-877398e3",
+  "fault": "pause",
+  "fault_injection": {
+    "inject": "SIGSTOP",
+    "recover": "SIGCONT"
+  },
   "broker": "Redis",
   "database": "PostgreSQL",
   "invariant": "at-most-one-effect",
+  "invariant_observed": 2,
+  "invariant_limit": 1,
   "committed_effects": 2,
   "effects": [
     {
       "worker": "worker-b",
       "fencing_token": 2,
       "amount": 100,
-      "committed_at": "2026-09-05 21:08:30.024608+00"
+      "committed_at": "2026-09-05 21:45:20.862335+00"
     },
     {
       "worker": "worker-a",
       "fencing_token": 1,
       "amount": 100,
-      "committed_at": "2026-09-05 21:08:34.082186+00"
+      "committed_at": "2026-09-05 21:45:25.341381+00"
     }
   ],
   "stale_rejections": [],

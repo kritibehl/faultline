@@ -1,0 +1,8 @@
+{"details": null, "fencing_token": 1, "job_id": "payment-unsafe-877398e3", "ts": "2026-09-05 21:45:10.315522+00", "type": "delivery_started", "worker": "worker-a"}
+{"details": null, "fencing_token": 1, "job_id": "payment-unsafe-877398e3", "ts": "2026-09-05 21:45:10.323981+00", "type": "ready_to_commit", "worker": "worker-a"}
+{"details": {"fault": "SIGSTOP"}, "fencing_token": 1, "job_id": "payment-unsafe-877398e3", "ts": "2026-09-05T21:45:10.470374+00:00", "type": "fault_injected", "worker": "worker-a"}
+{"details": null, "fencing_token": 2, "job_id": "payment-unsafe-877398e3", "ts": "2026-09-05 21:45:20.846311+00", "type": "delivery_started", "worker": "worker-b"}
+{"details": null, "fencing_token": 2, "job_id": "payment-unsafe-877398e3", "ts": "2026-09-05 21:45:20.869896+00", "type": "commit_accepted", "worker": "worker-b"}
+{"details": null, "fencing_token": 2, "job_id": "payment-unsafe-877398e3", "ts": "2026-09-05T21:45:21.161744+00:00", "type": "ownership_observed", "worker": "worker-b"}
+{"details": {"fault": "SIGCONT"}, "fencing_token": 1, "job_id": "payment-unsafe-877398e3", "ts": "2026-09-05T21:45:21.161795+00:00", "type": "fault_recovered", "worker": "worker-a"}
+{"details": null, "fencing_token": 1, "job_id": "payment-unsafe-877398e3", "ts": "2026-09-05 21:45:25.35229+00", "type": "commit_accepted", "worker": "worker-a"}
