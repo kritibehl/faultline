@@ -1,223 +1,445 @@
 # Faultline
 
-Faultline proves that distributed job recovery is only safe when stale workers are fenced, duplicate commits stay zero, and ownership remains correct under failure.
+**Correctness testing for at-least-once background workers.**
 
-**Core idea:** Recovery is not availability returning. Recovery is state remaining correct.
+Faultline injects real failures into queue consumers, records execution
+histories, and checks whether application-level side-effect invariants survive
+redelivery and stale-worker recovery.
 
-**Proof:** 12 scenarios tested · 4 fault profiles injected · 0 duplicate commits across all recovery runs · JSON and Markdown reports generated · fencing invariant enforced under partition, stall, and crash
+The current reference integration uses:
 
----
+- Celery
+- Redis
+- PostgreSQL
+- Docker
+- real worker processes
+- `SIGSTOP` / `SIGCONT`
+- visibility-timeout redelivery
+- fencing tokens
+- machine-readable execution histories
 
-Faultline is not about running jobs.
-It is about proving recovery correctness under stale ownership.
+## The bug Faultline reproduces
 
----
+At-least-once workers can execute the same logical job more than once.
 
-## The Failure Mode
+A worker can begin processing a job, lose progress or connectivity long enough
+for ownership to expire, and later resume after another worker has already
+taken over.
 
-A worker claims a job and receives a fencing token. It stalls — due to a slow network, GC pause, or partition. The lease expires. A second worker reclaims the job with a new token and begins executing. The first worker wakes up and attempts to commit with its old token.
-
-If the system accepts that commit, the job state is now corrupt: two workers believe they own the result, one of them is wrong, and there is no record of which.
-
-This is not a rare edge case. It is the standard partial-failure scenario in any distributed queue, workflow engine, or task processor.
-
----
-
-## The Invariant
-
-Only the worker holding the current fencing token may commit job state. Any write carrying a superseded token must be rejected, logged, and attributed to a stale writer.
-
----
-
-## Architecture
-
-```mermaid
-sequenceDiagram
-    participant W1 as Worker A
-    participant DB as Job Store
-    participant W2 as Worker B
-
-    W1->>DB: claim job, receive token 1
-    Note over W1: Worker stalls / partitioned
-    W2->>DB: lease expires, reclaim with token 2
-    W1->>DB: stale commit attempt with token 1
-    DB-->>W1: reject — token superseded
-    W2->>DB: commit with token 2
-    DB-->>W2: accepted
-```
-
----
-
-## What Faultline Proves
-
-| Claim | Evidence |
-|---|---|
-| Stale workers cannot commit after lease takeover | correctness audit across all fault scenarios |
-| Duplicate commits remain zero | recovery report |
-| Network partitions do not silently corrupt state | partition fault profile |
-| Crash recovery restores correct ownership | crash fault profile |
-| Recovery timeline is fully explainable | timeline report per scenario |
-
----
-
-## Fault Profiles Injected
-
-| Fault Type | Scenario |
-|---|---|
-| Worker stall | lease expires while worker is processing |
-| Network partition | worker loses connectivity mid-execution |
-| Crash before commit | worker dies without writing result |
-| Crash after partial write | worker dies after writing partial state |
-
----
-
-## Evidence Structure
-
-```
-reports/
-  correctness-audit.json      # per-scenario token validation results
-  recovery-report.json        # duplicate commit count, ownership trace
-  timeline-report.md          # human-readable recovery timeline
-  fault-profiles/             # per-fault-type injection and outcome logs
-```
-
----
-
-## Run Locally
-
-```bash
-git clone https://github.com/kritibehl/faultline
-cd faultline
-# see README for dependency setup
-make test
-make fault-inject
-make report
-```
-
----
-
-## Limits and Next Steps
-
-- Current implementation uses a single job store; multi-region replication adds fencing complexity not yet modeled
-- Token generation is monotonic but not globally ordered across shards
-- Does not yet model Byzantine workers (only crash-stop and stall failures)
-
----
-
-> [!IMPORTANT]
-> Recovery correctness is not the same as service availability. A system can return to "available" while job state is corrupt. Faultline tests for correctness, not uptime.
-
----
-
-[github.com/kritibehl/faultline](https://github.com/kritibehl/faultline)
-
-## AWS-Style Readiness and Java Health Client
-
-Faultline includes AWS-style deployment-readiness evidence and a small Java health-check client.
-
-Readiness evidence covers:
-
-- Docker-style build plan
-- service health checks
-- metrics exposure
-- CI/CD validation
-- failure simulation
-- rollback and remediation guidance
-
-Java client covers:
-
-- HTTP health check
-- timeout handling
-- JSON response parsing
-- CI-friendly exit code
-- dependency-free test
-
-Artifacts:
-- `reports/aws_infra_readiness_report.md`
-- `java_health_check_client/`
-
-## Network Reliability
-
-Faultline includes network reliability artifacts covering:
-
-- DNS failure handling
-- TCP timeout analysis
-- HTTP retry behavior
-- TLS-like handshake failure classification
-- service degradation playbooks
-- live-site RCA documentation
-
-Artifacts:
-- `network_reliability/`
-
-## Concurrency Scaling and Contention
-
-Faultline includes deterministic worker-scaling analysis across 1, 2, 4, 8, and 16 workers.
-
-Measured signals include:
-
-- throughput
-- p95 queue wait time
-- lease-acquisition contention
-- retry amplification
-- recovery latency under load
-- connection-pool utilization
-- fairness and starvation
-- duplicate-commit prevention
-
-Artifacts:
-- `concurrency_lab/concurrency_scaling_results.json`
-- `reports/concurrency_scaling_report.md`
-- `reports/concurrency_throughput_curve.png`
-
-Safe claim: this is an in-repo concurrency simulation, not a production traffic benchmark.
-
-## Correctness Proof
-
-Faultline focuses on four precise guarantees:
-
-- duplicate commit prevention
-- idempotent effect handling
-- transactional event publication
-- tested recovery invariants
-
-It does **not** claim universal exactly-once execution.
-
-### Architecture
-
-![Faultline correctness architecture](docs/diagrams/correctness_architecture.svg)
-
-The correctness path is:
-
-1. worker claim;
-2. lease issuance;
-3. monotonically increasing fencing token;
-4. commit-time token validation;
-5. atomic result and transactional-outbox persistence;
-6. duplicate suppression through unique identities and idempotency keys.
-
-### Deterministic stale-worker race
-
-![Deterministic stale-worker race](docs/diagrams/stale_worker_race.svg)
+Without a commit-time ownership check:
 
 ```text
-Worker A claims token 7
-Lease expires
-Worker B claims token 8
-Worker A attempts commit
-Commit rejected
-One-command demo
-make correctness-demo
+Worker A receives payment-42
+token = 1
+        |
+        v
+Worker A reaches commit window
+        |
+        v
+FAULT: SIGSTOP
+        |
+        v
+visibility timeout expires
+        |
+        v
+Worker B receives redelivery
+token = 2
+        |
+        v
+Worker B commits
+        |
+        v
+FAULT RECOVERY: SIGCONT
+        |
+        v
+Worker A resumes with stale token 1
+        |
+        v
+Worker A also commits
+Result:
 
-Expected summary:
+committed effects = 1
+stale rejections = 1
+AT_MOST_ONE_EFFECT = PASS
+Run the comparison
 
-Scenarios executed: 1,537
-Duplicate commits: 0
-Lost outbox events: 0
-Duplicate deliveries suppressed: 37
-RESULT: PASS
-Design documentation
-docs/database_invariants.md
-docs/design_deep_dive.md
+Requirements:
 
-The public technical article URL is linked from the design deep dive and explains the fencing-token model, deterministic race construction, and database-enforced invariants.
+Python 3.11+
+Docker
+Docker Compose
+
+Install locally:
+
+python3 -m venv .framework-venv
+source .framework-venv/bin/activate
+python -m pip install -e '.[dev]'
+
+Run the complete experiment:
+
+faultline compare \
+  --adapter celery \
+  --fault pause \
+  --invariant at-most-one-effect
+
+Expected result:
+
+Faultline Correctness Comparison
+================================
+
+                             UNSAFE     FENCED
+----------------------------------------------
+Committed effects                2          1
+Stale rejections                 0          1
+Current token                    2          2
+Invariant                     FAIL       PASS
+
+COMPARISON RESULT: PASS
+(unsafe violated the invariant; fenced preserved it)
+
+The comparison returns exit code 0 only when Faultline successfully observes
+the expected contrast:
+
+unsafe implementation -> invariant violation
+fenced implementation -> invariant preserved
+Run one implementation
+
+Unsafe:
+
+faultline test \
+  --adapter celery \
+  --fault pause \
+  --implementation unsafe \
+  --invariant at-most-one-effect
+
+Expected:
+
+Committed effects:       2
+Stale rejections:        0
+Current fencing token:   2
+
+AT_MOST_ONE_EFFECT: FAIL
+
+The command returns exit code 1 because the invariant was violated.
+
+Fenced:
+
+faultline test \
+  --adapter celery \
+  --fault pause \
+  --implementation fenced \
+  --invariant at-most-one-effect
+
+Expected:
+
+Committed effects:       1
+Stale rejections:        1
+Current fencing token:   2
+
+AT_MOST_ONE_EFFECT: PASS
+
+The command returns exit code 0.
+
+What Faultline actually does
+
+The Celery adapter runs two real workers against Redis and PostgreSQL.
+
+                         Faultline CLI
+                              |
+                              v
+                         Orchestrator
+                              |
+              +---------------+---------------+
+              |                               |
+              v                               v
+        Fault Injector                   Celery Adapter
+       SIGSTOP/SIGCONT                         |
+              |                               v
+              |                         Redis Broker
+              |                               |
+              +-----------> Worker A          |
+                              |                |
+                              |            redelivery
+                              |                |
+                              +-----------> Worker B
+                                               |
+                                               v
+                                        PostgreSQL
+                                       effect ledger
+                                               |
+                         +---------------------+--------------------+
+                         |                                          |
+                         v                                          v
+                 Execution History                          Invariant Checker
+                  history.jsonl                           at-most-one-effect
+                         |                                          |
+                         +------------------+-----------------------+
+                                            |
+                                            v
+                                        report.json
+
+The experiment intentionally creates this sequence:
+
+1. Worker A receives the task and receives fencing token 1.
+2. Worker A reaches the dangerous pre-commit window.
+3. Faultline stops Worker A with SIGSTOP.
+4. The Redis visibility timeout expires.
+5. Worker B receives the redelivered task and receives token 2.
+6. Worker B commits the application effect.
+7. Faultline resumes Worker A with SIGCONT.
+8. Worker A attempts to finish its original execution.
+9. Faultline checks the resulting PostgreSQL history.
+
+The only difference between the two reference implementations is how the final
+side effect is committed.
+
+Unsafe commit
+
+The worker writes its effect without validating that it still owns the job.
+
+token 1 -> accepted even though current token = 2
+
+Both workers therefore commit.
+
+Fenced commit
+
+The authoritative PostgreSQL state is checked inside the commit path.
+
+presented token = 1
+current token   = 2
+
+The stale worker is rejected before its effect is committed.
+
+The invariant
+
+The first supported invariant is:
+
+AT_MOST_ONE_EFFECT
+
+For every logical job:
+
+committed_effects(job_id) <= 1
+
+This is deliberately narrower than claiming universal "exactly once"
+execution.
+
+Faultline currently checks an observable application-side effect stored in its
+PostgreSQL ledger.
+
+Execution histories
+
+Every run emits a chronological JSONL history.
+
+Example fenced history:
+
+worker-a  token=1  delivery_started
+worker-a  token=1  ready_to_commit
+
+FAULT                 SIGSTOP worker-a
+
+worker-b  token=2  delivery_started
+worker-b  token=2  commit_accepted
+
+ownership observed    token=2
+
+FAULT RECOVERY        SIGCONT worker-a
+
+worker-a  token=1  commit_rejected
+
+Artifacts are written beneath:
+
+artifacts/runs/
+
+Each run contains:
+
+history.jsonl
+report.json
+worker-a.log
+worker-b.log
+
+Example report fields:
+
+{
+  "framework": "faultline",
+  "adapter": "celery",
+  "implementation": "fenced",
+  "fault": "pause",
+  "invariant": "at-most-one-effect",
+  "committed_effects": 1,
+  "current_fencing_token": 2,
+  "result": "PASS"
+}
+
+The actual report currently uses the mode field for the implementation name;
+the public CLI exposes --implementation while retaining --mode as a
+backward-compatible alias.
+
+Why fencing is necessary
+
+A lease or visibility timeout answers:
+
+Who is allowed to own the work now?
+
+It does not automatically prevent a previous owner from waking up later and
+writing stale state.
+
+Faultline assigns a monotonically increasing token on every ownership
+transition:
+
+Worker A -> token 1
+Worker B -> token 2
+
+A commit is accepted only when:
+
+presented_token == current_token
+
+Therefore:
+
+Worker B: 2 == 2 -> commit accepted
+Worker A: 1 != 2 -> stale commit rejected
+
+The authoritative storage system performs the check. Correctness does not rely
+on Worker A realizing that its lease expired while it was paused.
+
+Current capabilities
+Adapter
+Celery + Redis
+Real fault
+pause -> SIGSTOP
+recovery -> SIGCONT
+Recovery mechanism
+Redis visibility-timeout redelivery
+Side-effect store
+PostgreSQL
+Invariant
+at-most-one-effect
+Implementations
+unsafe
+fenced
+Outputs
+terminal verdict
+exit code
+history.jsonl
+report.json
+worker logs
+Project structure
+faultline/
+├── faultline/
+│   ├── cli.py
+│   ├── history.py
+│   ├── adapters/
+│   │   ├── base.py
+│   │   └── celery.py
+│   ├── faults/
+│   ├── invariants/
+│   │   └── effects.py
+│   └── reporting/
+│       └── compare.py
+│
+├── integrations/
+│   └── celery/
+│       ├── Dockerfile
+│       ├── docker-compose.yml
+│       ├── requirements.txt
+│       ├── app/
+│       │   ├── db.py
+│       │   ├── submit.py
+│       │   └── tasks.py
+│       └── postgres/
+│           └── init.sql
+│
+├── tests/
+│   ├── test_framework_cleanup.py
+│   ├── test_framework_cli.py
+│   ├── test_framework_invariants.py
+│   └── test_framework_reports.py
+│
+├── artifacts/
+│   └── runs/
+│
+├── pyproject.toml
+└── SCOPE_FRAMEWORK.md
+Testing
+
+Install development dependencies:
+
+python -m pip install -e '.[dev]'
+
+Run framework tests:
+
+python -m pytest \
+  tests/test_framework_invariants.py \
+  tests/test_framework_reports.py \
+  tests/test_framework_cleanup.py \
+  tests/test_framework_cli.py \
+  -q
+
+The current framework regression suite covers:
+
+invariant semantics
+canonical unsafe evidence
+canonical fenced evidence
+stale-token rejection evidence
+CLI parsing
+backward-compatible CLI arguments
+best-effort worker recovery
+Methodology
+
+Faultline is Jepsen-inspired in methodology:
+
+drive a real system
+-> inject a real failure
+-> collect an execution history
+-> check an explicit correctness property
+
+Faultline is not Jepsen and does not claim equivalent coverage or formal
+linearizability verification.
+
+What Faultline does not claim
+
+Faultline does not currently claim:
+
+universal exactly-once execution
+formal proof of linearizability
+Byzantine fault tolerance
+consensus verification
+production certification for Celery or Redis
+exhaustive fault coverage
+correctness of arbitrary external side effects
+
+The current result is deliberately specific:
+
+Under the included Celery/Redis/PostgreSQL stale-worker experiment, the
+unsafe reference implementation produces two committed effects after
+redelivery, while commit-time fencing rejects the stale worker and preserves
+the at-most-one-effect invariant.
+
+Roadmap
+
+Near-term work:
+
+extract process pause into the generic fault-injector interface
+add process kill/restart
+add broker-disconnect faults
+add database-disconnect faults
+add additional history-based invariants
+improve adapter lifecycle isolation
+add deterministic integration tests
+publish a Docker image
+add CI integration
+
+Future adapters:
+
+BullMQ / Redis
+Amazon SQS
+
+Adapters will preserve each system's actual delivery semantics rather than
+pretending all queue systems have the same lease or acknowledgement model.
+
+Status
+
+Faultline is currently an early framework prototype.
+
+The Celery reference adapter already runs the complete stale-worker experiment
+end-to-end and emits reproducible machine-readable evidence for both the unsafe
+and fenced implementations.
