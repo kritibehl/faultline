@@ -36,3 +36,5 @@ venv/
 # Go build artifacts
 cmd/faultline-inspector/faultline-inspector
 .framework-venv/
+faultline_worker.egg-info/
+artifacts/runs/20*/
