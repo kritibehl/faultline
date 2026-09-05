@@ -1,0 +1,36 @@
+{
+  "framework": "faultline",
+  "adapter": "celery",
+  "mode": "fenced",
+  "job_id": "payment-fenced-f7842d39",
+  "fault": "pause",
+  "fault_injection": {
+    "inject": "SIGSTOP",
+    "recover": "SIGCONT"
+  },
+  "broker": "Redis",
+  "database": "PostgreSQL",
+  "invariant": "at-most-one-effect",
+  "invariant_observed": 1,
+  "invariant_limit": 1,
+  "committed_effects": 1,
+  "effects": [
+    {
+      "worker": "worker-b",
+      "fencing_token": 2,
+      "amount": 100,
+      "committed_at": "2026-09-05 21:45:45.104823+00"
+    }
+  ],
+  "stale_rejections": [
+    {
+      "worker": "worker-a",
+      "presented_token": 1,
+      "current_token": 2,
+      "rejected_at": "2026-09-05 21:45:49.557288+00"
+    }
+  ],
+  "current_fencing_token": 2,
+  "result": "PASS",
+  "methodology": "Real Celery workers and Redis broker with PostgreSQL side-effect ledger; worker process is stopped during an unacknowledged execution window to force redelivery."
+}

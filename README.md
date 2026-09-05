@@ -279,11 +279,16 @@ A preserved invariant returns exit code `0`.
 
 ## Execution artifacts
 
-Each experiment writes an artifact directory under:
+Each local experiment writes a generated artifact directory under:
 
 `artifacts/runs/`
 
-A completed run contains:
+Generated runs are ignored by Git. Curated machine-readable evidence used by
+the regression suite is stored under:
+
+`artifacts/canonical/`
+
+A completed local run contains:
 
 ```text
 history.jsonl
