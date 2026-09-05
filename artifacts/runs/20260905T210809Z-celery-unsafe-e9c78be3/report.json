@@ -1,0 +1,29 @@
+{
+  "framework": "faultline",
+  "adapter": "celery",
+  "mode": "unsafe",
+  "job_id": "payment-unsafe-e9c78be3",
+  "fault": "SIGSTOP/SIGCONT",
+  "broker": "Redis",
+  "database": "PostgreSQL",
+  "invariant": "at-most-one-effect",
+  "committed_effects": 2,
+  "effects": [
+    {
+      "worker": "worker-b",
+      "fencing_token": 2,
+      "amount": 100,
+      "committed_at": "2026-09-05 21:08:30.024608+00"
+    },
+    {
+      "worker": "worker-a",
+      "fencing_token": 1,
+      "amount": 100,
+      "committed_at": "2026-09-05 21:08:34.082186+00"
+    }
+  ],
+  "stale_rejections": [],
+  "current_fencing_token": 2,
+  "result": "FAIL",
+  "methodology": "Real Celery workers and Redis broker with PostgreSQL side-effect ledger; worker process is stopped during an unacknowledged execution window to force redelivery."
+}

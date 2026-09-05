@@ -141,3 +141,12 @@ autopsy-lease-race:
 .PHONY: correctness-demo
 correctness-demo:
 	PYTHONPATH=. python3 scripts/correctness_demo.py
+
+
+.PHONY: framework-celery-unsafe framework-celery-fenced
+
+framework-celery-unsafe:
+	PYTHONPATH=. python3 -m faultline.cli test --adapter celery --mode unsafe --invariant at-most-one-effect
+
+framework-celery-fenced:
+	PYTHONPATH=. python3 -m faultline.cli test --adapter celery --mode fenced --invariant at-most-one-effect

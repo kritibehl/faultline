@@ -1,0 +1,87 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: faultline-celery-postgres
+    environment:
+      POSTGRES_USER: faultline
+      POSTGRES_PASSWORD: faultline
+      POSTGRES_DB: faultline
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U faultline -d faultline"
+        ]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
+
+  redis:
+    image: redis:7-alpine
+    container_name: faultline-celery-redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  worker-a:
+    build:
+      context: .
+    container_name: faultline-celery-worker-a
+    environment:
+      BROKER_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql://faultline:faultline@postgres:5432/faultline
+      WORKER_NAME: worker-a
+    command:
+      [
+        "celery",
+        "-A",
+        "app.tasks.app",
+        "worker",
+        "--loglevel=INFO",
+        "--pool=solo",
+        "--hostname=worker-a@%h"
+      ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker-b:
+    build:
+      context: .
+    container_name: faultline-celery-worker-b
+    environment:
+      BROKER_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql://faultline:faultline@postgres:5432/faultline
+      WORKER_NAME: worker-b
+    command:
+      [
+        "celery",
+        "-A",
+        "app.tasks.app",
+        "worker",
+        "--loglevel=INFO",
+        "--pool=solo",
+        "--hostname=worker-b@%h"
+      ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  client:
+    build:
+      context: .
+    environment:
+      BROKER_URL: redis://redis:6379/0
+      DATABASE_URL: postgresql://faultline:faultline@postgres:5432/faultline
+    entrypoint: ["python", "-m", "app.submit"]
+    depends_on:
+      redis:
+        condition: service_healthy
