@@ -29,3 +29,9 @@ faultline = "faultline.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["faultline*"]
+
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8,<10",
+]
