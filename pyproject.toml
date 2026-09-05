@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "faultline-worker"
+version = "0.1.0"
+description = "Failure testing for at-least-once background workers"
+requires-python = ">=3.11"
+authors = [
+    { name = "Kriti Behl" }
+]
+keywords = [
+    "distributed-systems",
+    "fault-injection",
+    "celery",
+    "correctness",
+    "fencing",
+    "queues"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.scripts]
+faultline = "faultline.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["faultline*"]

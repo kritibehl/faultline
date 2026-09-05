@@ -288,9 +288,15 @@ def best_effort_recover_worker_a() -> None:
     )
 
 
-def run_race(mode: str) -> tuple[dict[str, object], Path]:
+def run_race(
+    mode: str,
+    fault: str = "pause",
+) -> tuple[dict[str, object], Path]:
     if mode not in {"unsafe", "fenced"}:
         raise ValueError("mode must be unsafe or fenced")
+
+    if fault != "pause":
+        raise ValueError("Celery adapter currently supports only fault=\'pause\'")
 
     suffix = uuid.uuid4().hex[:8]
     job_id = f"payment-{mode}-{suffix}"
@@ -440,7 +446,11 @@ def run_race(mode: str) -> tuple[dict[str, object], Path]:
         "adapter": "celery",
         "mode": mode,
         "job_id": job_id,
-        "fault": "SIGSTOP/SIGCONT",
+        "fault": fault,
+        "fault_injection": {
+            "inject": "SIGSTOP",
+            "recover": "SIGCONT",
+        },
         "broker": "Redis",
         "database": "PostgreSQL",
         "invariant": invariant.name,
