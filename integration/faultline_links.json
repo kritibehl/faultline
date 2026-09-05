@@ -1,9 +1,0 @@
-{
-  "autoops_integration": {
-    "incident_view": [
-      "View Faultline timeline",
-      "Replay available",
-      "Open race/failure artifact"
-    ]
-  }
-}

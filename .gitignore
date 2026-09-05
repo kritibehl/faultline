@@ -38,3 +38,5 @@ cmd/faultline-inspector/faultline-inspector
 .framework-venv/
 faultline_worker.egg-info/
 artifacts/runs/20*/
+.venv/
+*.egg-info/

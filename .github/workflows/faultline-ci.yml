@@ -2,28 +2,35 @@ name: Faultline CI
 
 on:
   push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
+
+permissions:
+  contents: read
 
 jobs:
-  smoke:
+  framework:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      - name: Install dependencies
+          python-version: "3.12"
+
+      - name: Install
         run: |
           python -m pip install --upgrade pip
-          pip install pytest requests psycopg2-binary matplotlib
-      - name: Smoke test docs/helpers
+          python -m pip install -e '.[dev]'
+
+      - name: CLI smoke test
         run: |
-          python examples/replay_stale_worker.py
-          python - <<'PY'
-          from metrics.prometheus_metrics import FaultlineMetrics
-          from tracing.otel_trace import new_trace_id
-          print(FaultlineMetrics().render_prometheus())
-          print(new_trace_id())
-          PY
+          faultline --help
+          faultline test --help
+          faultline compare --help
+
+      - name: Framework regression tests
+        run: |
+          python -m pytest tests -q

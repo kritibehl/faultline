@@ -1,5 +1,0 @@
- committed_effects | at_most_one_effect 
--------------------+--------------------
-                 2 | FAIL
-(1 row)
-

@@ -1,5 +1,0 @@
-ALTER TABLE jobs
-ADD COLUMN IF NOT EXISTS retry_backoff_seconds INTEGER NOT NULL DEFAULT 0;
-
-ALTER TABLE jobs
-ADD COLUMN IF NOT EXISTS dead_letter_reason TEXT;
