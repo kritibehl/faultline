@@ -1,0 +1,9 @@
+{"details": null, "fencing_token": 1, "job_id": "payment-post-commit-fenced-f5a8d1cc", "ts": "2026-09-06 03:00:46.110469+00", "type": "delivery_started", "worker": "worker-a"}
+{"details": null, "fencing_token": 1, "job_id": "payment-post-commit-fenced-f5a8d1cc", "ts": "2026-09-06 03:00:46.128702+00", "type": "commit_accepted", "worker": "worker-a"}
+{"details": null, "fencing_token": 1, "job_id": "payment-post-commit-fenced-f5a8d1cc", "ts": "2026-09-06 03:00:46.137347+00", "type": "ready_after_commit", "worker": "worker-a"}
+{"details": {"fault": "SIGSTOP"}, "fencing_token": 1, "job_id": "payment-post-commit-fenced-f5a8d1cc", "ts": "2026-09-06T03:00:46.244488+00:00", "type": "fault_injected", "worker": "worker-a"}
+{"details": null, "fencing_token": 2, "job_id": "payment-post-commit-fenced-f5a8d1cc", "ts": "2026-09-06 03:00:56.698432+00", "type": "delivery_started", "worker": "worker-b"}
+{"details": null, "fencing_token": 2, "job_id": "payment-post-commit-fenced-f5a8d1cc", "ts": "2026-09-06 03:00:56.716947+00", "type": "commit_accepted", "worker": "worker-b"}
+{"details": null, "fencing_token": 2, "job_id": "payment-post-commit-fenced-f5a8d1cc", "ts": "2026-09-06T03:00:56.863374+00:00", "type": "ownership_observed", "worker": "worker-b"}
+{"details": {"fault": "SIGCONT"}, "fencing_token": 1, "job_id": "payment-post-commit-fenced-f5a8d1cc", "ts": "2026-09-06T03:00:56.863469+00:00", "type": "fault_recovered", "worker": "worker-a"}
+{"details": null, "fencing_token": 1, "job_id": "payment-post-commit-fenced-f5a8d1cc", "ts": "2026-09-06 03:01:01.168419+00", "type": "post_commit_window_exit", "worker": "worker-a"}
