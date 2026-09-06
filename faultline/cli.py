@@ -16,7 +16,10 @@ IMPLEMENTATIONS = (
     "fenced",
     "idempotent",
 )
-FAULTS = ("pause",)
+FAULTS = (
+    "pause",
+    "kill",
+)
 WINDOWS = (
     "pre-commit",
     "post-commit",
