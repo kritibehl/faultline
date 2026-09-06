@@ -11,7 +11,10 @@ from pathlib import Path
 from faultline.history import HistoryEvent, now_iso, write_jsonl
 from faultline.adapters.base import AdapterCapabilities
 from faultline.faults.base import FaultInjector
-from faultline.faults.process import DockerProcessPauseFault
+from faultline.faults.process import (
+    DockerProcessKillFault,
+    DockerProcessPauseFault,
+)
 from faultline.invariants.effects import at_most_one_effect
 from faultline.lifecycle import RunLifecycle
 
@@ -25,7 +28,7 @@ POSTGRES = "faultline-celery-postgres"
 
 CAPABILITIES = AdapterCapabilities(
     process_pause=True,
-    process_kill=False,
+    process_kill=True,
     broker_disconnect=False,
     redelivery=True,
     visibility_expiry=True,
@@ -318,6 +321,9 @@ def build_fault_injector(fault: str) -> FaultInjector:
     if fault == "pause":
         return DockerProcessPauseFault(run)
 
+    if fault == "kill":
+        return DockerProcessKillFault(run)
+
     raise ValueError(
         f"Celery adapter does not support fault={fault!r}"
     )
@@ -330,7 +336,7 @@ class CeleryRunLifecycle(RunLifecycle):
         self._injector = build_fault_injector(fault)
 
     def cleanup(self) -> None:
-        """Never leave Worker A frozen after a runner failure."""
+        """Best-effort recovery of Worker A after a runner failure."""
         self._injector.recover(
             WORKER_A,
             check=False,
@@ -361,6 +367,12 @@ def _run_race(
     }:
         raise ValueError(
             "window must be pre-commit or post-commit"
+        )
+
+    if fault == "kill" and window != "post-commit":
+        raise RunError(
+            "kill fault currently supports only "
+            "window=post-commit"
         )
 
     injector = build_fault_injector(fault)
@@ -482,31 +494,48 @@ def _run_race(
         )
     )
 
-    print("[6/8] Resuming Worker A")
+    if fault == "pause":
+        print("[6/8] Resuming Worker A")
 
-    orchestrator_events.append(
-        HistoryEvent(
-            ts=now_iso(),
-            type="fault_recovered",
-            job_id=job_id,
-            worker="worker-a",
-            fencing_token=1,
-            details={"fault": fault_description.recover},
+        orchestrator_events.append(
+            HistoryEvent(
+                ts=now_iso(),
+                type="fault_recovered",
+                job_id=job_id,
+                worker="worker-a",
+                fencing_token=1,
+                details={"fault": fault_description.recover},
+            )
         )
-    )
 
-    injector.recover(WORKER_A)
+        injector.recover(WORKER_A)
 
-    expected_terminal = worker_a_terminal_marker(
-        mode,
-        window,
-    )
+        expected_terminal = worker_a_terminal_marker(
+            mode,
+            window,
+        )
 
-    wait_for_log(
-        WORKER_A,
-        f"{expected_terminal} job={job_id}",
-        timeout=45,
-    )
+        wait_for_log(
+            WORKER_A,
+            f"{expected_terminal} job={job_id}",
+            timeout=45,
+        )
+
+    else:
+        print("[6/8] Restarting Worker A after process crash")
+
+        orchestrator_events.append(
+            HistoryEvent(
+                ts=now_iso(),
+                type="fault_recovered",
+                job_id=job_id,
+                worker="worker-a",
+                fencing_token=1,
+                details={"fault": fault_description.recover},
+            )
+        )
+
+        injector.recover(WORKER_A)
 
     print("[7/8] Querying PostgreSQL evidence")
 
@@ -561,16 +590,27 @@ def _run_race(
         "methodology": (
             (
                 "Real Celery workers and Redis broker with PostgreSQL "
-                "side-effect ledger; Worker A is stopped before its "
+                "side-effect ledger; Worker A is paused before its "
                 "first side-effect commit while the task remains "
                 "unacknowledged, forcing Redis redelivery."
             )
             if window == "pre-commit"
             else (
-                "Real Celery workers and Redis broker with PostgreSQL "
-                "side-effect ledger; Worker A commits the side effect "
-                "and is then stopped before task return/ack, forcing "
-                "Redis to redeliver the already-committed logical job."
+                (
+                    "Real Celery workers and Redis broker with PostgreSQL "
+                    "side-effect ledger; Worker A commits the side effect "
+                    "and is paused before task return/ack, forcing Redis "
+                    "to redeliver the already-committed logical job."
+                )
+                if fault == "pause"
+                else (
+                    "Real Celery workers and Redis broker with PostgreSQL "
+                    "side-effect ledger; Worker A commits the side effect "
+                    f"and is killed with {fault_description.inject} "
+                    "before task return/ack, "
+                    "forcing Redis to redeliver the already-committed "
+                    "logical job."
+                )
             )
         ),
     }
@@ -615,6 +655,12 @@ def run_race(
     window: str = "pre-commit",
 ) -> tuple[dict[str, object], Path]:
     """Run one Celery experiment with guaranteed best-effort cleanup."""
+    if fault == "kill" and window != "post-commit":
+        raise RunError(
+            "kill fault currently supports only "
+            "window=post-commit"
+        )
+
     with build_run_lifecycle(fault):
         return _run_race(
             mode,

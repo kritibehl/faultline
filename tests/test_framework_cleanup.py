@@ -33,7 +33,7 @@ def test_celery_capabilities_are_conservative():
     assert capabilities.redelivery is True
     assert capabilities.visibility_expiry is True
 
-    assert capabilities.process_kill is False
+    assert capabilities.process_kill is True
     assert capabilities.broker_disconnect is False
 
 
@@ -82,3 +82,33 @@ def test_run_race_cleans_up_when_runner_fails(monkeypatch):
 
     assert len(cleanup_calls) == 1
     assert cleanup_calls[0][0] is RuntimeError
+
+
+def test_celery_kill_lifecycle_restarts_worker_a_best_effort(
+    monkeypatch,
+):
+    calls = []
+
+    def fake_run(*args, **kwargs):
+        calls.append((args, kwargs))
+
+    monkeypatch.setattr(
+        celery,
+        "run",
+        fake_run,
+    )
+
+    lifecycle = celery.build_run_lifecycle("kill")
+    lifecycle.cleanup()
+
+    assert len(calls) == 1
+
+    args, kwargs = calls[0]
+
+    assert args == (
+        "docker",
+        "start",
+        celery.WORKER_A,
+    )
+
+    assert kwargs["check"] is False
