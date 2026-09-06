@@ -10,6 +10,8 @@ from pathlib import Path
 
 from faultline.history import HistoryEvent, now_iso, write_jsonl
 from faultline.adapters.base import AdapterCapabilities
+from faultline.faults.base import FaultInjector
+from faultline.faults.process import DockerProcessPauseFault
 from faultline.invariants.effects import at_most_one_effect
 
 
@@ -259,30 +261,19 @@ def submit(mode: str, job_id: str) -> None:
         print(result.stdout.strip())
 
 
-def inject_stop(container: str) -> None:
-    run(
-        "docker",
-        "kill",
-        "--signal=SIGSTOP",
-        container,
-    )
+def build_fault_injector(fault: str) -> FaultInjector:
+    if fault == "pause":
+        return DockerProcessPauseFault(run)
 
-
-def inject_continue(container: str) -> None:
-    run(
-        "docker",
-        "kill",
-        "--signal=SIGCONT",
-        container,
+    raise ValueError(
+        f"Celery adapter does not support fault={fault!r}"
     )
 
 
 def best_effort_recover_worker_a() -> None:
     """Never leave the test worker frozen after runner failure."""
-    run(
-        "docker",
-        "kill",
-        "--signal=SIGCONT",
+    injector = build_fault_injector("pause")
+    injector.recover(
         WORKER_A,
         check=False,
     )
@@ -295,8 +286,8 @@ def run_race(
     if mode not in {"unsafe", "fenced"}:
         raise ValueError("mode must be unsafe or fenced")
 
-    if fault != "pause":
-        raise ValueError("Celery adapter currently supports only fault=\'pause\'")
+    injector = build_fault_injector(fault)
+    fault_description = injector.describe()
 
     suffix = uuid.uuid4().hex[:8]
     job_id = f"payment-{mode}-{suffix}"
@@ -342,12 +333,12 @@ def run_race(
             job_id=job_id,
             worker="worker-a",
             fencing_token=1,
-            details={"fault": "SIGSTOP"},
+            details={"fault": fault_description.inject},
         )
     )
 
-    print("[3/8] Injecting SIGSTOP into Worker A")
-    inject_stop(WORKER_A)
+    print(f"[3/8] Injecting {fault_description.inject} into Worker A")
+    injector.inject(WORKER_A)
 
     print("[4/8] Waiting for Redis visibility timeout")
     time.sleep(8)
@@ -398,11 +389,11 @@ def run_race(
             job_id=job_id,
             worker="worker-a",
             fencing_token=1,
-            details={"fault": "SIGCONT"},
+            details={"fault": fault_description.recover},
         )
     )
 
-    inject_continue(WORKER_A)
+    injector.recover(WORKER_A)
 
     expected_terminal = (
         "COMMIT_ACCEPTED"
@@ -447,10 +438,7 @@ def run_race(
         "mode": mode,
         "job_id": job_id,
         "fault": fault,
-        "fault_injection": {
-            "inject": "SIGSTOP",
-            "recover": "SIGCONT",
-        },
+        "fault_injection": fault_description.as_report(),
         "broker": "Redis",
         "database": "PostgreSQL",
         "invariant": invariant.name,
