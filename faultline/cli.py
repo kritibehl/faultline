@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import subprocess
 import sys
 
 from faultline.adapters.celery import (
@@ -165,6 +166,25 @@ def main() -> int:
     except RunError as exc:
         print(
             f"FAULTLINE ERROR: {exc}",
+            file=sys.stderr,
+        )
+        return 2
+
+    except subprocess.CalledProcessError as exc:
+        command = exc.cmd
+        if isinstance(command, (list, tuple)):
+            command = " ".join(str(part) for part in command)
+
+        print(
+            f"FAULTLINE ERROR: command failed "
+            f"(exit {exc.returncode}): {command}",
+            file=sys.stderr,
+        )
+        return 2
+
+    except OSError as exc:
+        print(
+            f"FAULTLINE ERROR: infrastructure failure: {exc}",
             file=sys.stderr,
         )
         return 2

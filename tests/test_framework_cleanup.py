@@ -23,3 +23,14 @@ def test_best_effort_recovery_uses_sigcont(monkeypatch):
     )
 
     assert kwargs["check"] is False
+
+
+def test_celery_capabilities_are_conservative():
+    capabilities = celery.CAPABILITIES
+
+    assert capabilities.process_pause is True
+    assert capabilities.redelivery is True
+    assert capabilities.visibility_expiry is True
+
+    assert capabilities.process_kill is False
+    assert capabilities.broker_disconnect is False

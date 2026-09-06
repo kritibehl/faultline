@@ -22,8 +22,8 @@ POSTGRES = "faultline-celery-postgres"
 
 CAPABILITIES = AdapterCapabilities(
     process_pause=True,
-    process_kill=True,
-    broker_disconnect=True,
+    process_kill=False,
+    broker_disconnect=False,
     redelivery=True,
     visibility_expiry=True,
 )
