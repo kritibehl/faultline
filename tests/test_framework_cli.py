@@ -79,12 +79,6 @@ def test_subprocess_failure_returns_exit_code_2(monkeypatch, capsys):
 
     monkeypatch.setattr(cli, "run_race", fail_run)
     monkeypatch.setattr(
-        cli,
-        "best_effort_recover_worker_a",
-        lambda: None,
-    )
-
-    monkeypatch.setattr(
         sys,
         "argv",
         [
@@ -117,12 +111,6 @@ def test_missing_runtime_returns_exit_code_2(monkeypatch, capsys):
         raise FileNotFoundError("docker executable not found")
 
     monkeypatch.setattr(cli, "run_race", fail_run)
-    monkeypatch.setattr(
-        cli,
-        "best_effort_recover_worker_a",
-        lambda: None,
-    )
-
     monkeypatch.setattr(
         sys,
         "argv",

@@ -6,7 +6,6 @@ import sys
 
 from faultline.adapters.celery import (
     RunError,
-    best_effort_recover_worker_a,
     run_race,
 )
 from faultline.reporting.compare import print_comparison
@@ -195,9 +194,6 @@ def main() -> int:
             file=sys.stderr,
         )
         return 130
-
-    finally:
-        best_effort_recover_worker_a()
 
     return 2
 
