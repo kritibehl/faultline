@@ -1,0 +1,45 @@
+{
+  "framework": "faultline",
+  "adapter": "bullmq",
+  "mode": "idempotent",
+  "window": "post-commit",
+  "job_id": "payment-post-commit-idempotent-c9c54ba1",
+  "fault": "kill",
+  "fault_injection": {
+    "inject": "SIGKILL",
+    "recover": "docker start"
+  },
+  "queue_system": "BullMQ",
+  "queue_library_version": "6.3.4",
+  "broker": "Redis",
+  "database": "PostgreSQL",
+  "redelivery_mechanism": "BullMQ stalled-job recovery after worker-lock expiry",
+  "lock_duration_ms": 5000,
+  "stalled_interval_ms": 1000,
+  "invariant": "at-most-one-effect",
+  "invariant_observed": 1,
+  "invariant_limit": 1,
+  "committed_effects": 1,
+  "effects": [
+    {
+      "worker": "worker-a",
+      "fencing_token": 1,
+      "amount": 100,
+      "committed_at": "2026-09-06 23:02:59.51417+00"
+    }
+  ],
+  "stale_rejections": [],
+  "duplicate_suppressions": [
+    {
+      "ts": "2026-09-06 23:03:04.595633+00",
+      "type": "duplicate_suppressed",
+      "job_id": "payment-post-commit-idempotent-c9c54ba1",
+      "worker": "worker-b",
+      "fencing_token": 2,
+      "details": null
+    }
+  ],
+  "current_fencing_token": 2,
+  "result": "PASS",
+  "methodology": "Real BullMQ 6.3.4 workers with Redis and PostgreSQL; Worker A commits its side effect and is killed with SIGKILL before processor return. After the BullMQ lock expires, stalled-job recovery makes the same logical job available for Worker B."
+}

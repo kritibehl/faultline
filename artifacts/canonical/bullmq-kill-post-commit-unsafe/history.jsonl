@@ -1,0 +1,9 @@
+{"details": null, "fencing_token": 1, "job_id": "payment-post-commit-unsafe-7762e9a4", "ts": "2026-09-06 23:02:10.578352+00", "type": "delivery_started", "worker": "worker-a"}
+{"details": null, "fencing_token": 1, "job_id": "payment-post-commit-unsafe-7762e9a4", "ts": "2026-09-06 23:02:10.586854+00", "type": "commit_accepted", "worker": "worker-a"}
+{"details": null, "fencing_token": 1, "job_id": "payment-post-commit-unsafe-7762e9a4", "ts": "2026-09-06 23:02:10.588654+00", "type": "ready_after_commit", "worker": "worker-a"}
+{"details": {"fault": "SIGKILL"}, "fencing_token": 1, "job_id": "payment-post-commit-unsafe-7762e9a4", "ts": "2026-09-06T23:02:11.003562+00:00", "type": "fault_injected", "worker": "worker-a"}
+{"details": {"mechanism": "BullMQ stalled-job recovery", "semantics": "worker event observation"}, "fencing_token": 1, "job_id": "payment-post-commit-unsafe-7762e9a4", "ts": "2026-09-06T23:02:16.351Z", "type": "stalled_recovery_observed", "worker": "worker-b"}
+{"details": null, "fencing_token": 2, "job_id": "payment-post-commit-unsafe-7762e9a4", "ts": "2026-09-06 23:02:16.487226+00", "type": "delivery_started", "worker": "worker-b"}
+{"details": null, "fencing_token": 2, "job_id": "payment-post-commit-unsafe-7762e9a4", "ts": "2026-09-06 23:02:16.50145+00", "type": "commit_accepted", "worker": "worker-b"}
+{"details": null, "fencing_token": 2, "job_id": "payment-post-commit-unsafe-7762e9a4", "ts": "2026-09-06T23:02:17.331497+00:00", "type": "ownership_observed", "worker": "worker-b"}
+{"details": {"fault": "docker start"}, "fencing_token": 1, "job_id": "payment-post-commit-unsafe-7762e9a4", "ts": "2026-09-06T23:02:17.331636+00:00", "type": "fault_recovered", "worker": "worker-a"}
