@@ -1,0 +1,40 @@
+{
+  "framework": "faultline",
+  "adapter": "celery",
+  "mode": "idempotent",
+  "window": "post-commit",
+  "job_id": "payment-post-commit-idempotent-591b0c48",
+  "fault": "pause",
+  "fault_injection": {
+    "inject": "SIGSTOP",
+    "recover": "SIGCONT"
+  },
+  "broker": "Redis",
+  "database": "PostgreSQL",
+  "invariant": "at-most-one-effect",
+  "invariant_observed": 1,
+  "invariant_limit": 1,
+  "committed_effects": 1,
+  "effects": [
+    {
+      "worker": "worker-a",
+      "fencing_token": 1,
+      "amount": 100,
+      "committed_at": "2026-09-06 02:59:31.849218+00"
+    }
+  ],
+  "stale_rejections": [],
+  "duplicate_suppressions": [
+    {
+      "ts": "2026-09-06 02:59:42.317544+00",
+      "type": "duplicate_suppressed",
+      "job_id": "payment-post-commit-idempotent-591b0c48",
+      "worker": "worker-b",
+      "fencing_token": 2,
+      "details": null
+    }
+  ],
+  "current_fencing_token": 2,
+  "result": "PASS",
+  "methodology": "Real Celery workers and Redis broker with PostgreSQL side-effect ledger; Worker A commits the side effect and is then stopped before task return/ack, forcing Redis to redeliver the already-committed logical job."
+}

@@ -1,0 +1,9 @@
+{"details": null, "fencing_token": 1, "job_id": "payment-post-commit-idempotent-591b0c48", "ts": "2026-09-06 02:59:31.814481+00", "type": "delivery_started", "worker": "worker-a"}
+{"details": null, "fencing_token": 1, "job_id": "payment-post-commit-idempotent-591b0c48", "ts": "2026-09-06 02:59:31.8699+00", "type": "commit_accepted", "worker": "worker-a"}
+{"details": null, "fencing_token": 1, "job_id": "payment-post-commit-idempotent-591b0c48", "ts": "2026-09-06 02:59:31.878054+00", "type": "ready_after_commit", "worker": "worker-a"}
+{"details": {"fault": "SIGSTOP"}, "fencing_token": 1, "job_id": "payment-post-commit-idempotent-591b0c48", "ts": "2026-09-06T02:59:31.972936+00:00", "type": "fault_injected", "worker": "worker-a"}
+{"details": null, "fencing_token": 2, "job_id": "payment-post-commit-idempotent-591b0c48", "ts": "2026-09-06 02:59:42.305483+00", "type": "delivery_started", "worker": "worker-b"}
+{"details": null, "fencing_token": 2, "job_id": "payment-post-commit-idempotent-591b0c48", "ts": "2026-09-06 02:59:42.317544+00", "type": "duplicate_suppressed", "worker": "worker-b"}
+{"details": null, "fencing_token": 2, "job_id": "payment-post-commit-idempotent-591b0c48", "ts": "2026-09-06T02:59:42.547865+00:00", "type": "ownership_observed", "worker": "worker-b"}
+{"details": {"fault": "SIGCONT"}, "fencing_token": 1, "job_id": "payment-post-commit-idempotent-591b0c48", "ts": "2026-09-06T02:59:42.547935+00:00", "type": "fault_recovered", "worker": "worker-a"}
+{"details": null, "fencing_token": 1, "job_id": "payment-post-commit-idempotent-591b0c48", "ts": "2026-09-06 02:59:46.896769+00", "type": "post_commit_window_exit", "worker": "worker-a"}
