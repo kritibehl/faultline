@@ -1,0 +1,8 @@
+{"details": null, "fencing_token": 1, "job_id": "payment-post-commit-unsafe-ff8dae3c", "ts": "2026-09-06 03:08:46.882242+00", "type": "delivery_started", "worker": "worker-a"}
+{"details": null, "fencing_token": 1, "job_id": "payment-post-commit-unsafe-ff8dae3c", "ts": "2026-09-06 03:08:46.926991+00", "type": "commit_accepted", "worker": "worker-a"}
+{"details": null, "fencing_token": 1, "job_id": "payment-post-commit-unsafe-ff8dae3c", "ts": "2026-09-06 03:08:46.93614+00", "type": "ready_after_commit", "worker": "worker-a"}
+{"details": {"fault": "SIGKILL"}, "fencing_token": 1, "job_id": "payment-post-commit-unsafe-ff8dae3c", "ts": "2026-09-06T03:08:47.038757+00:00", "type": "fault_injected", "worker": "worker-a"}
+{"details": null, "fencing_token": 2, "job_id": "payment-post-commit-unsafe-ff8dae3c", "ts": "2026-09-06 03:08:57.463576+00", "type": "delivery_started", "worker": "worker-b"}
+{"details": null, "fencing_token": 2, "job_id": "payment-post-commit-unsafe-ff8dae3c", "ts": "2026-09-06 03:08:57.47652+00", "type": "commit_accepted", "worker": "worker-b"}
+{"details": null, "fencing_token": 2, "job_id": "payment-post-commit-unsafe-ff8dae3c", "ts": "2026-09-06T03:08:57.705369+00:00", "type": "ownership_observed", "worker": "worker-b"}
+{"details": {"fault": "docker start"}, "fencing_token": 1, "job_id": "payment-post-commit-unsafe-ff8dae3c", "ts": "2026-09-06T03:08:57.705442+00:00", "type": "fault_recovered", "worker": "worker-a"}

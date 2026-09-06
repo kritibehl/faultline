@@ -1,0 +1,37 @@
+{
+  "framework": "faultline",
+  "adapter": "celery",
+  "mode": "unsafe",
+  "window": "post-commit",
+  "job_id": "payment-post-commit-unsafe-ff8dae3c",
+  "fault": "kill",
+  "fault_injection": {
+    "inject": "SIGKILL",
+    "recover": "docker start"
+  },
+  "broker": "Redis",
+  "database": "PostgreSQL",
+  "invariant": "at-most-one-effect",
+  "invariant_observed": 2,
+  "invariant_limit": 1,
+  "committed_effects": 2,
+  "effects": [
+    {
+      "worker": "worker-a",
+      "fencing_token": 1,
+      "amount": 100,
+      "committed_at": "2026-09-06 03:08:46.902111+00"
+    },
+    {
+      "worker": "worker-b",
+      "fencing_token": 2,
+      "amount": 100,
+      "committed_at": "2026-09-06 03:08:57.469723+00"
+    }
+  ],
+  "stale_rejections": [],
+  "duplicate_suppressions": [],
+  "current_fencing_token": 2,
+  "result": "FAIL",
+  "methodology": "Real Celery workers and Redis broker with PostgreSQL side-effect ledger; Worker A commits the side effect and is killed with SIGKILL before task return/ack, forcing Redis to redeliver the already-committed logical job."
+}
