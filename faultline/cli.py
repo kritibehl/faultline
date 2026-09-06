@@ -11,8 +11,16 @@ from faultline.adapters.celery import (
 from faultline.reporting.compare import print_comparison
 
 
-IMPLEMENTATIONS = ("unsafe", "fenced")
+IMPLEMENTATIONS = (
+    "unsafe",
+    "fenced",
+    "idempotent",
+)
 FAULTS = ("pause",)
+WINDOWS = (
+    "pre-commit",
+    "post-commit",
+)
 INVARIANTS = ("at-most-one-effect",)
 
 
@@ -31,6 +39,13 @@ def add_common_arguments(
         choices=FAULTS,
         default="pause",
         help="Failure to inject.",
+    )
+
+    parser.add_argument(
+        "--window",
+        choices=WINDOWS,
+        default="pre-commit",
+        help="Execution window in which to inject the failure.",
     )
 
     parser.add_argument(
@@ -98,6 +113,7 @@ def run_test(args: argparse.Namespace) -> int:
     report, _ = run_race(
         implementation,
         fault=args.fault,
+        window=args.window,
     )
 
     return 0 if report["result"] == "PASS" else 1
@@ -111,6 +127,7 @@ def run_compare(args: argparse.Namespace) -> int:
     unsafe_report, unsafe_dir = run_race(
         "unsafe",
         fault=args.fault,
+        window=args.window,
     )
 
     print()
@@ -120,6 +137,7 @@ def run_compare(args: argparse.Namespace) -> int:
     fenced_report, fenced_dir = run_race(
         "fenced",
         fault=args.fault,
+        window=args.window,
     )
 
     print_comparison(
@@ -131,21 +149,46 @@ def run_compare(args: argparse.Namespace) -> int:
     print(f"Fenced report: {fenced_dir / 'report.json'}")
     print()
 
-    expected_contrast = (
-        unsafe_report["result"] == "FAIL"
-        and fenced_report["result"] == "PASS"
-    )
+    if args.window == "pre-commit":
+        expected_contrast = (
+            unsafe_report["result"] == "FAIL"
+            and fenced_report["result"] == "PASS"
+        )
+
+        success_message = (
+            "unsafe violated the invariant; "
+            "fencing preserved it"
+        )
+
+        expected_message = (
+            "expected unsafe=FAIL and fenced=PASS"
+        )
+
+    else:
+        expected_contrast = (
+            unsafe_report["result"] == "FAIL"
+            and fenced_report["result"] == "FAIL"
+        )
+
+        success_message = (
+            "both unsafe and fenced implementations violated "
+            "the invariant after post-commit redelivery"
+        )
+
+        expected_message = (
+            "expected unsafe=FAIL and fenced=FAIL"
+        )
 
     if expected_contrast:
         print(
             "COMPARISON RESULT: PASS "
-            "(unsafe violated the invariant; fenced preserved it)"
+            f"({success_message})"
         )
         return 0
 
     print(
         "COMPARISON RESULT: FAIL "
-        "(expected unsafe=FAIL and fenced=PASS)"
+        f"({expected_message})"
     )
 
     return 1

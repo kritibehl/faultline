@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS effects (
     worker_name TEXT NOT NULL,
     fencing_token BIGINT NOT NULL,
     amount INTEGER NOT NULL,
+    idempotency_key TEXT,
     committed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -39,3 +40,7 @@ ON effects(job_id);
 
 CREATE INDEX IF NOT EXISTS idx_rejections_job
 ON stale_rejections(job_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_effects_idempotency_key
+ON effects(idempotency_key)
+WHERE idempotency_key IS NOT NULL;

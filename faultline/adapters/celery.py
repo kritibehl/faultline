@@ -247,19 +247,71 @@ def fresh_environment() -> None:
     )
 
 
-def submit(mode: str, job_id: str) -> None:
+def submit(
+    mode: str,
+    job_id: str,
+    window: str,
+) -> None:
     result = compose(
         "run",
         "--rm",
         "client",
         "--mode",
         mode,
+        "--window",
+        window,
         "--job-id",
         job_id,
     )
 
     if result.stdout:
         print(result.stdout.strip())
+
+
+def fault_window_marker(window: str) -> str:
+    if window == "pre-commit":
+        return "READY_TO_COMMIT"
+
+    if window == "post-commit":
+        return "READY_AFTER_COMMIT"
+
+    raise ValueError(
+        f"unsupported window: {window!r}"
+    )
+
+
+def worker_b_terminal_marker(
+    mode: str,
+    window: str,
+) -> str:
+    if (
+        mode == "idempotent"
+        and window == "post-commit"
+    ):
+        return "DUPLICATE_SUPPRESSED"
+
+    return "COMMIT_ACCEPTED"
+
+
+def worker_a_terminal_marker(
+    mode: str,
+    window: str,
+) -> str:
+    if window == "post-commit":
+        return "POST_COMMIT_WINDOW_EXIT"
+
+    if mode == "unsafe":
+        return "COMMIT_ACCEPTED"
+
+    if mode == "fenced":
+        return "COMMIT_REJECTED"
+
+    if mode == "idempotent":
+        return "DUPLICATE_SUPPRESSED"
+
+    raise ValueError(
+        f"unsupported mode: {mode!r}"
+    )
 
 
 def build_fault_injector(fault: str) -> FaultInjector:
@@ -292,21 +344,40 @@ def build_run_lifecycle(fault: str) -> RunLifecycle:
 def _run_race(
     mode: str,
     fault: str = "pause",
+    window: str = "pre-commit",
 ) -> tuple[dict[str, object], Path]:
-    if mode not in {"unsafe", "fenced"}:
-        raise ValueError("mode must be unsafe or fenced")
+    if mode not in {
+        "unsafe",
+        "fenced",
+        "idempotent",
+    }:
+        raise ValueError(
+            "mode must be unsafe, fenced, or idempotent"
+        )
+
+    if window not in {
+        "pre-commit",
+        "post-commit",
+    }:
+        raise ValueError(
+            "window must be pre-commit or post-commit"
+        )
 
     injector = build_fault_injector(fault)
     fault_description = injector.describe()
 
     suffix = uuid.uuid4().hex[:8]
-    job_id = f"payment-{mode}-{suffix}"
+    job_id = (
+        f"payment-{window}-{mode}-{suffix}"
+    )
 
     stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
     artifact_dir = Path(
         "artifacts/runs"
-    ) / f"{stamp}-celery-{mode}-{suffix}"
+    ) / (
+        f"{stamp}-celery-{window}-{mode}-{suffix}"
+    )
 
     artifact_dir.mkdir(
         parents=True,
@@ -320,6 +391,7 @@ def _run_race(
     print("=========")
     print(f"Adapter:   celery")
     print(f"Mode:      {mode}")
+    print(f"Window:    {window}")
     print(f"Job:       {job_id}")
     print()
 
@@ -327,14 +399,23 @@ def _run_race(
     fresh_environment()
 
     print("[2/8] Publishing real Celery task")
-    submit(mode, job_id)
+    submit(
+        mode,
+        job_id,
+        window,
+    )
+
+    ready_marker = fault_window_marker(window)
 
     wait_for_log(
         WORKER_A,
-        f"READY_TO_COMMIT job={job_id}",
+        f"{ready_marker} job={job_id}",
     )
 
-    print("      Worker A acquired token 1 and reached commit window")
+    print(
+        "      Worker A reached "
+        f"{window} fault window with token 1"
+    )
 
     orchestrator_events.append(
         HistoryEvent(
@@ -367,18 +448,29 @@ def _run_race(
         "ready.",
     )
 
+    worker_b_terminal = worker_b_terminal_marker(
+        mode,
+        window,
+    )
+
     wait_for_log(
         WORKER_B,
-        f"COMMIT_ACCEPTED job={job_id}",
+        f"{worker_b_terminal} job={job_id}",
         timeout=45,
     )
 
     takeover_token = current_token(job_id)
 
-    print(
-        f"      Worker B redelivered task and committed token "
-        f"{takeover_token}"
-    )
+    if worker_b_terminal == "COMMIT_ACCEPTED":
+        print(
+            "      Worker B redelivered task and "
+            f"committed token {takeover_token}"
+        )
+    else:
+        print(
+            "      Worker B redelivered task and "
+            "suppressed the duplicate effect"
+        )
 
     orchestrator_events.append(
         HistoryEvent(
@@ -390,7 +482,7 @@ def _run_race(
         )
     )
 
-    print("[6/8] Resuming stale Worker A")
+    print("[6/8] Resuming Worker A")
 
     orchestrator_events.append(
         HistoryEvent(
@@ -405,10 +497,9 @@ def _run_race(
 
     injector.recover(WORKER_A)
 
-    expected_terminal = (
-        "COMMIT_ACCEPTED"
-        if mode == "unsafe"
-        else "COMMIT_REJECTED"
+    expected_terminal = worker_a_terminal_marker(
+        mode,
+        window,
     )
 
     wait_for_log(
@@ -429,6 +520,12 @@ def _run_race(
 
     database_events = parse_attempt_history(job_id)
 
+    duplicate_suppressions = [
+        asdict(event)
+        for event in database_events
+        if event.type == "duplicate_suppressed"
+    ]
+
     all_events = database_events + orchestrator_events
 
     all_events.sort(
@@ -446,6 +543,7 @@ def _run_race(
         "framework": "faultline",
         "adapter": "celery",
         "mode": mode,
+        "window": window,
         "job_id": job_id,
         "fault": fault,
         "fault_injection": fault_description.as_report(),
@@ -457,12 +555,23 @@ def _run_race(
         "committed_effects": committed_effects,
         "effects": effects,
         "stale_rejections": rejections,
+        "duplicate_suppressions": duplicate_suppressions,
         "current_fencing_token": current_token(job_id),
         "result": "PASS" if invariant_pass else "FAIL",
         "methodology": (
-            "Real Celery workers and Redis broker with PostgreSQL "
-            "side-effect ledger; worker process is stopped during an "
-            "unacknowledged execution window to force redelivery."
+            (
+                "Real Celery workers and Redis broker with PostgreSQL "
+                "side-effect ledger; Worker A is stopped before its "
+                "first side-effect commit while the task remains "
+                "unacknowledged, forcing Redis redelivery."
+            )
+            if window == "pre-commit"
+            else (
+                "Real Celery workers and Redis broker with PostgreSQL "
+                "side-effect ledger; Worker A commits the side effect "
+                "and is then stopped before task return/ack, forcing "
+                "Redis to redeliver the already-committed logical job."
+            )
         ),
     }
 
@@ -483,6 +592,10 @@ def _run_race(
     print("----------------------------------------")
     print(f"Committed effects:       {committed_effects}")
     print(f"Stale rejections:        {len(rejections)}")
+    print(
+        f"Duplicate suppressions:  "
+        f"{len(duplicate_suppressions)}"
+    )
     print(f"Current fencing token:   {report['current_fencing_token']}")
     print("----------------------------------------")
     print(
@@ -499,10 +612,12 @@ def _run_race(
 def run_race(
     mode: str,
     fault: str = "pause",
+    window: str = "pre-commit",
 ) -> tuple[dict[str, object], Path]:
     """Run one Celery experiment with guaranteed best-effort cleanup."""
     with build_run_lifecycle(fault):
         return _run_race(
             mode,
             fault=fault,
+            window=window,
         )

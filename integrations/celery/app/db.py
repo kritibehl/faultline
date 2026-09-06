@@ -29,6 +29,7 @@ def next_token(job_id: str) -> int:
                 """,
                 (job_id,),
             )
+
             token = cur.fetchone()[0]
 
         conn.commit()
@@ -54,7 +55,12 @@ def record_attempt(
                 )
                 VALUES (%s, %s, %s, %s)
                 """,
-                (job_id, worker_name, token, phase),
+                (
+                    job_id,
+                    worker_name,
+                    token,
+                    phase,
+                ),
             )
 
         conn.commit()
@@ -78,7 +84,12 @@ def unsafe_commit(
                 )
                 VALUES (%s, %s, %s, %s)
                 """,
-                (job_id, worker_name, token, amount),
+                (
+                    job_id,
+                    worker_name,
+                    token,
+                    amount,
+                ),
             )
 
         conn.commit()
@@ -107,7 +118,9 @@ def fenced_commit(
             row = cur.fetchone()
 
             if row is None:
-                raise RuntimeError(f"missing ownership row for {job_id}")
+                raise RuntimeError(
+                    f"missing ownership row for {job_id}"
+                )
 
             current_token = int(row[0])
 
@@ -154,3 +167,42 @@ def fenced_commit(
         conn.commit()
 
     return True
+
+
+def idempotent_commit(
+    job_id: str,
+    worker_name: str,
+    token: int,
+    amount: int,
+) -> bool:
+    with connect() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO effects(
+                    job_id,
+                    worker_name,
+                    fencing_token,
+                    amount,
+                    idempotency_key
+                )
+                VALUES (%s, %s, %s, %s, %s)
+                ON CONFLICT (idempotency_key)
+                WHERE idempotency_key IS NOT NULL
+                DO NOTHING
+                RETURNING id
+                """,
+                (
+                    job_id,
+                    worker_name,
+                    token,
+                    amount,
+                    job_id,
+                ),
+            )
+
+            inserted = cur.fetchone() is not None
+
+        conn.commit()
+
+    return inserted

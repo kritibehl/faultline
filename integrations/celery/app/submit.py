@@ -7,7 +7,10 @@ import uuid
 from celery import Celery
 
 
-BROKER_URL = os.getenv("BROKER_URL", "redis://redis:6379/0")
+BROKER_URL = os.getenv(
+    "BROKER_URL",
+    "redis://redis:6379/0",
+)
 
 
 def main() -> int:
@@ -15,8 +18,21 @@ def main() -> int:
 
     parser.add_argument(
         "--mode",
-        choices=["unsafe", "fenced"],
+        choices=[
+            "unsafe",
+            "fenced",
+            "idempotent",
+        ],
         required=True,
+    )
+
+    parser.add_argument(
+        "--window",
+        choices=[
+            "pre-commit",
+            "post-commit",
+        ],
+        default="pre-commit",
     )
 
     parser.add_argument(
@@ -26,7 +42,10 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    job_id = args.job_id or f"payment-{uuid.uuid4().hex[:8]}"
+    job_id = (
+        args.job_id
+        or f"payment-{uuid.uuid4().hex[:8]}"
+    )
 
     app = Celery(
         "faultline_submitter",
@@ -39,6 +58,7 @@ def main() -> int:
             job_id,
             100,
             args.mode,
+            args.window,
         ],
     )
 

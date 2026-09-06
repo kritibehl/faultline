@@ -7,14 +7,22 @@ from celery import Celery
 
 from app.db import (
     fenced_commit,
+    idempotent_commit,
     next_token,
     record_attempt,
     unsafe_commit,
 )
 
 
-BROKER_URL = os.getenv("BROKER_URL", "redis://redis:6379/0")
-WORKER_NAME = os.getenv("WORKER_NAME", "unknown-worker")
+BROKER_URL = os.getenv(
+    "BROKER_URL",
+    "redis://redis:6379/0",
+)
+
+WORKER_NAME = os.getenv(
+    "WORKER_NAME",
+    "unknown-worker",
+)
 
 
 app = Celery(
@@ -46,7 +54,16 @@ def process_payment(
     job_id: str,
     amount: int,
     mode: str,
+    window: str = "pre-commit",
 ):
+    if window not in {
+        "pre-commit",
+        "post-commit",
+    }:
+        raise ValueError(
+            f"unsupported window: {window}"
+        )
+
     token = next_token(job_id)
 
     record_attempt(
@@ -60,14 +77,12 @@ def process_payment(
         f"DELIVERY job={job_id} "
         f"worker={WORKER_NAME} "
         f"token={token} "
-        f"mode={mode}",
+        f"mode={mode} "
+        f"window={window}",
         flush=True,
     )
 
-    # The first ownership generation intentionally pauses in a
-    # dangerous pre-commit window. Faultline's orchestrator will
-    # SIGSTOP/pause the Worker A container while it is here.
-    if token == 1:
+    if token == 1 and window == "pre-commit":
         record_attempt(
             job_id,
             WORKER_NAME,
@@ -77,7 +92,8 @@ def process_payment(
 
         print(
             f"READY_TO_COMMIT job={job_id} "
-            f"worker={WORKER_NAME} token={token}",
+            f"worker={WORKER_NAME} "
+            f"token={token}",
             flush=True,
         )
 
@@ -90,6 +106,7 @@ def process_payment(
             token,
             amount,
         )
+
     elif mode == "fenced":
         committed = fenced_commit(
             job_id,
@@ -97,10 +114,28 @@ def process_payment(
             token,
             amount,
         )
-    else:
-        raise ValueError(f"unsupported mode: {mode}")
 
-    phase = "commit_accepted" if committed else "commit_rejected"
+    elif mode == "idempotent":
+        committed = idempotent_commit(
+            job_id,
+            WORKER_NAME,
+            token,
+            amount,
+        )
+
+    else:
+        raise ValueError(
+            f"unsupported mode: {mode}"
+        )
+
+    if committed:
+        phase = "commit_accepted"
+
+    elif mode == "idempotent":
+        phase = "duplicate_suppressed"
+
+    else:
+        phase = "commit_rejected"
 
     record_attempt(
         job_id,
@@ -111,13 +146,46 @@ def process_payment(
 
     print(
         f"{phase.upper()} job={job_id} "
-        f"worker={WORKER_NAME} token={token}",
+        f"worker={WORKER_NAME} "
+        f"token={token}",
         flush=True,
     )
+
+    if token == 1 and window == "post-commit":
+        record_attempt(
+            job_id,
+            WORKER_NAME,
+            token,
+            "ready_after_commit",
+        )
+
+        print(
+            f"READY_AFTER_COMMIT job={job_id} "
+            f"worker={WORKER_NAME} "
+            f"token={token}",
+            flush=True,
+        )
+
+        time.sleep(15)
+
+        record_attempt(
+            job_id,
+            WORKER_NAME,
+            token,
+            "post_commit_window_exit",
+        )
+
+        print(
+            f"POST_COMMIT_WINDOW_EXIT job={job_id} "
+            f"worker={WORKER_NAME} "
+            f"token={token}",
+            flush=True,
+        )
 
     return {
         "job_id": job_id,
         "worker": WORKER_NAME,
         "token": token,
         "committed": committed,
+        "window": window,
     }
