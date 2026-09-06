@@ -13,6 +13,7 @@ from faultline.adapters.base import AdapterCapabilities
 from faultline.faults.base import FaultInjector
 from faultline.faults.process import DockerProcessPauseFault
 from faultline.invariants.effects import at_most_one_effect
+from faultline.lifecycle import RunLifecycle
 
 
 COMPOSE = "integrations/celery/docker-compose.yml"
@@ -270,16 +271,25 @@ def build_fault_injector(fault: str) -> FaultInjector:
     )
 
 
-def best_effort_recover_worker_a() -> None:
-    """Never leave the test worker frozen after runner failure."""
-    injector = build_fault_injector("pause")
-    injector.recover(
-        WORKER_A,
-        check=False,
-    )
+class CeleryRunLifecycle(RunLifecycle):
+    """Cleanup actions owned by one Celery correctness run."""
+
+    def __init__(self, fault: str) -> None:
+        self._injector = build_fault_injector(fault)
+
+    def cleanup(self) -> None:
+        """Never leave Worker A frozen after a runner failure."""
+        self._injector.recover(
+            WORKER_A,
+            check=False,
+        )
 
 
-def run_race(
+def build_run_lifecycle(fault: str) -> RunLifecycle:
+    return CeleryRunLifecycle(fault)
+
+
+def _run_race(
     mode: str,
     fault: str = "pause",
 ) -> tuple[dict[str, object], Path]:
@@ -484,3 +494,15 @@ def run_race(
     print(f"Report:  {artifact_dir / 'report.json'}")
 
     return report, artifact_dir
+
+
+def run_race(
+    mode: str,
+    fault: str = "pause",
+) -> tuple[dict[str, object], Path]:
+    """Run one Celery experiment with guaranteed best-effort cleanup."""
+    with build_run_lifecycle(fault):
+        return _run_race(
+            mode,
+            fault=fault,
+        )
