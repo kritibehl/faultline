@@ -9,7 +9,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from faultline.history import HistoryEvent, now_iso, write_jsonl
-from faultline.adapters.base import AdapterCapabilities
+from faultline.adapters.base import (
+    AdapterCapabilities,
+    RunError,
+)
 from faultline.faults.base import FaultInjector
 from faultline.faults.process import (
     DockerProcessKillFault,
@@ -33,10 +36,6 @@ CAPABILITIES = AdapterCapabilities(
     redelivery=True,
     visibility_expiry=True,
 )
-
-
-class RunError(RuntimeError):
-    pass
 
 
 def run(

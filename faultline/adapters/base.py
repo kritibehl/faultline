@@ -6,6 +6,12 @@ from pathlib import Path
 from typing import Any
 
 
+class RunError(RuntimeError):
+    """Adapter/runtime failure distinct from an invariant violation."""
+
+    pass
+
+
 @dataclass(frozen=True)
 class AdapterCapabilities:
     process_pause: bool = False

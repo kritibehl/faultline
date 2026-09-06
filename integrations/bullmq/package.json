@@ -1,0 +1,10 @@
+{
+  "name": "faultline-bullmq-integration",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "bullmq": "6.3.4",
+    "ioredis": "6.0.0",
+    "pg": "8.23.0"
+  }
+}

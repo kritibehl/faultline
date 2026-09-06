@@ -1,0 +1,78 @@
+services:
+  postgres:
+    image: postgres:15-bookworm
+    container_name: faultline-bullmq-postgres
+    environment:
+      POSTGRES_USER: faultline
+      POSTGRES_PASSWORD: faultline
+      POSTGRES_DB: faultline
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U faultline -d faultline"
+        ]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
+
+  redis:
+    image: redis:7-alpine
+    container_name: faultline-bullmq-redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  worker-a:
+    build:
+      context: .
+    container_name: faultline-bullmq-worker-a
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      DATABASE_URL: postgresql://faultline:faultline@postgres:5432/faultline
+      QUEUE_NAME: faultline-payments
+      WORKER_NAME: worker-a
+      LOCK_DURATION_MS: 5000
+      STALLED_INTERVAL_MS: 1000
+      MAX_STALLED_COUNT: 1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker-b:
+    build:
+      context: .
+    container_name: faultline-bullmq-worker-b
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      DATABASE_URL: postgresql://faultline:faultline@postgres:5432/faultline
+      QUEUE_NAME: faultline-payments
+      WORKER_NAME: worker-b
+      LOCK_DURATION_MS: 5000
+      STALLED_INTERVAL_MS: 1000
+      MAX_STALLED_COUNT: 1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  client:
+    build:
+      context: .
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      QUEUE_NAME: faultline-payments
+    entrypoint: ["node", "app/submit.js"]
+    depends_on:
+      redis:
+        condition: service_healthy
