@@ -4,8 +4,9 @@ import argparse
 import subprocess
 import sys
 
-from faultline.adapters.celery import (
-    RunError,
+from faultline.adapters.base import RunError
+from faultline.adapters.registry import (
+    ADAPTER_NAMES,
     run_race,
 )
 from faultline.reporting.compare import print_comparison
@@ -32,7 +33,7 @@ def add_common_arguments(
 ) -> None:
     parser.add_argument(
         "--adapter",
-        choices=["celery"],
+        choices=ADAPTER_NAMES,
         required=True,
         help="Worker/queue integration to test.",
     )
@@ -114,6 +115,7 @@ def run_test(args: argparse.Namespace) -> int:
     implementation = args.implementation or args.mode
 
     report, _ = run_race(
+        args.adapter,
         implementation,
         fault=args.fault,
         window=args.window,
@@ -128,34 +130,93 @@ def run_compare(args: argparse.Namespace) -> int:
     print()
 
     unsafe_report, unsafe_dir = run_race(
+        args.adapter,
         "unsafe",
         fault=args.fault,
         window=args.window,
     )
 
+    second_mode = (
+        "idempotent"
+        if args.adapter == "bullmq"
+        else "fenced"
+    )
+
     print()
-    print("Running fenced implementation...")
+    print(
+        f"Running {second_mode} implementation..."
+    )
     print()
 
-    fenced_report, fenced_dir = run_race(
-        "fenced",
+    second_report, second_dir = run_race(
+        args.adapter,
+        second_mode,
         fault=args.fault,
         window=args.window,
     )
 
-    print_comparison(
-        unsafe_dir / "report.json",
-        fenced_dir / "report.json",
-    )
+    if args.adapter == "bullmq":
+        print("Faultline Correctness Comparison")
+        print("================================")
+        print()
+        print(
+            f"{'':28}"
+            f"{'UNSAFE':>12}"
+            f"{'IDEMPOTENT':>14}"
+        )
+        print("-" * 54)
+        print(
+            f"{'Committed effects':28}"
+            f"{unsafe_report['committed_effects']:>12}"
+            f"{second_report['committed_effects']:>14}"
+        )
+        print(
+            f"{'Duplicate suppressions':28}"
+            f"{len(unsafe_report['duplicate_suppressions']):>12}"
+            f"{len(second_report['duplicate_suppressions']):>14}"
+        )
+        print(
+            f"{'Invariant':28}"
+            f"{unsafe_report['result']:>12}"
+            f"{second_report['result']:>14}"
+        )
+        print()
+    else:
+        print_comparison(
+            unsafe_dir / "report.json",
+            second_dir / "report.json",
+        )
 
-    print(f"Unsafe report: {unsafe_dir / 'report.json'}")
-    print(f"Fenced report: {fenced_dir / 'report.json'}")
+    print(
+        f"Unsafe report: "
+        f"{unsafe_dir / 'report.json'}"
+    )
+    print(
+        f"{second_mode.capitalize()} report: "
+        f"{second_dir / 'report.json'}"
+    )
     print()
 
-    if args.window == "pre-commit":
+    if args.adapter == "bullmq":
         expected_contrast = (
             unsafe_report["result"] == "FAIL"
-            and fenced_report["result"] == "PASS"
+            and second_report["result"] == "PASS"
+        )
+
+        success_message = (
+            "unsafe duplicated the logical effect; "
+            "idempotency preserved it"
+        )
+
+        expected_message = (
+            "expected unsafe=FAIL and "
+            "idempotent=PASS"
+        )
+
+    elif args.window == "pre-commit":
+        expected_contrast = (
+            unsafe_report["result"] == "FAIL"
+            and second_report["result"] == "PASS"
         )
 
         success_message = (
@@ -170,7 +231,7 @@ def run_compare(args: argparse.Namespace) -> int:
     else:
         expected_contrast = (
             unsafe_report["result"] == "FAIL"
-            and fenced_report["result"] == "FAIL"
+            and second_report["result"] == "FAIL"
         )
 
         success_message = (
