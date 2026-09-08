@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:15-bookworm
+    container_name: faultline-ambiguous-postgres
+    environment:
+      POSTGRES_USER: faultline
+      POSTGRES_PASSWORD: faultline
+      POSTGRES_DB: faultline
+    volumes:
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U faultline -d faultline"
+        ]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+  charge-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: faultline-ambiguous-charge-service
+    environment:
+      PORT: "8080"
+      DATABASE_URL: postgres://faultline:faultline@postgres:5432/faultline
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:18080:8080"
