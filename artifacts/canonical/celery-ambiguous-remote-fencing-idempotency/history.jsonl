@@ -1,0 +1,16 @@
+{"details": null, "fencing_token": 1, "job_id": "ambiguous-fencing-idempotency-9019fe5c", "ts": "2026-09-09 03:06:50.377132+00", "type": "delivery_started", "worker": "worker-a"}
+{"details": null, "fencing_token": 1, "job_id": "ambiguous-fencing-idempotency-9019fe5c", "ts": "2026-09-09 03:06:51.348402+00", "type": "effect_started", "worker": "worker-a"}
+{"details": {"fencing": true, "mode": "idempotent"}, "fencing_token": 1, "job_id": "ambiguous-fencing-idempotency-9019fe5c", "ts": "2026-09-09 03:07:01.72347+00", "type": "effect_started", "worker": "worker-a"}
+{"details": {"remote_token": 1}, "fencing_token": 1, "job_id": "ambiguous-fencing-idempotency-9019fe5c", "ts": "2026-09-09 03:07:02.114623+00", "type": "fencing_accepted", "worker": "worker-a"}
+{"details": {"charge_id": "1", "mode": "idempotent"}, "fencing_token": 1, "job_id": "ambiguous-fencing-idempotency-9019fe5c", "ts": "2026-09-09 03:07:02.136767+00", "type": "external_effect_committed", "worker": "worker-a"}
+{"details": {"after": "commit", "fencing": true, "mode": "idempotent"}, "fencing_token": 1, "job_id": "ambiguous-fencing-idempotency-9019fe5c", "ts": "2026-09-09 03:07:02.146844+00", "type": "response_dropped", "worker": "worker-a"}
+{"details": null, "fencing_token": 1, "job_id": "ambiguous-fencing-idempotency-9019fe5c", "ts": "2026-09-09 03:07:03.081552+00", "type": "effect_result_unknown", "worker": "worker-a"}
+{"details": {"after": "effect_result_unknown", "fault": "SIGKILL"}, "fencing_token": 1, "job_id": "ambiguous-fencing-idempotency-9019fe5c", "ts": "2026-09-09T03:07:10.552639+00:00", "type": "fault_injected", "worker": "worker-a"}
+{"details": null, "fencing_token": 2, "job_id": "ambiguous-fencing-idempotency-9019fe5c", "ts": "2026-09-09 03:07:53.194711+00", "type": "delivery_started", "worker": "worker-b"}
+{"details": null, "fencing_token": 2, "job_id": "ambiguous-fencing-idempotency-9019fe5c", "ts": "2026-09-09 03:07:53.740996+00", "type": "effect_started", "worker": "worker-b"}
+{"details": {"fencing": true, "mode": "idempotent"}, "fencing_token": 2, "job_id": "ambiguous-fencing-idempotency-9019fe5c", "ts": "2026-09-09 03:07:54.358135+00", "type": "effect_started", "worker": "worker-b"}
+{"details": {"remote_token": 2}, "fencing_token": 2, "job_id": "ambiguous-fencing-idempotency-9019fe5c", "ts": "2026-09-09 03:07:54.438214+00", "type": "fencing_accepted", "worker": "worker-b"}
+{"details": {"idempotency_key": "ambiguous-fencing-idempotency-9019fe5c", "mode": "idempotent"}, "fencing_token": 2, "job_id": "ambiguous-fencing-idempotency-9019fe5c", "ts": "2026-09-09 03:07:54.455788+00", "type": "duplicate_suppressed", "worker": "worker-b"}
+{"details": null, "fencing_token": 2, "job_id": "ambiguous-fencing-idempotency-9019fe5c", "ts": "2026-09-09 03:07:54.726405+00", "type": "effect_result_observed", "worker": "worker-b"}
+{"details": null, "fencing_token": 2, "job_id": "ambiguous-fencing-idempotency-9019fe5c", "ts": "2026-09-09 03:07:54.989781+00", "type": "local_commit_accepted", "worker": "worker-b"}
+{"details": {"fault": "docker start"}, "fencing_token": 1, "job_id": "ambiguous-fencing-idempotency-9019fe5c", "ts": "2026-09-09T03:08:07.481509+00:00", "type": "fault_recovered", "worker": "worker-a"}

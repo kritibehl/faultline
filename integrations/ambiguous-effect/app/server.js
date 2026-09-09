@@ -18,6 +18,7 @@ const pool = new Pool({
   connectionString: DATABASE_URL,
 });
 
+
 async function readJson(req) {
   const chunks = [];
 
@@ -31,6 +32,7 @@ async function readJson(req) {
 
   return raw ? JSON.parse(raw) : {};
 }
+
 
 function sendJson(
   res,
@@ -52,6 +54,7 @@ function sendJson(
   res.end(encoded);
 }
 
+
 function validateCharge(data) {
   if (
     typeof data.job_id !== "string"
@@ -72,95 +75,298 @@ function validateCharge(data) {
   }
 }
 
-async function unsafeCharge(data) {
-  const result = await pool.query(
-    `
-      INSERT INTO charges (
-          job_id,
-          amount,
-          idempotency_key
-      )
-      VALUES ($1, $2, NULL)
-      RETURNING
-          id,
-          job_id,
-          amount,
-          committed_at
-    `,
-    [
-      data.job_id,
-      data.amount,
-    ],
-  );
+
+function requestIdentity(req) {
+  const workerName =
+    req.headers[
+      "x-faultline-worker"
+    ] || "external-client";
+
+  const rawToken =
+    req.headers[
+      "x-faultline-token"
+    ];
+
+  const parsed =
+    Number(rawToken);
+
+  const fencingToken =
+    Number.isInteger(parsed)
+      ? parsed
+      : 0;
+
+  const fencingEnabled =
+    req.headers[
+      "x-faultline-fencing"
+    ] === "enabled";
 
   return {
-    inserted: true,
-    duplicate_suppressed: false,
-    charge: result.rows[0],
+    workerName,
+    fencingToken,
+    fencingEnabled,
   };
 }
 
-async function idempotentCharge(data) {
-  const key =
-    data.idempotency_key
-    || data.job_id;
 
-  const result = await pool.query(
+async function recordEvent({
+  jobId,
+  workerName,
+  fencingToken,
+  eventType,
+  details = {},
+}) {
+  await pool.query(
     `
-      INSERT INTO charges (
+      INSERT INTO service_events (
           job_id,
-          amount,
-          idempotency_key
+          worker_name,
+          fencing_token,
+          event_type,
+          details
       )
-      VALUES ($1, $2, $3)
-      ON CONFLICT (idempotency_key)
-      WHERE idempotency_key IS NOT NULL
-      DO NOTHING
-      RETURNING
-          id,
-          job_id,
-          amount,
-          idempotency_key,
-          committed_at
+      VALUES ($1, $2, $3, $4, $5::jsonb)
     `,
     [
-      data.job_id,
-      data.amount,
-      key,
+      jobId,
+      workerName,
+      fencingToken,
+      eventType,
+      JSON.stringify(details),
     ],
   );
+}
 
-  if (result.rowCount === 1) {
-    return {
-      inserted: true,
-      duplicate_suppressed: false,
-      charge: result.rows[0],
-    };
+
+async function advanceFence(
+  client,
+  jobId,
+  fencingToken,
+) {
+  if (
+    !Number.isInteger(fencingToken)
+    || fencingToken <= 0
+  ) {
+    throw new Error(
+      "fencing requires a positive token",
+    );
   }
 
-  const existing =
-    await pool.query(
-      `
-        SELECT
-            id,
-            job_id,
-            amount,
-            idempotency_key,
-            committed_at
-        FROM charges
-        WHERE idempotency_key = $1
-      `,
-      [
-        key,
-      ],
+  const result = await client.query(
+    `
+      INSERT INTO remote_ownership (
+          job_id,
+          current_token
+      )
+      VALUES ($1, $2)
+
+      ON CONFLICT (job_id)
+      DO UPDATE SET
+          current_token = GREATEST(
+              remote_ownership.current_token,
+              EXCLUDED.current_token
+          ),
+          updated_at = NOW()
+
+      RETURNING current_token
+    `,
+    [
+      jobId,
+      fencingToken,
+    ],
+  );
+
+  return Number(
+    result.rows[0].current_token,
+  );
+}
+
+
+async function performCharge({
+  data,
+  workerName,
+  fencingToken,
+  fencingEnabled,
+  idempotent,
+}) {
+  const client =
+    await pool.connect();
+
+  try {
+    await client.query(
+      "BEGIN",
     );
 
-  return {
-    inserted: false,
-    duplicate_suppressed: true,
-    charge: existing.rows[0],
-  };
+    let remoteToken = null;
+
+    if (fencingEnabled) {
+      remoteToken =
+        await advanceFence(
+          client,
+          data.job_id,
+          fencingToken,
+        );
+
+      if (
+        fencingToken
+        < remoteToken
+      ) {
+        await client.query(
+          "COMMIT",
+        );
+
+        return {
+          inserted: false,
+          duplicate_suppressed:
+            false,
+          stale_rejected: true,
+          remote_token:
+            remoteToken,
+          charge: null,
+        };
+      }
+    }
+
+    if (!idempotent) {
+      const result =
+        await client.query(
+          `
+            INSERT INTO charges (
+                job_id,
+                worker_name,
+                fencing_token,
+                amount,
+                idempotency_key
+            )
+            VALUES (
+                $1,
+                $2,
+                $3,
+                $4,
+                NULL
+            )
+            RETURNING *
+          `,
+          [
+            data.job_id,
+            workerName,
+            fencingToken,
+            data.amount,
+          ],
+        );
+
+      await client.query(
+        "COMMIT",
+      );
+
+      return {
+        inserted: true,
+        duplicate_suppressed:
+          false,
+        stale_rejected: false,
+        remote_token:
+          remoteToken,
+        charge: result.rows[0],
+      };
+    }
+
+    const key =
+      data.idempotency_key
+      || data.job_id;
+
+    const inserted =
+      await client.query(
+        `
+          INSERT INTO charges (
+              job_id,
+              worker_name,
+              fencing_token,
+              amount,
+              idempotency_key
+          )
+          VALUES (
+              $1,
+              $2,
+              $3,
+              $4,
+              $5
+          )
+
+          ON CONFLICT (
+              idempotency_key
+          )
+          WHERE
+              idempotency_key
+              IS NOT NULL
+
+          DO NOTHING
+
+          RETURNING *
+        `,
+        [
+          data.job_id,
+          workerName,
+          fencingToken,
+          data.amount,
+          key,
+        ],
+      );
+
+    if (
+      inserted.rowCount === 1
+    ) {
+      await client.query(
+        "COMMIT",
+      );
+
+      return {
+        inserted: true,
+        duplicate_suppressed:
+          false,
+        stale_rejected: false,
+        remote_token:
+          remoteToken,
+        charge:
+          inserted.rows[0],
+      };
+    }
+
+    const existing =
+      await client.query(
+        `
+          SELECT *
+          FROM charges
+          WHERE idempotency_key = $1
+        `,
+        [key],
+      );
+
+    await client.query(
+      "COMMIT",
+    );
+
+    return {
+      inserted: false,
+      duplicate_suppressed:
+        true,
+      stale_rejected: false,
+      remote_token:
+        remoteToken,
+      charge:
+        existing.rows[0],
+    };
+
+  } catch (error) {
+    await client.query(
+      "ROLLBACK",
+    );
+
+    throw error;
+
+  } finally {
+    client.release();
+  }
 }
+
 
 const server = http.createServer(
   async (req, res) => {
@@ -178,7 +384,8 @@ const server = http.createServer(
           200,
           {
             status: "ok",
-            database: "connected",
+            database:
+              "connected",
           },
         );
 
@@ -194,12 +401,16 @@ const server = http.createServer(
         && req.url
           === "/charge-idempotent";
 
-      if (!unsafe && !idempotent) {
+      if (
+        !unsafe
+        && !idempotent
+      ) {
         sendJson(
           res,
           404,
           {
-            error: "not_found",
+            error:
+              "not_found",
           },
         );
 
@@ -211,41 +422,172 @@ const server = http.createServer(
 
       validateCharge(data);
 
+      const {
+        workerName,
+        fencingToken,
+        fencingEnabled,
+      } = requestIdentity(req);
+
       const mode =
         idempotent
           ? "idempotent"
           : "unsafe";
 
+      await recordEvent({
+        jobId: data.job_id,
+        workerName,
+        fencingToken,
+        eventType:
+          "effect_started",
+        details: {
+          mode,
+          fencing:
+            fencingEnabled,
+        },
+      });
+
       console.log(
         [
           "EFFECT_STARTED",
           `job=${data.job_id}`,
+          `worker=${workerName}`,
+          `token=${fencingToken}`,
           `mode=${mode}`,
+          `fencing=${
+            fencingEnabled
+              ? 1
+              : 0
+          }`,
         ].join(" "),
       );
 
       const result =
-        idempotent
-          ? await idempotentCharge(data)
-          : await unsafeCharge(data);
+        await performCharge({
+          data,
+          workerName,
+          fencingToken,
+          fencingEnabled,
+          idempotent,
+        });
 
       if (
-        result.duplicate_suppressed
+        result.stale_rejected
       ) {
+        await recordEvent({
+          jobId: data.job_id,
+          workerName,
+          fencingToken,
+          eventType:
+            "stale_remote_rejected",
+          details: {
+            mode,
+            remote_token:
+              result.remote_token,
+          },
+        });
+
+        console.log(
+          [
+            "STALE_REMOTE_REJECTED",
+            `job=${data.job_id}`,
+            `worker=${workerName}`,
+            `token=${fencingToken}`,
+            `current=${
+              result.remote_token
+            }`,
+          ].join(" "),
+        );
+
+        sendJson(
+          res,
+          409,
+          {
+            ok: false,
+            stale_rejected: true,
+            remote_token:
+              result.remote_token,
+          },
+        );
+
+        return;
+      }
+
+      if (fencingEnabled) {
+        await recordEvent({
+          jobId: data.job_id,
+          workerName,
+          fencingToken,
+          eventType:
+            "fencing_accepted",
+          details: {
+            remote_token:
+              result.remote_token,
+          },
+        });
+
+        console.log(
+          [
+            "FENCING_ACCEPTED",
+            `job=${data.job_id}`,
+            `worker=${workerName}`,
+            `token=${fencingToken}`,
+            `current=${
+              result.remote_token
+            }`,
+          ].join(" "),
+        );
+      }
+
+      if (
+        result
+          .duplicate_suppressed
+      ) {
+        await recordEvent({
+          jobId: data.job_id,
+          workerName,
+          fencingToken,
+          eventType:
+            "duplicate_suppressed",
+          details: {
+            mode,
+            idempotency_key:
+              result.charge
+                .idempotency_key,
+          },
+        });
+
         console.log(
           [
             "DUPLICATE_SUPPRESSED",
             `job=${data.job_id}`,
-            `mode=${mode}`,
+            `worker=${workerName}`,
+            `token=${fencingToken}`,
           ].join(" "),
         );
+
       } else {
+        await recordEvent({
+          jobId: data.job_id,
+          workerName,
+          fencingToken,
+          eventType:
+            "external_effect_committed",
+          details: {
+            mode,
+            charge_id:
+              result.charge.id,
+          },
+        });
+
         console.log(
           [
             "EFFECT_COMMITTED",
             `job=${data.job_id}`,
-            `mode=${mode}`,
-            `charge_id=${result.charge.id}`,
+            `worker=${workerName}`,
+            `token=${fencingToken}`,
+            `charge_id=${
+              result.charge.id
+            }`,
           ].join(" "),
         );
       }
@@ -256,29 +598,49 @@ const server = http.createServer(
         ] === "after-commit";
 
       if (dropResponse) {
+        await recordEvent({
+          jobId: data.job_id,
+          workerName,
+          fencingToken,
+          eventType:
+            "response_dropped",
+          details: {
+            mode,
+            fencing:
+              fencingEnabled,
+            after: "commit",
+          },
+        });
+
         console.log(
           [
             "RESPONSE_DROPPED",
             `job=${data.job_id}`,
-            `mode=${mode}`,
+            `worker=${workerName}`,
+            `token=${fencingToken}`,
             "after=commit",
           ].join(" "),
         );
 
-        req.socket.destroy();
+        res.destroy();
 
         return;
       }
 
       sendJson(
         res,
-        result.inserted ? 201 : 200,
+        result.inserted
+          ? 201
+          : 200,
         {
           ok: true,
           mode,
+          fencing:
+            fencingEnabled,
           ...result,
         },
       );
+
     } catch (error) {
       console.error(
         "REQUEST_ERROR",
@@ -293,13 +655,15 @@ const server = http.createServer(
           res,
           500,
           {
-            error: error.message,
+            error:
+              error.message,
           },
         );
       }
     }
   },
 );
+
 
 server.listen(
   PORT,
@@ -311,6 +675,7 @@ server.listen(
   },
 );
 
+
 async function shutdown() {
   server.close(
     async () => {
@@ -319,6 +684,7 @@ async function shutdown() {
     },
   );
 }
+
 
 process.on(
   "SIGTERM",

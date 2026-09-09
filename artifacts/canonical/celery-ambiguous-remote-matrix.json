@@ -1,0 +1,42 @@
+{
+  "fencing": {
+    "current_fencing_token": 2,
+    "duplicate_suppressions": 0,
+    "external_effects": 2,
+    "remote_fencing_acceptances": 2,
+    "remote_fencing_token": 2,
+    "remote_stale_rejections": 0,
+    "result": "FAIL",
+    "source_run": "artifacts/runs/20260909T023335Z-ambiguous-remote-fencing-80c70e44"
+  },
+  "fencing-idempotency": {
+    "current_fencing_token": 2,
+    "duplicate_suppressions": 1,
+    "external_effects": 1,
+    "remote_fencing_acceptances": 2,
+    "remote_fencing_token": 2,
+    "remote_stale_rejections": 0,
+    "result": "PASS",
+    "source_run": "artifacts/runs/20260909T030811Z-ambiguous-remote-fencing-idempotency-9019fe5c"
+  },
+  "idempotency": {
+    "current_fencing_token": 2,
+    "duplicate_suppressions": 1,
+    "external_effects": 1,
+    "remote_fencing_acceptances": 0,
+    "remote_fencing_token": null,
+    "remote_stale_rejections": 0,
+    "result": "PASS",
+    "source_run": "artifacts/runs/20260909T024425Z-ambiguous-remote-idempotency-0e766fc3"
+  },
+  "naive": {
+    "current_fencing_token": 2,
+    "duplicate_suppressions": 0,
+    "external_effects": 2,
+    "remote_fencing_acceptances": 0,
+    "remote_fencing_token": null,
+    "remote_stale_rejections": 0,
+    "result": "FAIL",
+    "source_run": "artifacts/runs/20260909T022623Z-ambiguous-remote-naive-b9116ff6"
+  }
+}

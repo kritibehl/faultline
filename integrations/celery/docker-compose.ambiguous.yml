@@ -1,0 +1,67 @@
+services:
+  charge-postgres:
+    image: postgres:15-bookworm
+    container_name: faultline-ambiguous-postgres
+    environment:
+      POSTGRES_USER: faultline
+      POSTGRES_PASSWORD: faultline
+      POSTGRES_DB: faultline
+    volumes:
+      - ../ambiguous-effect/postgres/init.sql:/docker-entrypoint-initdb.d/001-init.sql:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U faultline -d faultline"
+        ]
+      interval: 1s
+      timeout: 3s
+      retries: 30
+
+  charge-service:
+    build:
+      context: ../ambiguous-effect
+      dockerfile: Dockerfile
+    container_name: faultline-ambiguous-charge-service
+    environment:
+      PORT: "8080"
+      DATABASE_URL: postgres://faultline:faultline@charge-postgres:5432/faultline
+    depends_on:
+      charge-postgres:
+        condition: service_healthy
+
+  worker-a:
+    environment:
+      CHARGE_SERVICE_URL: http://charge-service:8080
+    command:
+      [
+        "celery",
+        "-A",
+        "app.ambiguous_tasks.app",
+        "worker",
+        "--loglevel=INFO",
+        "--pool=solo",
+        "--hostname=worker-a@%h"
+      ]
+
+  worker-b:
+    environment:
+      CHARGE_SERVICE_URL: http://charge-service:8080
+    command:
+      [
+        "celery",
+        "-A",
+        "app.ambiguous_tasks.app",
+        "worker",
+        "--loglevel=INFO",
+        "--pool=solo",
+        "--hostname=worker-b@%h"
+      ]
+
+  client:
+    entrypoint:
+      [
+        "python",
+        "-m",
+        "app.ambiguous_submit"
+      ]

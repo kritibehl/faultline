@@ -1,0 +1,36 @@
+{
+  "adapter": "celery",
+  "current_fencing_token": 2,
+  "duplicate_suppressions": 0,
+  "effects_before_redelivery": 1,
+  "external_effect_rows": [
+    {
+      "amount": 5000,
+      "charge_id": 1,
+      "committed_at": "2026-09-09 02:25:50.848428+00",
+      "fencing_token": 1,
+      "idempotency_key": null,
+      "worker": "worker-a"
+    },
+    {
+      "amount": 5000,
+      "charge_id": 2,
+      "committed_at": "2026-09-09 02:26:10.859779+00",
+      "fencing_token": 2,
+      "idempotency_key": null,
+      "worker": "worker-b"
+    }
+  ],
+  "external_effects": 2,
+  "fault": "remote-response-loss+SIGKILL",
+  "framework": "faultline",
+  "invariant": "at-most-one-logical-effect",
+  "job_id": "ambiguous-naive-b9116ff6",
+  "remote_fencing_acceptances": 0,
+  "remote_fencing_token": null,
+  "remote_stale_rejections": 0,
+  "result": "FAIL",
+  "scenario": "ambiguous-remote-outcome",
+  "strategy": "naive",
+  "worker_a_observation": "effect_result_unknown"
+}

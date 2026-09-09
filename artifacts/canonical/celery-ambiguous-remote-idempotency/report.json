@@ -1,0 +1,28 @@
+{
+  "adapter": "celery",
+  "current_fencing_token": 2,
+  "duplicate_suppressions": 1,
+  "effects_before_redelivery": 1,
+  "external_effect_rows": [
+    {
+      "amount": 5000,
+      "charge_id": 1,
+      "committed_at": "2026-09-09 02:44:09.990354+00",
+      "fencing_token": 1,
+      "idempotency_key": "ambiguous-idempotency-0e766fc3",
+      "worker": "worker-a"
+    }
+  ],
+  "external_effects": 1,
+  "fault": "remote-response-loss+SIGKILL",
+  "framework": "faultline",
+  "invariant": "at-most-one-logical-effect",
+  "job_id": "ambiguous-idempotency-0e766fc3",
+  "remote_fencing_acceptances": 0,
+  "remote_fencing_token": null,
+  "remote_stale_rejections": 0,
+  "result": "PASS",
+  "scenario": "ambiguous-remote-outcome",
+  "strategy": "idempotency",
+  "worker_a_observation": "effect_result_unknown"
+}
