@@ -40,3 +40,4 @@ faultline_worker.egg-info/
 artifacts/runs/20*/
 .venv/
 *.egg-info/
+*.egg-info/
