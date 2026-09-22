@@ -2,41 +2,13 @@
 
 **Failure testing for correctness bugs in at-least-once background workers.**
 
-Faultline drives real queue consumers, injects failures, records execution
-histories, and checks application-level invariants after redelivery and
-stale-worker recovery.
+Faultline drives real Celery workers, injects real process-level faults with `SIGSTOP`/`SIGCONT`, and proves — with a live comparison, not a claim — that commit-time fencing prevents the duplicate-execution bug that plain at-least-once delivery allows.
 
-Current reference integration:
+`Python` · `Celery` · `Redis` · `PostgreSQL` · `Docker Compose`
 
-- Celery workers
-- Redis broker
-- PostgreSQL side-effect ledger
-- Docker Compose
-- real `SIGSTOP` / `SIGCONT`
-- visibility-timeout redelivery
-- fencing tokens
-- machine-readable JSONL histories and JSON reports
+---
 
-## Quick demo
-
-Install:
-
-```bash
-python3 -m venv .framework-venv
-source .framework-venv/bin/activate
-python -m pip install -e '.[dev]'
-```
-
-Run the complete correctness comparison:
-
-```bash
-faultline compare \
-  --adapter celery \
-  --fault pause \
-  --invariant at-most-one-effect
-```
-
-Current observed result:
+## The result, first
 
 ```text
 Faultline Correctness Comparison
@@ -53,397 +25,182 @@ COMPARISON RESULT: PASS
 (unsafe violated the invariant; fenced preserved it)
 ```
 
-The comparison exits `0` when Faultline observes the expected contrast:
+Same fault, same workers, same broker — one implementation double-executes the job, the other doesn't. That's the whole thesis of this project, proven by a real run, not asserted in prose.
 
-```text
-unsafe implementation  -> invariant violated
-fenced implementation  -> invariant preserved
+Run it yourself:
+```bash
+faultline compare --adapter celery --fault pause --invariant at-most-one-effect
 ```
 
-## The stale-worker bug
+---
 
-At-least-once delivery means a logical job can be executed more than once.
+## The bug
 
-Faultline reproduces a case where Worker A starts a task, stops before
-committing, and later resumes after Worker B has already taken ownership.
-
-### Without fencing
+At-least-once delivery means a logical job can execute more than once. Faultline reproduces the specific case that causes that: Worker A starts a task, stalls before committing, and resumes *after* Worker B has already taken ownership and finished the job.
 
 ```text
-Worker A receives job
-token = 1
-        |
-        v
+Worker A receives job, token = 1
+        │
+        ▼
 Worker A reaches pre-commit window
-        |
-        v
-Faultline sends SIGSTOP
-        |
-        v
+        │
+   Faultline: SIGSTOP
+        │
+        ▼
 Redis visibility timeout expires
-        |
-        v
-Worker B receives redelivery
-token = 2
-        |
-        v
-Worker B commits
-        |
-        v
-Faultline sends SIGCONT
-        |
-        v
-Worker A resumes with stale token 1
-        |
-        v
-Worker A also commits
+        │
+        ▼
+Worker B receives redelivery, token = 2 → commits
+        │
+   Faultline: SIGCONT
+        │
+        ▼
+Worker A resumes, still holding token 1 → also commits
 ```
 
-Observed result:
+**Without fencing:** both commits succeed. `committed_effects = 2`. Invariant fails.
 
-```text
-committed effects = 2
-stale rejections  = 0
-current token     = 2
+**With fencing:** PostgreSQL validates ownership at commit time — `presented_token == current_token` — so Worker A's stale commit is rejected outright. `committed_effects = 1`. Invariant holds. The database enforces this; correctness doesn't depend on Worker A ever realizing it lost ownership.
 
-AT_MOST_ONE_EFFECT = FAIL
-```
+---
 
-### With fencing
+## Why this matters
 
-The same fault is injected, but PostgreSQL validates ownership at commit time.
+A lease or a timeout can determine who owns a job *right now*. It does nothing to stop the previous owner from waking up later and writing anyway. That gap is where duplicate charges, double-sent notifications, and corrupted ledgers come from in real systems — and it's the specific gap this project reproduces, measures, and closes.
 
-```text
-Worker A receives job
-token = 1
-        |
-      SIGSTOP
-        |
-        v
-Worker B receives redelivery
-token = 2
-        |
-        v
-Worker B commits
-        |
-      SIGCONT
-        |
-        v
-Worker A resumes
-presented token = 1
-current token   = 2
-        |
-        v
-stale commit rejected
-```
+---
 
-Observed result:
+## What Faultline actually does, end to end
 
-```text
-committed effects = 1
-stale rejections  = 1
-current token     = 2
+1. Starts PostgreSQL, Redis, and Worker A
+2. Publishes a real Celery task
+3. Waits until Worker A reaches the dangerous pre-commit window
+4. Stops Worker A with `SIGSTOP`
+5. Waits for the Redis visibility timeout
+6. Starts Worker B — observes redelivery with a newer fencing token
+7. Waits for Worker B to commit
+8. Resumes Worker A with `SIGCONT`
+9. Records whether Worker A's stale commit succeeds or is rejected
+10. Reads the PostgreSQL execution history and evaluates the invariant
+11. Writes machine-readable JSON/JSONL artifacts
 
-AT_MOST_ONE_EFFECT = PASS
-```
-
-## Why fencing matters
-
-A timeout or lease can determine who owns work now, but it does not
-automatically stop a previous owner from waking up later and writing stale
-state.
-
-Faultline assigns monotonically increasing ownership generations:
-
-```text
-Worker A -> token 1
-Worker B -> token 2
-```
-
-The fenced commit path accepts a write only when:
-
-```text
-presented_token == current_token
-```
-
-Therefore:
-
-```text
-Worker B: 2 == 2 -> commit accepted
-Worker A: 1 != 2 -> commit rejected
-```
-
-The authoritative database performs the check. Correctness does not depend on
-the paused worker realizing that ownership changed.
-
-## What Faultline does
-
-For the current Celery experiment, Faultline:
-
-1. Starts PostgreSQL, Redis, and Worker A.
-2. Publishes a real Celery task.
-3. Waits until Worker A reaches the dangerous pre-commit window.
-4. Stops Worker A with `SIGSTOP`.
-5. Waits for the Redis visibility timeout.
-6. Starts Worker B.
-7. Observes the task being redelivered with a newer fencing token.
-8. Waits for Worker B to commit.
-9. Resumes Worker A with `SIGCONT`.
-10. Records whether Worker A's stale commit succeeds or is rejected.
-11. Reads the PostgreSQL execution history.
-12. Evaluates the configured correctness invariant.
-13. Writes machine-readable artifacts.
+---
 
 ## Architecture
 
 ```text
                     faultline CLI
-                         |
-                         v
+                         │
+                         ▼
                     orchestrator
-                         |
-          +--------------+--------------+
-          |                             |
-          v                             v
+                         │
+          ┌──────────────┴──────────────┐
+          ▼                             ▼
     fault injection                Celery adapter
-    SIGSTOP/SIGCONT                     |
-                                        v
+    SIGSTOP / SIGCONT                   │
+                                        ▼
                                    Redis broker
-                                        |
-                           +------------+------------+
-                           |                         |
-                           v                         v
+                                        │
+                           ┌────────────┴────────────┐
+                           ▼                         ▼
                        Worker A                  Worker B
-                           |                         |
-                           +------------+------------+
-                                        |
-                                        v
+                           │                         │
+                           └────────────┬────────────┘
+                                        ▼
                                    PostgreSQL
                                   effect ledger
-                                        |
-                    +-------------------+-------------------+
-                    |                                       |
-                    v                                       v
+                                        │
+                    ┌───────────────────┴───────────────────┐
+                    ▼                                       ▼
               execution history                       invariant
-               history.jsonl                           checker
-                    |                                       |
-                    +-------------------+-------------------+
-                                        |
-                                        v
+               history.jsonl                            checker
+                    │                                       │
+                    └───────────────────┬───────────────────┘
+                                        ▼
                                    report.json
 ```
 
-## Supported invariant
+---
 
-The first framework invariant is:
+## Methodology — and what this isn't
 
-`at-most-one-effect`
+Faultline is **Jepsen-inspired**: drive a real system → inject a real failure → collect execution history → check an explicit correctness property. It is *not* Jepsen, and doesn't claim Jepsen-equivalent coverage.
 
-For each logical job:
+The demonstrated result is deliberately narrow, and stated that way on purpose:
 
-```text
-committed_effects(job_id) <= 1
-```
+> Under the included Celery/Redis/PostgreSQL stale-worker experiment, the unsafe reference implementation produces two committed effects after redelivery, while commit-time fencing rejects the stale worker and preserves the at-most-one-effect invariant.
 
-This is intentionally narrower than claiming universal exactly-once
-execution.
+**What this project does not claim:** universal exactly-once execution, formal proof of linearizability, Byzantine fault tolerance, consensus verification, production certification for Celery/Redis, exhaustive fault coverage, or correctness of arbitrary external side effects.
 
-## CLI
+That restraint is deliberate — an honest, narrow, *proven* claim is worth more than a broad, asserted one.
 
-Test the unsafe implementation:
+---
 
-```bash
-faultline test \
-  --adapter celery \
-  --fault pause \
-  --implementation unsafe \
-  --invariant at-most-one-effect
-```
-
-An invariant violation returns exit code `1`.
-
-Test the fenced implementation:
+## Try it
 
 ```bash
-faultline test \
-  --adapter celery \
-  --fault pause \
-  --implementation fenced \
-  --invariant at-most-one-effect
-```
+python3 -m venv .framework-venv
+source .framework-venv/bin/activate
+python -m pip install -e '.[dev]'
 
-A preserved invariant returns exit code `0`.
+# Unsafe implementation — expect FAIL
+faultline test --adapter celery --fault pause --implementation unsafe --invariant at-most-one-effect
 
-`--mode unsafe|fenced` remains available as a backward-compatible alias for
-`--implementation`.
-
-## Execution artifacts
-
-Each local experiment writes a generated artifact directory under:
-
-`artifacts/runs/`
-
-Generated runs are ignored by Git. Curated machine-readable evidence used by
-the regression suite is stored under:
-
-`artifacts/canonical/`
-
-A completed local run contains:
-
-```text
-history.jsonl
-report.json
-worker-a.log
-worker-b.log
-```
-
-The history contains events such as:
-
-```text
-delivery_started
-ready_to_commit
-fault_injected
-delivery_started
-commit_accepted
-ownership_observed
-fault_recovered
-commit_rejected
-```
-
-A fenced report records the accepted effect and the rejected stale ownership
-generation.
-
-## Project structure
-
-```text
-faultline/
-├── faultline/
-│   ├── cli.py
-│   ├── history.py
-│   ├── adapters/
-│   │   ├── base.py
-│   │   └── celery.py
-│   ├── faults/
-│   ├── invariants/
-│   │   └── effects.py
-│   └── reporting/
-│       └── compare.py
-├── integrations/
-│   └── celery/
-│       ├── Dockerfile
-│       ├── docker-compose.yml
-│       ├── requirements.txt
-│       ├── app/
-│       │   ├── db.py
-│       │   ├── submit.py
-│       │   └── tasks.py
-│       └── postgres/
-│           └── init.sql
-├── tests/
-├── artifacts/
-├── pyproject.toml
-└── SCOPE_FRAMEWORK.md
+# Fenced implementation — expect PASS
+faultline test --adapter celery --fault pause --implementation fenced --invariant at-most-one-effect
 ```
 
 ## Tests
 
-Install development dependencies:
-
 ```bash
 python -m pip install -e '.[dev]'
+python -m pytest tests/test_framework_invariants.py tests/test_framework_reports.py \
+  tests/test_framework_cleanup.py tests/test_framework_cli.py -q
 ```
 
-Run the framework regression suite:
+Covers invariant behavior, canonical unsafe/fenced evidence, CLI parsing, backward compatibility, and worker recovery cleanup.
 
-```bash
-python -m pytest \
-  tests/test_framework_invariants.py \
-  tests/test_framework_reports.py \
-  tests/test_framework_cleanup.py \
-  tests/test_framework_cli.py \
-  -q
+---
+
+## Repository Structure
+
+```
+faultline/
+├── faultline/
+│   ├── cli.py
+│   ├── history.py
+│   ├── adapters/        base.py, celery.py
+│   ├── faults/
+│   ├── invariants/      effects.py
+│   └── reporting/       compare.py
+├── integrations/celery/ Dockerfile, docker-compose, app/, postgres/init.sql
+├── tests/
+├── artifacts/            runs/ (generated, gitignored) · canonical/ (curated evidence)
+├── pyproject.toml
+└── SCOPE_FRAMEWORK.md
 ```
 
-The suite currently covers invariant behavior, canonical unsafe and fenced
-evidence, CLI parsing, backward compatibility, and worker recovery cleanup.
-
-## Methodology
-
-Faultline is **Jepsen-inspired** in methodology:
-
-```text
-drive a real system
-        |
-inject a real failure
-        |
-collect execution history
-        |
-check an explicit correctness property
-```
-
-Faultline is not Jepsen and does not claim Jepsen-equivalent coverage or
-formal linearizability verification.
-
-## Scope and non-goals
-
-Faultline currently does **not** claim:
-
-- universal exactly-once execution
-- formal proof of linearizability
-- Byzantine fault tolerance
-- consensus verification
-- production certification for Celery or Redis
-- exhaustive fault coverage
-- correctness of arbitrary external side effects
-
-The demonstrated result is deliberately specific:
-
-> Under the included Celery/Redis/PostgreSQL stale-worker experiment, the
-> unsafe reference implementation produces two committed effects after
-> redelivery, while commit-time fencing rejects the stale worker and preserves
-> the at-most-one-effect invariant.
+---
 
 ## Current support
 
-| Component | Current support |
-| --- | --- |
+| Component | Support |
+|---|---|
 | Worker framework | Celery |
 | Broker | Redis |
 | Side-effect store | PostgreSQL |
-| Fault | process pause |
-| Injection | `SIGSTOP` |
+| Fault | Process pause (`SIGSTOP`) |
 | Recovery | `SIGCONT` |
 | Redelivery | Redis visibility timeout |
 | Invariant | `at-most-one-effect` |
 | Implementations | unsafe, fenced |
-| Reports | JSON |
-| Histories | JSONL |
 
 ## Roadmap
 
-Near-term:
+Near-term: generic fault-injector interface, process kill/restart, broker/database disconnect faults, additional invariants, CI integration. Future adapters (BullMQ/Redis, Amazon SQS) will preserve each broker's real delivery semantics rather than assuming they all behave the same.
 
-- extract pause behavior behind the generic fault-injector interface
-- add process kill/restart
-- add broker and database disconnect faults
-- add additional application-level invariants
-- strengthen adapter lifecycle isolation
-- add integration coverage in CI
-- package a reproducible containerized runner
-
-Future adapters:
-
-- BullMQ / Redis
-- Amazon SQS
-
-Future adapters will preserve each system's real delivery semantics rather than
-pretending all brokers use the same lease, visibility, or acknowledgement
-model.
+---
 
 ## Status
 
-Faultline is an early framework prototype.
-
-The Celery reference adapter currently runs the stale-worker experiment
-end-to-end using real workers, Redis redelivery, PostgreSQL writes, process
-pause/resume injection, execution histories, and invariant evaluation.
+Early framework prototype. The Celery reference adapter runs the full stale-worker experiment end-to-end today — real workers, real Redis redelivery, real PostgreSQL writes, real process pause/resume, and a machine-checked invariant.
