@@ -18,7 +18,11 @@ from faultline.faults.process import (
     DockerProcessKillFault,
     DockerProcessPauseFault,
 )
-from faultline.invariants.effects import at_most_one_effect
+from faultline.invariants.effects import (
+    at_most_one_effect,
+    no_lost_committed_effect,
+    stale_owner_cannot_commit,
+)
 from faultline.lifecycle import RunLifecycle
 
 
@@ -350,6 +354,7 @@ def _run_race(
     mode: str,
     fault: str = "pause",
     window: str = "pre-commit",
+    invariant: str = "at-most-one-effect",
 ) -> tuple[dict[str, object], Path]:
     if mode not in {
         "unsafe",
@@ -543,7 +548,32 @@ def _run_race(
 
     committed_effects = len(effects)
 
-    invariant = at_most_one_effect(committed_effects)
+    committed_tokens = [
+        effect["fencing_token"] for effect in effects
+    ]
+    stale_commits_accepted = (
+        sum(
+            1
+            for token in committed_tokens
+            if token < max(committed_tokens)
+        )
+        if committed_tokens
+        else 0
+    )
+
+    invariant_results = {
+        "at-most-one-effect": at_most_one_effect(
+            committed_effects
+        ),
+        "no-lost-committed-effect": no_lost_committed_effect(
+            committed_effects
+        ),
+        "stale-owner-cannot-commit": stale_owner_cannot_commit(
+            stale_commits_accepted
+        ),
+    }
+
+    invariant = invariant_results[invariant]
     invariant_pass = invariant.passed
 
     database_events = parse_attempt_history(job_id)
@@ -580,6 +610,14 @@ def _run_race(
         "invariant": invariant.name,
         "invariant_observed": invariant.observed,
         "invariant_limit": invariant.limit,
+        "all_invariants": {
+            name: {
+                "passed": result.passed,
+                "observed": result.observed,
+                "limit": result.limit,
+            }
+            for name, result in invariant_results.items()
+        },
         "committed_effects": committed_effects,
         "effects": effects,
         "stale_rejections": rejections,
@@ -652,6 +690,7 @@ def run_race(
     mode: str,
     fault: str = "pause",
     window: str = "pre-commit",
+    invariant: str = "at-most-one-effect",
 ) -> tuple[dict[str, object], Path]:
     """Run one Celery experiment with guaranteed best-effort cleanup."""
     if fault == "kill" and window != "post-commit":
@@ -665,4 +704,5 @@ def run_race(
             mode,
             fault=fault,
             window=window,
+            invariant=invariant,
         )
