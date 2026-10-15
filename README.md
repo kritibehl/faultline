@@ -104,6 +104,8 @@ Worker A resumes, still holding token 1 → also commits
 ---
  
 ## Architecture
+
+**Technical deep dive:** [Architecture, fencing, idempotency, and correctness boundaries](docs/ARCHITECTURE_AND_CORRECTNESS.md).
  
 ```text
                     faultline CLI
