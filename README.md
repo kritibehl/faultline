@@ -83,7 +83,7 @@ Worker A resumes, still holding token 1 → also commits
  
 **Without fencing:** both commits succeed. `committed_effects = 2`. Invariant fails.
  
-**With fencing:** PostgreSQL validates ownership at commit time — `presented_token == current_token` — so Worker A's stale commit is rejected outright. `committed_effects = 1`. Invariant holds. The database enforces this; correctness doesn't depend on Worker A ever realizing it lost ownership.
+**With fencing:** the commit runs in a PostgreSQL transaction that locks the job's ownership row (`SELECT … FOR UPDATE`) and compares the presented token with `current_token`. Worker A's stale commit fails that comparison, is recorded in `stale_rejections`, and is refused. `committed_effects = 1`. Invariant holds. Correctness doesn't depend on Worker A ever realizing it lost ownership.
  
 ---
  
@@ -169,7 +169,7 @@ python -m pip install -e '.[dev]'
 python -m pytest tests/ -v
 ```
  
-52 tests covering: invariant behavior (all four checkers), canonical unsafe/fenced/idempotent evidence for both adapters, the ambiguous-remote-outcome matrix, CLI parsing and backward compatibility, pre-commit and post-commit semantics, kill-fault lifecycle, and worker recovery cleanup.
+58 tests covering: unit tests for all four invariant checkers, canonical unsafe/fenced/idempotent evidence for both adapters, the ambiguous-remote-outcome matrix, CLI parsing and backward compatibility, pre-commit and post-commit semantics, kill-fault lifecycle, and worker recovery cleanup.
  
 ---
  
@@ -186,7 +186,7 @@ faultline/
 │   ├── invariants/         effects.py (4 invariant checkers)
 │   └── reporting/           compare.py
 ├── integrations/celery/       Dockerfile, docker-compose, app/, postgres/init.sql
-├── tests/                        52 tests across ~15 files
+├── tests/                        58 tests across 16 files
 ├── artifacts/                      runs/ (generated, gitignored) · canonical/ (curated evidence)
 ├── pyproject.toml
 └── SCOPE_FRAMEWORK.md
@@ -203,7 +203,7 @@ faultline/
 | Side-effect store | PostgreSQL |
 | Faults | Process pause (`SIGSTOP`/`SIGCONT`), kill (`SIGKILL`/restart) |
 | Windows | pre-commit, post-commit |
-| Invariants | at-most-one-effect, stale-owner-cannot-commit, no-lost-committed-effect, eventually-processed-after-recovery |
+| Invariants | at-most-one-effect, stale-owner-cannot-commit, no-lost-committed-effect (all reported on every Celery run); eventually-processed-after-recovery (implemented and unit-tested, not yet used by a scenario) |
 | Implementations | unsafe, fenced, idempotent |
 | Scenarios | stale-worker redelivery, ambiguous remote outcome |
  
@@ -211,10 +211,10 @@ faultline/
  
 ## Roadmap
  
-Near-term: broker/database disconnect faults, wiring `--invariant` selection fully through the CLI's `compare` command (currently only `test` supports invariant selection end-to-end), CI integration. Future adapters (Amazon SQS) will preserve each broker's real delivery semantics rather than assuming they all behave the same.
+Near-term: broker/database disconnect faults, making `--invariant` selectable for all four checkers (today the CLI accepts only `at-most-one-effect`; the other checkers are computed into each Celery report's `all_invariants` field, and `eventually-processed-after-recovery` isn't used by any scenario yet), CI integration. Future adapters (Amazon SQS) will preserve each broker's real delivery semantics rather than assuming they all behave the same.
  
 ---
  
 ## Status
  
-Active framework, not an early prototype — 52 passing tests across two worker adapters (Celery, BullMQ), two fault types, two failure windows, four invariant checkers, and two distinct distributed-systems scenarios (stale-worker redelivery and ambiguous remote outcome), all validated against real Redis/PostgreSQL/Docker infrastructure.
+Active framework, not an early prototype — 58 passing tests across two worker adapters (Celery, BullMQ), two fault types, two failure windows, four invariant checkers (three reported on every Celery run), and two distinct distributed-systems scenarios (stale-worker redelivery and ambiguous remote outcome), all validated against real Redis/PostgreSQL/Docker infrastructure.
