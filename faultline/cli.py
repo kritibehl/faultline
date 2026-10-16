@@ -25,7 +25,10 @@ WINDOWS = (
     "pre-commit",
     "post-commit",
 )
-INVARIANTS = ("at-most-one-effect",)
+INVARIANTS = (
+    "at-most-one-effect",
+    "no-lost-committed-effect",
+)
 
 
 def add_common_arguments(
@@ -119,12 +122,19 @@ def run_test(args: argparse.Namespace) -> int:
         implementation,
         fault=args.fault,
         window=args.window,
+        invariant=args.invariant,
     )
 
     return 0 if report["result"] == "PASS" else 1
 
 
 def run_compare(args: argparse.Namespace) -> int:
+    if args.invariant != "at-most-one-effect":
+        raise RunError(
+            "compare currently supports only "
+            "at-most-one-effect; use test for other invariants"
+        )
+
     print()
     print("Running unsafe implementation...")
     print()

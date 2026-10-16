@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from faultline.invariants.effects import no_lost_committed_effect
+
 import json
 import re
 import subprocess
@@ -406,6 +408,7 @@ def _run_race(
     mode: str,
     fault: str = "kill",
     window: str = "post-commit",
+    invariant: str = "at-most-one-effect",
 ) -> tuple[dict[str, object], Path]:
     validate_configuration(
         mode,
@@ -628,11 +631,17 @@ def _run_race(
 
     committed_effects = len(effects)
 
-    invariant = at_most_one_effect(
-        committed_effects
-    )
+    invariant_results = {
+        "at-most-one-effect": at_most_one_effect(
+            committed_effects
+        ),
+        "no-lost-committed-effect": no_lost_committed_effect(
+            committed_effects
+        ),
+    }
 
-    invariant_pass = invariant.passed
+    selected_invariant = invariant_results[invariant]
+    invariant_pass = selected_invariant.passed
 
     database_events = (
         parse_attempt_history(job_id)
@@ -689,11 +698,19 @@ def _run_race(
             LOCK_DURATION_MS,
         "stalled_interval_ms":
             STALLED_INTERVAL_MS,
-        "invariant": invariant.name,
+        "invariant": selected_invariant.name,
         "invariant_observed":
-            invariant.observed,
+            selected_invariant.observed,
         "invariant_limit":
-            invariant.limit,
+            selected_invariant.limit,
+        "all_invariants": {
+            name: {
+                "passed": result.passed,
+                "observed": result.observed,
+                "limit": result.limit,
+            }
+            for name, result in invariant_results.items()
+        },
         "committed_effects":
             committed_effects,
         "effects": effects,
@@ -769,7 +786,7 @@ def _run_race(
         "----------------------------------------"
     )
     print(
-        "AT_MOST_ONE_EFFECT: "
+        f"{selected_invariant.name}: "
         f"{'PASS' if invariant_pass else 'FAIL'}"
     )
     print()
@@ -789,6 +806,7 @@ def run_race(
     mode: str,
     fault: str = "kill",
     window: str = "post-commit",
+    invariant: str = "at-most-one-effect",
 ) -> tuple[dict[str, object], Path]:
     validate_configuration(
         mode,
@@ -801,4 +819,5 @@ def run_race(
             mode,
             fault=fault,
             window=window,
+            invariant=invariant,
         )

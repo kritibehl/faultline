@@ -676,7 +676,7 @@ def _run_race(
     print(f"Current fencing token:   {report['current_fencing_token']}")
     print("----------------------------------------")
     print(
-        f"AT_MOST_ONE_EFFECT: "
+        f"{invariant.name}: "
         f"{'PASS' if invariant_pass else 'FAIL'}"
     )
     print()

@@ -17,6 +17,7 @@ def test_registry_dispatches_to_selected_adapter(
         mode,
         fault,
         window,
+        invariant="at-most-one-effect",
     ):
         calls.append(
             (mode, fault, window)

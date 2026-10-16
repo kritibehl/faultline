@@ -23,6 +23,7 @@ def run_race(
     *,
     fault: str,
     window: str,
+    invariant: str = "at-most-one-effect",
 ) -> tuple[dict[str, object], Path]:
     module = ADAPTERS.get(adapter)
 
@@ -35,4 +36,5 @@ def run_race(
         mode,
         fault=fault,
         window=window,
+        invariant=invariant,
     )
