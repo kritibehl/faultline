@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+
 from abc import ABC, abstractmethod
 from types import TracebackType
 
@@ -16,7 +18,16 @@ class RunLifecycle(ABC):
         exc_value: BaseException | None,
         traceback: TracebackType | None,
     ) -> bool:
-        self.cleanup()
+        try:
+            self.cleanup()
+        except Exception as cleanup_error:
+            if exc_value is None:
+                raise
+            print(
+                f"FAULTLINE WARNING: recovery cleanup failed while handling "
+                f"{type(exc_value).__name__}: {cleanup_error}",
+                file=sys.stderr,
+            )
         return False
 
     @abstractmethod

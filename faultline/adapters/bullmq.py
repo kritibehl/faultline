@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from faultline.reporting.failure_artifacts import preserve_failed_run
+
 from faultline.reporting.recovery_audit import save_recovery_audit
 
 from faultline.invariants.effects import no_lost_committed_effect
@@ -58,6 +60,7 @@ def run(
     return subprocess.run(
         list(args),
         text=True,
+        stdin=subprocess.DEVNULL,
         stdout=(
             subprocess.PIPE
             if capture
@@ -458,368 +461,394 @@ def _run_race(
         HistoryEvent
     ] = []
 
-    print()
-    print("Faultline")
-    print("=========")
-    print("Adapter:   bullmq")
-    print(f"Mode:      {mode}")
-    print(f"Window:    {window}")
-    print(f"Job:       {job_id}")
-    print()
-
-    print(
-        "[1/8] Starting clean "
-        "BullMQ/Redis/PostgreSQL environment"
-    )
-
-    fresh_environment()
-
-    print(
-        "[2/8] Publishing real BullMQ job"
-    )
-
-    submit(
-        mode,
-        job_id,
-        window,
-    )
-
-    wait_for_log(
-        WORKER_A,
-        f"READY_AFTER_COMMIT job={job_id}",
-    )
-
-    print(
-        "      Worker A committed token 1 "
-        "and reached post-commit fault window"
-    )
-
-    orchestrator_events.append(
-        HistoryEvent(
-            ts=now_iso(),
-            type="fault_injected",
-            job_id=job_id,
-            worker="worker-a",
-            fencing_token=1,
-            details={
-                "fault":
-                    fault_description.inject
-            },
-        )
-    )
-
-    print(
-        f"[3/8] Injecting "
-        f"{fault_description.inject} "
-        "into Worker A"
-    )
-
-    injector.inject(WORKER_A)
-
-    print(
-        "[4/8] Starting Worker B and "
-        "waiting for BullMQ stalled-job recovery"
-    )
-
-    compose(
-        "up",
-        "-d",
-        "worker-b",
-        capture=False,
-    )
-
-    wait_for_log(
-        WORKER_B,
-        "WORKER_READY worker=worker-b",
-    )
-
-    wait_for_log(
-        WORKER_B,
-        f"JOB_STALLED job={job_id}",
-        timeout=45,
-    )
-
-    print(
-        "      BullMQ detected the expired "
-        "job lock and recovered the stalled job"
-    )
-
-    stalled_ts = log_event_timestamp(
-        WORKER_B,
-        f"JOB_STALLED job={job_id}",
-    )
-
-    orchestrator_events.append(
-        HistoryEvent(
-            ts=stalled_ts,
-            type="stalled_recovery_observed",
-            job_id=job_id,
-            worker="worker-b",
-            fencing_token=1,
-            details={
-                "mechanism":
-                    "BullMQ stalled-job recovery",
-                "semantics":
-                    "worker event observation",
-            },
-        )
-    )
-
-    print(
-        "[5/8] Waiting for redelivered "
-        "job terminal result"
-    )
-
-    worker_b_terminal = (
-        worker_b_terminal_marker(mode)
-    )
-
-    wait_for_log(
-        WORKER_B,
-        f"{worker_b_terminal} "
-        f"job={job_id}",
-        timeout=45,
-    )
-
-    takeover_token = current_token(
-        job_id
-    )
-
-    if (
-        worker_b_terminal
-        == "COMMIT_ACCEPTED"
-    ):
-        print(
-            "      Worker B processed the "
-            f"stalled job and committed "
-            f"token {takeover_token}"
-        )
-    else:
-        print(
-            "      Worker B processed the "
-            "stalled job and suppressed "
-            "the duplicate effect"
-        )
-
-    orchestrator_events.append(
-        HistoryEvent(
-            ts=now_iso(),
-            type="ownership_observed",
-            job_id=job_id,
-            worker="worker-b",
-            fencing_token=takeover_token,
-        )
-    )
-
-    print(
-        "[6/8] Restarting Worker A "
-        "after process crash"
-    )
-
-    orchestrator_events.append(
-        HistoryEvent(
-            ts=now_iso(),
-            type="fault_recovered",
-            job_id=job_id,
-            worker="worker-a",
-            fencing_token=1,
-            details={
-                "fault":
-                    fault_description.recover
-            },
-        )
-    )
-
-    injector.recover(WORKER_A)
-
-    print(
-        "[7/8] Querying PostgreSQL evidence"
-    )
-
-    effects = query_effects(job_id)
-    rejections = query_rejections(job_id)
-
-    committed_effects = len(effects)
-
-    invariant_results = {
-        "at-most-one-effect": at_most_one_effect(
-            committed_effects
-        ),
-        "no-lost-committed-effect": no_lost_committed_effect(
-            committed_effects
-        ),
-    }
-
-    selected_invariant = invariant_results[invariant]
-    invariant_pass = selected_invariant.passed
-
-    database_events = (
-        parse_attempt_history(job_id)
-    )
-
-    duplicate_suppressions = [
-        asdict(event)
-        for event in database_events
-        if (
-            event.type
-            == "duplicate_suppressed"
-        )
-    ]
-
-    all_events = (
-        database_events
-        + orchestrator_events
-    )
-
-    all_events.sort(
-        key=lambda event:
-            datetime.fromisoformat(
-                event.ts.replace(
-                    " ",
-                    "T",
-                    1,
-                )
-            )
-    )
-
-    write_jsonl(
-        artifact_dir / "history.jsonl",
-        all_events,
-    )
-
-    report: dict[str, object] = {
-        "framework": "faultline",
-        "adapter": "bullmq",
-        "compose_project": PROJECT_NAME,
-        "mode": mode,
-        "window": window,
-        "job_id": job_id,
-        "fault": fault,
-        "fault_injection":
-            fault_description.as_report(),
-        "queue_system": "BullMQ",
-        "queue_library_version": "6.3.4",
-        "broker": "Redis",
-        "database": "PostgreSQL",
-        "redelivery_mechanism": (
-            "BullMQ stalled-job recovery "
-            "after worker-lock expiry"
-        ),
-        "lock_duration_ms":
-            LOCK_DURATION_MS,
-        "stalled_interval_ms":
-            STALLED_INTERVAL_MS,
-        "invariant": selected_invariant.name,
-        "invariant_observed":
-            selected_invariant.observed,
-        "invariant_limit":
-            selected_invariant.limit,
-        "all_invariants": {
-            name: {
-                "passed": result.passed,
-                "observed": result.observed,
-                "limit": result.limit,
-            }
-            for name, result in invariant_results.items()
+    stage = {"name": "environment_setup"}
+    with preserve_failed_run(
+        run_dir=artifact_dir,
+        adapter="bullmq",
+        compose_project=PROJECT_NAME,
+        job_id=job_id,
+        mode=mode,
+        fault=fault,
+        window=window,
+        invariant=invariant,
+        stage=stage,
+        orchestrator_events=orchestrator_events,
+        load_db_events=lambda: parse_attempt_history(job_id),
+        worker_logs={
+            "worker-a": lambda: logs(WORKER_A),
+            "worker-b": lambda: logs(WORKER_B),
         },
-        "committed_effects":
-            committed_effects,
-        "effects": effects,
-        "stale_rejections":
-            rejections,
-        "duplicate_suppressions":
-            duplicate_suppressions,
-        "current_fencing_token":
-            current_token(job_id),
-        "result": (
-            "PASS"
-            if invariant_pass
-            else "FAIL"
-        ),
-        "methodology": (
-            "Real BullMQ 6.3.4 workers "
-            "with Redis and PostgreSQL; "
-            "Worker A commits its side "
-            "effect and is killed with "
-            f"{fault_description.inject} "
-            "before processor return. "
-            "After the BullMQ lock expires, "
-            "stalled-job recovery makes the "
-            "same logical job available for "
-            "Worker B."
-        ),
-    }
+    ):
+        print()
+        print("Faultline")
+        print("=========")
+        print("Adapter:   bullmq")
+        print(f"Mode:      {mode}")
+        print(f"Window:    {window}")
+        print(f"Job:       {job_id}")
+        print()
 
-    (
-        artifact_dir / "report.json"
-    ).write_text(
-        json.dumps(
-            report,
-            indent=2,
+        print(
+            "[1/8] Starting clean "
+            "BullMQ/Redis/PostgreSQL environment"
         )
-        + "\n"
-    )
 
-    (
-        artifact_dir / "worker-a.log"
-    ).write_text(
-        logs(WORKER_A)
-    )
+        stage["name"] = "environment_setup"
+        fresh_environment()
 
-    (
-        artifact_dir / "worker-b.log"
-    ).write_text(
-        logs(WORKER_B)
-    )
+        print(
+            "[2/8] Publishing real BullMQ job"
+        )
 
-    print("[8/8] Invariant result")
-    print()
-    print(
-        "----------------------------------------"
-    )
-    print(
-        f"Committed effects:       "
-        f"{committed_effects}"
-    )
-    print(
-        f"Stale rejections:        "
-        f"{len(rejections)}"
-    )
-    print(
-        f"Duplicate suppressions:  "
-        f"{len(duplicate_suppressions)}"
-    )
-    print(
-        f"Current fencing token:   "
-        f"{report['current_fencing_token']}"
-    )
-    print(
-        "----------------------------------------"
-    )
-    print(
-        f"{selected_invariant.name}: "
-        f"{'PASS' if invariant_pass else 'FAIL'}"
-    )
-    print()
-    print(
-        f"History: "
-        f"{artifact_dir / 'history.jsonl'}"
-    )
-    print(
-        f"Report:  "
-        f"{artifact_dir / 'report.json'}"
-    )
+        stage["name"] = "job_submission"
+        submit(
+            mode,
+            job_id,
+            window,
+        )
 
-    recovery = save_recovery_audit(
-        report,
-        [asdict(event) for event in all_events],
-        artifact_dir,
-        timeout_seconds=60,
-    )
+        wait_for_log(
+            WORKER_A,
+            f"READY_AFTER_COMMIT job={job_id}",
+        )
 
-    print(f"Recovery audit: {recovery['status']}")
+        print(
+            "      Worker A committed token 1 "
+            "and reached post-commit fault window"
+        )
 
-    return report, artifact_dir
+
+        print(
+            f"[3/8] Injecting "
+            f"{fault_description.inject} "
+            "into Worker A"
+        )
+
+        stage["name"] = "fault_injection"
+        injector.inject(WORKER_A)
+
+        orchestrator_events.append(
+            HistoryEvent(
+                ts=now_iso(),
+                type="fault_injected",
+                job_id=job_id,
+                worker="worker-a",
+                fencing_token=1,
+                details={
+                    "fault":
+                        fault_description.inject
+                },
+            )
+        )
+
+        print(
+            "[4/8] Starting Worker B and "
+            "waiting for BullMQ stalled-job recovery"
+        )
+
+        compose(
+            "up",
+            "-d",
+            "worker-b",
+            capture=False,
+        )
+
+        wait_for_log(
+            WORKER_B,
+            "WORKER_READY worker=worker-b",
+        )
+
+        wait_for_log(
+            WORKER_B,
+            f"JOB_STALLED job={job_id}",
+            timeout=45,
+        )
+
+        print(
+            "      BullMQ detected the expired "
+            "job lock and recovered the stalled job"
+        )
+
+        stalled_ts = log_event_timestamp(
+            WORKER_B,
+            f"JOB_STALLED job={job_id}",
+        )
+
+        orchestrator_events.append(
+            HistoryEvent(
+                ts=stalled_ts,
+                type="stalled_recovery_observed",
+                job_id=job_id,
+                worker="worker-b",
+                fencing_token=1,
+                details={
+                    "mechanism":
+                        "BullMQ stalled-job recovery",
+                    "semantics":
+                        "worker event observation",
+                },
+            )
+        )
+
+        print(
+            "[5/8] Waiting for redelivered "
+            "job terminal result"
+        )
+
+        stage["name"] = "redelivery_observation"
+        worker_b_terminal = (
+            worker_b_terminal_marker(mode)
+        )
+
+        wait_for_log(
+            WORKER_B,
+            f"{worker_b_terminal} "
+            f"job={job_id}",
+            timeout=45,
+        )
+
+        takeover_token = current_token(
+            job_id
+        )
+
+        if (
+            worker_b_terminal
+            == "COMMIT_ACCEPTED"
+        ):
+            print(
+                "      Worker B processed the "
+                f"stalled job and committed "
+                f"token {takeover_token}"
+            )
+        else:
+            print(
+                "      Worker B processed the "
+                "stalled job and suppressed "
+                "the duplicate effect"
+            )
+
+        orchestrator_events.append(
+            HistoryEvent(
+                ts=now_iso(),
+                type="ownership_observed",
+                job_id=job_id,
+                worker="worker-b",
+                fencing_token=takeover_token,
+            )
+        )
+
+        print(
+            "[6/8] Restarting Worker A "
+            "after process crash"
+        )
+
+        orchestrator_events.append(
+            HistoryEvent(
+                ts=now_iso(),
+                type="fault_recovered",
+                job_id=job_id,
+                worker="worker-a",
+                fencing_token=1,
+                details={
+                    "fault":
+                        fault_description.recover
+                },
+            )
+        )
+
+        injector.recover(WORKER_A)
+
+        print(
+            "[7/8] Querying PostgreSQL evidence"
+        )
+
+        stage["name"] = "evidence_collection"
+        effects = query_effects(job_id)
+        rejections = query_rejections(job_id)
+
+        committed_effects = len(effects)
+
+        invariant_results = {
+            "at-most-one-effect": at_most_one_effect(
+                committed_effects
+            ),
+            "no-lost-committed-effect": no_lost_committed_effect(
+                committed_effects
+            ),
+        }
+
+        selected_invariant = invariant_results[invariant]
+        invariant_pass = selected_invariant.passed
+
+        database_events = (
+            parse_attempt_history(job_id)
+        )
+
+        duplicate_suppressions = [
+            asdict(event)
+            for event in database_events
+            if (
+                event.type
+                == "duplicate_suppressed"
+            )
+        ]
+
+        all_events = (
+            database_events
+            + orchestrator_events
+        )
+
+        all_events.sort(
+            key=lambda event:
+                datetime.fromisoformat(
+                    event.ts.replace(
+                        " ",
+                        "T",
+                        1,
+                    )
+                )
+        )
+
+        stage["name"] = "reporting"
+        write_jsonl(
+            artifact_dir / "history.jsonl",
+            all_events,
+        )
+
+        report: dict[str, object] = {
+            "framework": "faultline",
+            "adapter": "bullmq",
+            "compose_project": PROJECT_NAME,
+            "mode": mode,
+            "window": window,
+            "job_id": job_id,
+            "fault": fault,
+            "fault_injection":
+                fault_description.as_report(),
+            "queue_system": "BullMQ",
+            "queue_library_version": "6.3.4",
+            "broker": "Redis",
+            "database": "PostgreSQL",
+            "redelivery_mechanism": (
+                "BullMQ stalled-job recovery "
+                "after worker-lock expiry"
+            ),
+            "lock_duration_ms":
+                LOCK_DURATION_MS,
+            "stalled_interval_ms":
+                STALLED_INTERVAL_MS,
+            "invariant": selected_invariant.name,
+            "invariant_observed":
+                selected_invariant.observed,
+            "invariant_limit":
+                selected_invariant.limit,
+            "all_invariants": {
+                name: {
+                    "passed": result.passed,
+                    "observed": result.observed,
+                    "limit": result.limit,
+                }
+                for name, result in invariant_results.items()
+            },
+            "committed_effects":
+                committed_effects,
+            "effects": effects,
+            "stale_rejections":
+                rejections,
+            "duplicate_suppressions":
+                duplicate_suppressions,
+            "current_fencing_token":
+                current_token(job_id),
+            "result": (
+                "PASS"
+                if invariant_pass
+                else "FAIL"
+            ),
+            "methodology": (
+                "Real BullMQ 6.3.4 workers "
+                "with Redis and PostgreSQL; "
+                "Worker A commits its side "
+                "effect and is killed with "
+                f"{fault_description.inject} "
+                "before processor return. "
+                "After the BullMQ lock expires, "
+                "stalled-job recovery makes the "
+                "same logical job available for "
+                "Worker B."
+            ),
+        }
+
+        (
+            artifact_dir / "report.json"
+        ).write_text(
+            json.dumps(
+                report,
+                indent=2,
+            )
+            + "\n"
+        )
+
+        (
+            artifact_dir / "worker-a.log"
+        ).write_text(
+            logs(WORKER_A)
+        )
+
+        (
+            artifact_dir / "worker-b.log"
+        ).write_text(
+            logs(WORKER_B)
+        )
+
+        print("[8/8] Invariant result")
+        print()
+        print(
+            "----------------------------------------"
+        )
+        print(
+            f"Committed effects:       "
+            f"{committed_effects}"
+        )
+        print(
+            f"Stale rejections:        "
+            f"{len(rejections)}"
+        )
+        print(
+            f"Duplicate suppressions:  "
+            f"{len(duplicate_suppressions)}"
+        )
+        print(
+            f"Current fencing token:   "
+            f"{report['current_fencing_token']}"
+        )
+        print(
+            "----------------------------------------"
+        )
+        print(
+            f"{selected_invariant.name}: "
+            f"{'PASS' if invariant_pass else 'FAIL'}"
+        )
+        print()
+        print(
+            f"History: "
+            f"{artifact_dir / 'history.jsonl'}"
+        )
+        print(
+            f"Report:  "
+            f"{artifact_dir / 'report.json'}"
+        )
+
+        recovery = save_recovery_audit(
+            report,
+            [asdict(event) for event in all_events],
+            artifact_dir,
+            timeout_seconds=60,
+        )
+
+        print(f"Recovery audit: {recovery['status']}")
+
+        return report, artifact_dir
+
 
 
 def run_race(

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from faultline.reporting.failure_artifacts import preserve_failed_run
+
 from faultline.reporting.recovery_audit import save_recovery_audit
 
 import json
@@ -56,6 +58,7 @@ def run(
     return subprocess.run(
         list(args),
         text=True,
+        stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE if capture else None,
         stderr=subprocess.STDOUT if capture else None,
         check=check,
@@ -412,298 +415,324 @@ def _run_race(
 
     orchestrator_events: list[HistoryEvent] = []
 
-    print()
-    print("Faultline")
-    print("=========")
-    print(f"Adapter:   celery")
-    print(f"Mode:      {mode}")
-    print(f"Window:    {window}")
-    print(f"Job:       {job_id}")
-    print()
+    stage = {"name": "environment_setup"}
+    with preserve_failed_run(
+        run_dir=artifact_dir,
+        adapter="celery",
+        compose_project=PROJECT_NAME,
+        job_id=job_id,
+        mode=mode,
+        fault=fault,
+        window=window,
+        invariant=invariant,
+        stage=stage,
+        orchestrator_events=orchestrator_events,
+        load_db_events=lambda: parse_attempt_history(job_id),
+        worker_logs={
+            "worker-a": lambda: logs(WORKER_A),
+            "worker-b": lambda: logs(WORKER_B),
+        },
+    ):
+        print()
+        print("Faultline")
+        print("=========")
+        print(f"Adapter:   celery")
+        print(f"Mode:      {mode}")
+        print(f"Window:    {window}")
+        print(f"Job:       {job_id}")
+        print()
 
-    print("[1/8] Starting clean Celery/Redis/PostgreSQL environment")
-    fresh_environment()
+        print("[1/8] Starting clean Celery/Redis/PostgreSQL environment")
+        stage["name"] = "environment_setup"
+        fresh_environment()
 
-    print("[2/8] Publishing real Celery task")
-    submit(
-        mode,
-        job_id,
-        window,
-    )
-
-    ready_marker = fault_window_marker(window)
-
-    wait_for_log(
-        WORKER_A,
-        f"{ready_marker} job={job_id}",
-    )
-
-    print(
-        "      Worker A reached "
-        f"{window} fault window with token 1"
-    )
-
-    orchestrator_events.append(
-        HistoryEvent(
-            ts=now_iso(),
-            type="fault_injected",
-            job_id=job_id,
-            worker="worker-a",
-            fencing_token=1,
-            details={"fault": fault_description.inject},
+        print("[2/8] Publishing real Celery task")
+        stage["name"] = "job_submission"
+        submit(
+            mode,
+            job_id,
+            window,
         )
-    )
 
-    print(f"[3/8] Injecting {fault_description.inject} into Worker A")
-    injector.inject(WORKER_A)
+        ready_marker = fault_window_marker(window)
 
-    print("[4/8] Waiting for Redis visibility timeout")
-    time.sleep(8)
-    print("      Redis visibility window expired")
+        wait_for_log(
+            WORKER_A,
+            f"{ready_marker} job={job_id}",
+        )
 
-    print("[5/8] Starting Worker B and waiting for redelivery")
-    compose(
-        "up",
-        "-d",
-        "worker-b",
-        capture=False,
-    )
-
-    wait_for_log(
-        WORKER_B,
-        "ready.",
-    )
-
-    worker_b_terminal = worker_b_terminal_marker(
-        mode,
-        window,
-    )
-
-    wait_for_log(
-        WORKER_B,
-        f"{worker_b_terminal} job={job_id}",
-        timeout=45,
-    )
-
-    takeover_token = current_token(job_id)
-
-    if worker_b_terminal == "COMMIT_ACCEPTED":
         print(
-            "      Worker B redelivered task and "
-            f"committed token {takeover_token}"
-        )
-    else:
-        print(
-            "      Worker B redelivered task and "
-            "suppressed the duplicate effect"
+            "      Worker A reached "
+            f"{window} fault window with token 1"
         )
 
-    orchestrator_events.append(
-        HistoryEvent(
-            ts=now_iso(),
-            type="ownership_observed",
-            job_id=job_id,
-            worker="worker-b",
-            fencing_token=takeover_token,
-        )
-    )
 
-    if fault == "pause":
-        print("[6/8] Resuming Worker A")
+        print(f"[3/8] Injecting {fault_description.inject} into Worker A")
+        stage["name"] = "fault_injection"
+        injector.inject(WORKER_A)
 
         orchestrator_events.append(
             HistoryEvent(
                 ts=now_iso(),
-                type="fault_recovered",
+                type="fault_injected",
                 job_id=job_id,
                 worker="worker-a",
                 fencing_token=1,
-                details={"fault": fault_description.recover},
+                details={"fault": fault_description.inject},
             )
         )
 
-        injector.recover(WORKER_A)
+        print("[4/8] Waiting for Redis visibility timeout")
+        time.sleep(8)
+        print("      Redis visibility window expired")
 
-        expected_terminal = worker_a_terminal_marker(
+        print("[5/8] Starting Worker B and waiting for redelivery")
+        compose(
+            "up",
+            "-d",
+            "worker-b",
+            capture=False,
+        )
+
+        wait_for_log(
+            WORKER_B,
+            "ready.",
+        )
+
+        stage["name"] = "redelivery_observation"
+        worker_b_terminal = worker_b_terminal_marker(
             mode,
             window,
         )
 
         wait_for_log(
-            WORKER_A,
-            f"{expected_terminal} job={job_id}",
+            WORKER_B,
+            f"{worker_b_terminal} job={job_id}",
             timeout=45,
         )
 
-    else:
-        print("[6/8] Restarting Worker A after process crash")
+        takeover_token = current_token(job_id)
+
+        if worker_b_terminal == "COMMIT_ACCEPTED":
+            print(
+                "      Worker B redelivered task and "
+                f"committed token {takeover_token}"
+            )
+        else:
+            print(
+                "      Worker B redelivered task and "
+                "suppressed the duplicate effect"
+            )
 
         orchestrator_events.append(
             HistoryEvent(
                 ts=now_iso(),
-                type="fault_recovered",
+                type="ownership_observed",
                 job_id=job_id,
-                worker="worker-a",
-                fencing_token=1,
-                details={"fault": fault_description.recover},
+                worker="worker-b",
+                fencing_token=takeover_token,
             )
         )
 
-        injector.recover(WORKER_A)
+        if fault == "pause":
+            print("[6/8] Resuming Worker A")
 
-    print("[7/8] Querying PostgreSQL evidence")
-
-    effects = query_effects(job_id)
-    rejections = query_rejections(job_id)
-
-    committed_effects = len(effects)
-
-    committed_tokens = [
-        effect["fencing_token"] for effect in effects
-    ]
-    stale_commits_accepted = (
-        sum(
-            1
-            for token in committed_tokens
-            if token < max(committed_tokens)
-        )
-        if committed_tokens
-        else 0
-    )
-
-    invariant_results = {
-        "at-most-one-effect": at_most_one_effect(
-            committed_effects
-        ),
-        "no-lost-committed-effect": no_lost_committed_effect(
-            committed_effects
-        ),
-        "stale-owner-cannot-commit": stale_owner_cannot_commit(
-            stale_commits_accepted
-        ),
-    }
-
-    invariant = invariant_results[invariant]
-    invariant_pass = invariant.passed
-
-    database_events = parse_attempt_history(job_id)
-
-    duplicate_suppressions = [
-        asdict(event)
-        for event in database_events
-        if event.type == "duplicate_suppressed"
-    ]
-
-    all_events = database_events + orchestrator_events
-
-    all_events.sort(
-        key=lambda event: datetime.fromisoformat(
-            event.ts.replace(" ", "T", 1)
-        )
-    )
-
-    write_jsonl(
-        artifact_dir / "history.jsonl",
-        all_events,
-    )
-
-    report: dict[str, object] = {
-        "framework": "faultline",
-        "adapter": "celery",
-        "compose_project": PROJECT_NAME,
-        "mode": mode,
-        "window": window,
-        "job_id": job_id,
-        "fault": fault,
-        "fault_injection": fault_description.as_report(),
-        "broker": "Redis",
-        "database": "PostgreSQL",
-        "invariant": invariant.name,
-        "invariant_observed": invariant.observed,
-        "invariant_limit": invariant.limit,
-        "all_invariants": {
-            name: {
-                "passed": result.passed,
-                "observed": result.observed,
-                "limit": result.limit,
-            }
-            for name, result in invariant_results.items()
-        },
-        "committed_effects": committed_effects,
-        "effects": effects,
-        "stale_rejections": rejections,
-        "duplicate_suppressions": duplicate_suppressions,
-        "current_fencing_token": current_token(job_id),
-        "result": "PASS" if invariant_pass else "FAIL",
-        "methodology": (
-            (
-                "Real Celery workers and Redis broker with PostgreSQL "
-                "side-effect ledger; Worker A is paused before its "
-                "first side-effect commit while the task remains "
-                "unacknowledged, forcing Redis redelivery."
+            orchestrator_events.append(
+                HistoryEvent(
+                    ts=now_iso(),
+                    type="fault_recovered",
+                    job_id=job_id,
+                    worker="worker-a",
+                    fencing_token=1,
+                    details={"fault": fault_description.recover},
+                )
             )
-            if window == "pre-commit"
-            else (
+
+            injector.recover(WORKER_A)
+
+            expected_terminal = worker_a_terminal_marker(
+                mode,
+                window,
+            )
+
+            wait_for_log(
+                WORKER_A,
+                f"{expected_terminal} job={job_id}",
+                timeout=45,
+            )
+
+        else:
+            print("[6/8] Restarting Worker A after process crash")
+
+            orchestrator_events.append(
+                HistoryEvent(
+                    ts=now_iso(),
+                    type="fault_recovered",
+                    job_id=job_id,
+                    worker="worker-a",
+                    fencing_token=1,
+                    details={"fault": fault_description.recover},
+                )
+            )
+
+            injector.recover(WORKER_A)
+
+        print("[7/8] Querying PostgreSQL evidence")
+
+        stage["name"] = "evidence_collection"
+        effects = query_effects(job_id)
+        rejections = query_rejections(job_id)
+
+        committed_effects = len(effects)
+
+        committed_tokens = [
+            effect["fencing_token"] for effect in effects
+        ]
+        stale_commits_accepted = (
+            sum(
+                1
+                for token in committed_tokens
+                if token < max(committed_tokens)
+            )
+            if committed_tokens
+            else 0
+        )
+
+        invariant_results = {
+            "at-most-one-effect": at_most_one_effect(
+                committed_effects
+            ),
+            "no-lost-committed-effect": no_lost_committed_effect(
+                committed_effects
+            ),
+            "stale-owner-cannot-commit": stale_owner_cannot_commit(
+                stale_commits_accepted
+            ),
+        }
+
+        invariant = invariant_results[invariant]
+        invariant_pass = invariant.passed
+
+        database_events = parse_attempt_history(job_id)
+
+        duplicate_suppressions = [
+            asdict(event)
+            for event in database_events
+            if event.type == "duplicate_suppressed"
+        ]
+
+        all_events = database_events + orchestrator_events
+
+        all_events.sort(
+            key=lambda event: datetime.fromisoformat(
+                event.ts.replace(" ", "T", 1)
+            )
+        )
+
+        stage["name"] = "reporting"
+        write_jsonl(
+            artifact_dir / "history.jsonl",
+            all_events,
+        )
+
+        report: dict[str, object] = {
+            "framework": "faultline",
+            "adapter": "celery",
+            "compose_project": PROJECT_NAME,
+            "mode": mode,
+            "window": window,
+            "job_id": job_id,
+            "fault": fault,
+            "fault_injection": fault_description.as_report(),
+            "broker": "Redis",
+            "database": "PostgreSQL",
+            "invariant": invariant.name,
+            "invariant_observed": invariant.observed,
+            "invariant_limit": invariant.limit,
+            "all_invariants": {
+                name: {
+                    "passed": result.passed,
+                    "observed": result.observed,
+                    "limit": result.limit,
+                }
+                for name, result in invariant_results.items()
+            },
+            "committed_effects": committed_effects,
+            "effects": effects,
+            "stale_rejections": rejections,
+            "duplicate_suppressions": duplicate_suppressions,
+            "current_fencing_token": current_token(job_id),
+            "result": "PASS" if invariant_pass else "FAIL",
+            "methodology": (
                 (
                     "Real Celery workers and Redis broker with PostgreSQL "
-                    "side-effect ledger; Worker A commits the side effect "
-                    "and is paused before task return/ack, forcing Redis "
-                    "to redeliver the already-committed logical job."
+                    "side-effect ledger; Worker A is paused before its "
+                    "first side-effect commit while the task remains "
+                    "unacknowledged, forcing Redis redelivery."
                 )
-                if fault == "pause"
+                if window == "pre-commit"
                 else (
-                    "Real Celery workers and Redis broker with PostgreSQL "
-                    "side-effect ledger; Worker A commits the side effect "
-                    f"and is killed with {fault_description.inject} "
-                    "before task return/ack, "
-                    "forcing Redis to redeliver the already-committed "
-                    "logical job."
+                    (
+                        "Real Celery workers and Redis broker with PostgreSQL "
+                        "side-effect ledger; Worker A commits the side effect "
+                        "and is paused before task return/ack, forcing Redis "
+                        "to redeliver the already-committed logical job."
+                    )
+                    if fault == "pause"
+                    else (
+                        "Real Celery workers and Redis broker with PostgreSQL "
+                        "side-effect ledger; Worker A commits the side effect "
+                        f"and is killed with {fault_description.inject} "
+                        "before task return/ack, "
+                        "forcing Redis to redeliver the already-committed "
+                        "logical job."
+                    )
                 )
-            )
-        ),
-    }
+            ),
+        }
 
-    (artifact_dir / "report.json").write_text(
-        json.dumps(report, indent=2) + "\n"
-    )
+        (artifact_dir / "report.json").write_text(
+            json.dumps(report, indent=2) + "\n"
+        )
 
-    (artifact_dir / "worker-a.log").write_text(
-        logs(WORKER_A)
-    )
+        (artifact_dir / "worker-a.log").write_text(
+            logs(WORKER_A)
+        )
 
-    (artifact_dir / "worker-b.log").write_text(
-        logs(WORKER_B)
-    )
+        (artifact_dir / "worker-b.log").write_text(
+            logs(WORKER_B)
+        )
 
-    print("[8/8] Invariant result")
-    print()
-    print("----------------------------------------")
-    print(f"Committed effects:       {committed_effects}")
-    print(f"Stale rejections:        {len(rejections)}")
-    print(
-        f"Duplicate suppressions:  "
-        f"{len(duplicate_suppressions)}"
-    )
-    print(f"Current fencing token:   {report['current_fencing_token']}")
-    print("----------------------------------------")
-    print(
-        f"{invariant.name}: "
-        f"{'PASS' if invariant_pass else 'FAIL'}"
-    )
-    print()
-    print(f"History: {artifact_dir / 'history.jsonl'}")
-    print(f"Report:  {artifact_dir / 'report.json'}")
+        print("[8/8] Invariant result")
+        print()
+        print("----------------------------------------")
+        print(f"Committed effects:       {committed_effects}")
+        print(f"Stale rejections:        {len(rejections)}")
+        print(
+            f"Duplicate suppressions:  "
+            f"{len(duplicate_suppressions)}"
+        )
+        print(f"Current fencing token:   {report['current_fencing_token']}")
+        print("----------------------------------------")
+        print(
+            f"{invariant.name}: "
+            f"{'PASS' if invariant_pass else 'FAIL'}"
+        )
+        print()
+        print(f"History: {artifact_dir / 'history.jsonl'}")
+        print(f"Report:  {artifact_dir / 'report.json'}")
 
-    recovery = save_recovery_audit(
-        report,
-        [asdict(event) for event in all_events],
-        artifact_dir,
-        timeout_seconds=60,
-    )
+        recovery = save_recovery_audit(
+            report,
+            [asdict(event) for event in all_events],
+            artifact_dir,
+            timeout_seconds=60,
+        )
 
-    print(f"Recovery audit: {recovery['status']}")
+        print(f"Recovery audit: {recovery['status']}")
 
-    return report, artifact_dir
+        return report, artifact_dir
+
 
 
 def run_race(
