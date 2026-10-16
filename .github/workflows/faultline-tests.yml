@@ -11,6 +11,11 @@ on:
         required: false
         type: boolean
         default: false
+      run_outages:
+        description: 'Run opt-in isolated Redis/PostgreSQL service outage probes (no worker jobs)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -59,5 +64,44 @@ jobs:
           path: |
             artifacts/benchmarks/
             artifacts/runs/
+          if-no-files-found: warn
+          retention-days: 7
+
+  isolated-service-outages:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_outages
+    needs: unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - adapter: celery
+            service: redis
+          - adapter: bullmq
+            service: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install project and tests
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e . pytest
+      - name: Execute isolated network-peer service-outage probe
+        run: >-
+          python -m faultline.outage_probe
+          --adapter ${{ matrix.adapter }}
+          --service ${{ matrix.service }}
+          --pause-seconds 5
+          --min-free-gib 3
+          --cleanup-passing
+      - name: Upload evidence even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: service-outage-${{ matrix.adapter }}-${{ matrix.service }}
+          path: artifacts/outages/
           if-no-files-found: warn
           retention-days: 7
