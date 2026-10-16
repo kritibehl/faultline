@@ -48,7 +48,7 @@ The scenario above shows fencing solving a *local ownership* problem: a stale wo
 | idempotency | 1 | 1 | – | PASS |
 | fencing + idempotency | 1 | 1 | 2 | PASS |
  
-**Why fencing alone still fails:** both of Worker B's commit attempts are fencing-*accepted* (`remote_fencing_acceptances: 2`, `remote_stale_rejections: 0`). Worker B isn't a stale owner — it legitimately holds the current token. Fencing has nothing to reject, because the problem was never "who owns this job." It's "did the remote side effect already happen." Those are different failure classes: fencing defends the *local ownership* transition; only idempotency (an idempotency key on the remote charge itself) defends the *remote effect* against being applied twice when the caller genuinely cannot tell whether its previous attempt succeeded.
+**Why fencing alone still fails:** the charge service accepted both calls under fencing (`remote_fencing_acceptances: 2`, `remote_stale_rejections: 0`): Worker A's call with token 1, which landed before Worker A was killed, and Worker B's redelivered call with token 2. Each token was current when its call arrived, so fencing had nothing to reject. The problem was never who owns this job. It's whether the remote side effect already happened. Those are different failure classes: fencing defends the *local ownership* transition; only idempotency (an idempotency key on the remote charge itself) defends the *remote effect* against being applied twice when the caller genuinely cannot tell whether its previous attempt succeeded.
  
 ```bash
 python -m faultline.scenarios.ambiguous_remote --strategy fencing
