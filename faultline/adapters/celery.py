@@ -29,10 +29,14 @@ from faultline.lifecycle import RunLifecycle
 
 
 COMPOSE = "integrations/celery/docker-compose.yml"
+COMPOSE_OVERRIDE = "integrations/celery/docker-compose.isolation.yml"
 
-WORKER_A = "faultline-celery-worker-a"
-WORKER_B = "faultline-celery-worker-b"
-POSTGRES = "faultline-celery-postgres"
+# Each adapter process owns a distinct disposable Compose project.
+PROJECT_NAME = f"faultline-celery-{uuid.uuid4().hex[:12]}"
+
+WORKER_A = f"{PROJECT_NAME}-worker-a"
+WORKER_B = f"{PROJECT_NAME}-worker-b"
+POSTGRES = f"{PROJECT_NAME}-postgres"
 
 
 CAPABILITIES = AdapterCapabilities(
@@ -62,8 +66,12 @@ def compose(*args: str, capture: bool = True) -> subprocess.CompletedProcess[str
     return run(
         "docker",
         "compose",
+        "-p",
+        PROJECT_NAME,
         "-f",
         COMPOSE,
+        "-f",
+        COMPOSE_OVERRIDE,
         *args,
         capture=capture,
     )

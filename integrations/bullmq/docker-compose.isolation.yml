@@ -1,0 +1,11 @@
+# Used only by automated isolated Faultline experiments.
+# Original Compose files remain unchanged.
+services:
+  postgres:
+    container_name: "${COMPOSE_PROJECT_NAME}-postgres"
+  redis:
+    container_name: "${COMPOSE_PROJECT_NAME}-redis"
+  worker-a:
+    container_name: "${COMPOSE_PROJECT_NAME}-worker-a"
+  worker-b:
+    container_name: "${COMPOSE_PROJECT_NAME}-worker-b"

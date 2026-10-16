@@ -28,10 +28,14 @@ from faultline.lifecycle import RunLifecycle
 
 
 COMPOSE = "integrations/bullmq/docker-compose.yml"
+COMPOSE_OVERRIDE = "integrations/bullmq/docker-compose.isolation.yml"
 
-WORKER_A = "faultline-bullmq-worker-a"
-WORKER_B = "faultline-bullmq-worker-b"
-POSTGRES = "faultline-bullmq-postgres"
+# Each adapter process owns a distinct disposable Compose project.
+PROJECT_NAME = f"faultline-bullmq-{uuid.uuid4().hex[:12]}"
+
+WORKER_A = f"{PROJECT_NAME}-worker-a"
+WORKER_B = f"{PROJECT_NAME}-worker-b"
+POSTGRES = f"{PROJECT_NAME}-postgres"
 
 LOCK_DURATION_MS = 5000
 STALLED_INTERVAL_MS = 1000
@@ -75,8 +79,12 @@ def compose(
     return run(
         "docker",
         "compose",
+        "-p",
+        PROJECT_NAME,
         "-f",
         COMPOSE,
+        "-f",
+        COMPOSE_OVERRIDE,
         *args,
         capture=capture,
     )
