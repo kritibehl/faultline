@@ -610,6 +610,7 @@ def _run_race(
     report: dict[str, object] = {
         "framework": "faultline",
         "adapter": "celery",
+        "compose_project": PROJECT_NAME,
         "mode": mode,
         "window": window,
         "job_id": job_id,
