@@ -108,10 +108,15 @@ def peer_probe_args(project: str, service: str) -> list[str]:
     raise ValueError("invalid service")
 
 
-def outage_proven(result: dict[str, Any]) -> bool:
-    # 124 is the exit code of the CLIENT timeout inside the running peer;
-    # an unrelated Docker CLI timeout/error is not evidence of an outage.
-    return result.get("returncode") == 124 and not result.get("timed_out")
+def outage_proven(
+    result: dict[str, Any], *, expected_timeout_code: int = 124
+) -> bool:
+    """Accept only the peer's calibrated timeout exit code."""
+    return (
+        expected_timeout_code in (124, 143)
+        and result.get("returncode") == expected_timeout_code
+        and result.get("timed_out") is False
+    )
 
 
 def response_ok(service: str, execution: dict[str, Any]) -> bool:
@@ -290,6 +295,28 @@ def run_probe(config: Config, *, dry_run: bool = False) -> tuple[int, Path | Non
             raise ProbeError("baseline network probe never reached readiness")
         record["baseline_ready"] = True
 
+        # Calibrate the peer's timeout program before fault injection.
+        # BusyBox may return 143; GNU timeout usually returns 124.
+        record["stage"] = "timeout_calibration"
+        control = run_command(
+            ["docker", "exec", peer_name(project),
+             "timeout", "1", "sleep", "4"],
+            timeout=6,
+        )
+        record["events"].append({
+            "stage": "timeout_calibration",
+            "probe": control,
+        })
+        if (
+            control.get("timed_out")
+            or control.get("returncode") not in (124, 143)
+        ):
+            raise ProbeError(
+                "peer timeout calibration failed"
+            )
+        expected_timeout_code = int(control["returncode"])
+        record["timeout_control_exit_code"] = expected_timeout_code
+
         record["stage"] = "injection"
         pause_attempted = True
         require_success(run_command(["docker", "pause", target], timeout=25), "service pause")
@@ -301,7 +328,24 @@ def run_probe(config: Config, *, dry_run: bool = False) -> tuple[int, Path | Non
         begin = time.monotonic()
         record["stage"] = "outage_observation"
         during = run_command(probe_args, timeout=10)
-        record["outage_observed"] = outage_proven(during)
+
+        still_paused = run_command(
+            ["docker", "inspect", "--format",
+             "{{.State.Paused}}", target],
+            timeout=15,
+        )
+        require_success(still_paused, "paused-state recheck")
+
+        record["paused_through_probe"] = (
+            still_paused["stdout"].strip() == "true"
+        )
+        record["outage_observed"] = (
+            record["paused_through_probe"]
+            and outage_proven(
+                during,
+                expected_timeout_code=expected_timeout_code,
+            )
+        )
         record["events"].append({
             "stage": "during_pause", "probe": during,
             "unavailable": record["outage_observed"],

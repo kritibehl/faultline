@@ -126,7 +126,7 @@ def test_wait_for_probe_recovers_after_failure(monkeypatch):
     assert ok and len(attempts) == 2
 
 
-def _harness(monkeypatch, tmp_path, *, during_available=False, recovery_available=True, cleanup=False, inject_error=False):
+def _harness(monkeypatch, tmp_path, *, during_available=False, recovery_available=True, cleanup=False, inject_error=False, timeout_code=124, during_timeout_code=None):
     monkeypatch.setattr(op, "ROOT", tmp_path)
     monkeypatch.setattr(op, "check_space", lambda *_: 8.0)
     monkeypatch.setattr(op.time, "sleep", lambda *_: None)
@@ -158,8 +158,11 @@ def _harness(monkeypatch, tmp_path, *, during_available=False, recovery_availabl
         if args[:2] == ["docker", "run"]:
             return {"returncode": 0, "stdout": "a" * 64, "stderr": "", "timed_out": False}
         if args[:2] == ["docker", "exec"]:
+            if args[-3:] == ["1", "sleep", "4"]:
+                return {"returncode": timeout_code, "stdout": "", "stderr": "", "timed_out": False}
             if paused["value"] and not during_available:
-                return {"returncode": 124, "stdout": "", "stderr": "", "timed_out": False}
+                code = during_timeout_code if during_timeout_code is not None else timeout_code
+                return {"returncode": code, "stdout": "", "stderr": "", "timed_out": False}
             if not paused["value"] and not recovery_available and any(x[:2] == ["docker", "unpause"] for x in commands):
                 return {"returncode": 1, "stdout": "", "stderr": "unavailable", "timed_out": False}
             return {"returncode": 0, "stdout": "PONG", "stderr": "", "timed_out": False}
@@ -213,3 +216,54 @@ def test_cli_invalid_argument_exit_two():
     with pytest.raises(SystemExit) as exc:
         op.main(["--adapter", "celery", "--service", "postgres", "--pause-seconds", "3"])
     assert exc.value.code == 2
+
+
+
+def test_busybox_calibrated_timeout(monkeypatch, tmp_path):
+    commands, paused, _ = _harness(
+        monkeypatch, tmp_path, timeout_code=143
+    )
+    code, path = op.run_probe(op.Config("celery", "redis"))
+    report = json.loads(path.read_text())
+    assert code == 0
+    assert report["result"] == "PASS"
+    assert report["timeout_control_exit_code"] == 143
+    assert report["paused_through_probe"] is True
+    assert report["outage_observed"] is True
+    assert not paused["value"]
+
+
+def test_mismatched_timeout_not_accepted(monkeypatch, tmp_path):
+    commands, paused, _ = _harness(
+        monkeypatch, tmp_path,
+        timeout_code=124,
+        during_timeout_code=143,
+    )
+    code, path = op.run_probe(
+        op.Config("celery", "redis", cleanup_passing=True)
+    )
+    report = json.loads(path.read_text())
+    assert code == 2
+    assert report["result"] == "INCONCLUSIVE"
+    assert report["timeout_control_exit_code"] == 124
+    assert report["outage_observed"] is False
+    assert not paused["value"]
+    assert not any("down" in cmd for cmd in commands)
+
+
+def test_invalid_calibration_fails_closed(monkeypatch, tmp_path):
+    commands, paused, _ = _harness(
+        monkeypatch, tmp_path, timeout_code=0
+    )
+    code, path = op.run_probe(
+        op.Config("celery", "redis", cleanup_passing=True)
+    )
+    report = json.loads(path.read_text())
+    assert code == 2
+    assert report["result"] == "INCONCLUSIVE"
+    assert "calibration failed" in report["error"]
+    assert not paused["value"]
+    assert not any(
+        cmd[:2] == ["docker", "pause"]
+        for cmd in commands
+    )
