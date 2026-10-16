@@ -1,0 +1,63 @@
+name: Faultline tests
+
+on:
+  push:
+    branches: [main, feat/p0-invariant-recovery]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      run_live:
+        description: 'Run isolated real Celery and BullMQ integration trials (slow; uses Docker)'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install project and test requirements
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e . pytest
+      - name: Compile and test
+        run: |
+          python -m compileall -q faultline tests
+          python -m pytest tests/ -q --tb=short
+      - name: Preview real trial plan without Docker
+        run: python -m faultline.trials --trials 1 --dry-run
+
+  live-integration:
+    if: github.event_name == 'workflow_dispatch' && inputs.run_live
+    needs: unit
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install project
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e . pytest
+      - name: Run isolated real-worker integrations
+        run: python -m faultline.trials --trials 1 --min-free-gib 3 --cleanup-passing
+      - name: Preserve all run evidence, even when integration fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: faultline-integration-evidence
+          path: |
+            artifacts/benchmarks/
+            artifacts/runs/
+          if-no-files-found: warn
+          retention-days: 7
