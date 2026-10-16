@@ -129,10 +129,19 @@ def run_command(args: list[str], *, timeout: float) -> dict[str, Any]:
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
             text=True, timeout=timeout, check=False,
         )
+        # Docker inspect produces complete JSON that may exceed 4 KB.
+        full_inspect = args[:2] == ["docker", "inspect"] and "--format" not in args
+        if full_inspect and len(proc.stdout) > 1_000_000:
+            return {
+                "returncode": 2,
+                "timed_out": False,
+                "stdout": "",
+                "stderr": "Docker inspect response exceeds 1 MB safety limit",
+            }
         return {
             "returncode": proc.returncode,
             "timed_out": False,
-            "stdout": proc.stdout[-4000:],
+            "stdout": proc.stdout if full_inspect else proc.stdout[-4000:],
             "stderr": proc.stderr[-4000:],
         }
     except subprocess.TimeoutExpired as exc:
