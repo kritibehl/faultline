@@ -44,3 +44,33 @@ ON stale_rejections(job_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_effects_idempotency_key
 ON effects(idempotency_key)
 WHERE idempotency_key IS NOT NULL;
+
+
+-- Milestone 8: snapshot the authoritative ownership token at side-effect
+-- insertion time. A SHARE lock conflicts with concurrent token UPDATEs.
+-- That lock is retained until the inserting transaction completes, making
+-- the snapshot/commit order serializable with ownership transitions.
+-- The attempt timeline alone is NOT authoritative for this property.
+ALTER TABLE effects
+    ADD COLUMN IF NOT EXISTS owner_token_at_commit BIGINT;
+
+CREATE OR REPLACE FUNCTION faultline_stamp_effect_owner()
+RETURNS TRIGGER AS $$
+BEGIN
+    SELECT current_token
+      INTO NEW.owner_token_at_commit
+      FROM job_ownership
+     WHERE job_id = NEW.job_id
+       FOR SHARE;
+
+    -- A missing ownership row produces NULL evidence: the auditor must
+    -- report INCONCLUSIVE rather than claiming a safe commit.
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS faultline_effect_owner_snapshot ON effects;
+CREATE TRIGGER faultline_effect_owner_snapshot
+BEFORE INSERT ON effects
+FOR EACH ROW
+EXECUTE FUNCTION faultline_stamp_effect_owner();

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from faultline.invariants.ownership import audit_effect_ownership
+
 from faultline.reporting.failure_artifacts import preserve_failed_run
 
 from faultline.reporting.recovery_audit import save_recovery_audit
@@ -158,13 +160,15 @@ def parse_attempt_history(job_id: str) -> list[HistoryEvent]:
 
 
 def query_effects(job_id: str) -> list[dict[str, object]]:
+    """Read effects with the commit-transaction ownership snapshot."""
     output = sql(
         f"""
         SELECT
             worker_name,
             fencing_token,
             amount,
-            committed_at
+            committed_at,
+            owner_token_at_commit
         FROM effects
         WHERE job_id = '{job_id}'
         ORDER BY id;
@@ -172,23 +176,22 @@ def query_effects(job_id: str) -> list[dict[str, object]]:
     )
 
     effects: list[dict[str, object]] = []
-
     if not output:
         return effects
 
     for line in output.splitlines():
-        worker, token, amount, committed_at = line.split("\t", 3)
-
+        worker, token, amount, committed_at, owner = line.split("\t", 4)
         effects.append(
             {
                 "worker": worker,
                 "fencing_token": int(token),
                 "amount": int(amount),
                 "committed_at": committed_at,
+                "owner_token_at_commit": int(owner) if owner else None,
             }
         )
-
     return effects
+
 
 
 def query_rejections(job_id: str) -> list[dict[str, object]]:
@@ -585,29 +588,9 @@ def _run_race(
 
         committed_effects = len(effects)
 
-        committed_tokens = [
-            effect["fencing_token"] for effect in effects
-        ]
-        stale_commits_accepted = (
-            sum(
-                1
-                for token in committed_tokens
-                if token < max(committed_tokens)
-            )
-            if committed_tokens
-            else 0
-        )
-
         invariant_results = {
-            "at-most-one-effect": at_most_one_effect(
-                committed_effects
-            ),
-            "no-lost-committed-effect": no_lost_committed_effect(
-                committed_effects
-            ),
-            "stale-owner-cannot-commit": stale_owner_cannot_commit(
-                stale_commits_accepted
-            ),
+            "at-most-one-effect": at_most_one_effect(committed_effects),
+            "no-lost-committed-effect": no_lost_committed_effect(committed_effects),
         }
 
         invariant = invariant_results[invariant]
@@ -689,6 +672,24 @@ def _run_race(
                     )
                 )
             ),
+        }
+
+        # Persist only authoritative commit-transaction ownership evidence.
+        ownership_audit = audit_effect_ownership(effects)
+        report["ownership_audit"] = ownership_audit
+        report["all_invariants"]["stale-owner-cannot-commit"] = {
+            "status": ownership_audit["status"],
+            "passed": (
+                True if ownership_audit["status"] == "PASS"
+                else False if ownership_audit["status"] == "FAIL"
+                else None
+            ),
+            "observed": (
+                len(ownership_audit["violations"])
+                if ownership_audit["status"] != "INCONCLUSIVE" else None
+            ),
+            "limit": 0,
+            "evidence": "PostgreSQL ownership token snapshotted at effect insert",
         }
 
         (artifact_dir / "report.json").write_text(
