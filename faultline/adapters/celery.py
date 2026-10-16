@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from faultline.reporting.recovery_audit import save_recovery_audit
+
 import json
 import subprocess
 import time
@@ -682,6 +684,15 @@ def _run_race(
     print()
     print(f"History: {artifact_dir / 'history.jsonl'}")
     print(f"Report:  {artifact_dir / 'report.json'}")
+
+    recovery = save_recovery_audit(
+        report,
+        [asdict(event) for event in all_events],
+        artifact_dir,
+        timeout_seconds=60,
+    )
+
+    print(f"Recovery audit: {recovery['status']}")
 
     return report, artifact_dir
 

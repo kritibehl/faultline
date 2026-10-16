@@ -184,6 +184,41 @@ def audit_recovery(
     )
 
 
+
+def save_recovery_audit(
+    report: dict[str, Any],
+    history: list[dict[str, Any]],
+    run_dir: Path,
+    *,
+    timeout_seconds: float = 60,
+) -> dict[str, Any]:
+    """Persist an offline, post-experiment recovery assessment."""
+
+    outcome = audit_recovery(
+        report,
+        history,
+        timeout_seconds=timeout_seconds,
+    )
+
+    report["recovery_audit"] = outcome
+
+    for filename, payload in (
+        ("recovery-audit.json", outcome),
+        ("report.json", report),
+    ):
+        destination = run_dir / filename
+        temporary = run_dir / (filename + ".tmp")
+
+        temporary.write_text(
+            json.dumps(payload, indent=2) + chr(10),
+            encoding="utf-8",
+        )
+
+        temporary.replace(destination)
+
+    return outcome
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Audit a completed Faultline run"

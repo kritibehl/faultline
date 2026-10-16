@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from faultline.reporting.recovery_audit import save_recovery_audit
+
 from faultline.invariants.effects import no_lost_committed_effect
 
 import json
@@ -798,6 +800,15 @@ def _run_race(
         f"Report:  "
         f"{artifact_dir / 'report.json'}"
     )
+
+    recovery = save_recovery_audit(
+        report,
+        [asdict(event) for event in all_events],
+        artifact_dir,
+        timeout_seconds=60,
+    )
+
+    print(f"Recovery audit: {recovery['status']}")
 
     return report, artifact_dir
 
