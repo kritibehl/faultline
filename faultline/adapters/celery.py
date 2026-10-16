@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from faultline.recovery_deadline import (
+    bounded_sleep, bounded_subprocess_run, current_observation,
+    recovery_observation_deadline,
+)
+
 from faultline.invariants.ownership import audit_effect_ownership
 
 from faultline.reporting.failure_artifacts import preserve_failed_run
@@ -57,7 +62,7 @@ def run(
     capture: bool = True,
     check: bool = True,
 ) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
+    return bounded_subprocess_run(
         list(args),
         text=True,
         stdin=subprocess.DEVNULL,
@@ -92,16 +97,24 @@ def wait_for_log(
     needle: str,
     timeout: int = 45,
 ) -> None:
-    deadline = time.monotonic() + timeout
-
-    while time.monotonic() < deadline:
+    # Existing readiness waits retain their own timeout. During recovery,
+    # the *shared* deadline limits all readiness/terminal polls together.
+    import time
+    local_end = time.monotonic() + timeout
+    while True:
+        active = current_observation()
+        if active is not None:
+            active.remaining(f"waiting for {needle!r} in {container}")
+        if time.monotonic() >= local_end:
+            raise RunError(
+                f"timed out waiting for {needle!r} in {container}"
+            )
         if needle in logs(container):
+            if active is not None:
+                active.remaining(f"observing {needle!r} in {container}")
             return
-        time.sleep(0.5)
+        bounded_sleep(min(0.5, max(0.0, local_end - time.monotonic())))
 
-    raise RunError(
-        f"timed out waiting for {needle!r} in {container}"
-    )
 
 
 def sql(query: str) -> str:
@@ -484,35 +497,36 @@ def _run_race(
                 details={"fault": fault_description.inject},
             )
         )
-
-        print("[4/8] Waiting for Redis visibility timeout")
-        time.sleep(8)
-        print("      Redis visibility window expired")
-
-        print("[5/8] Starting Worker B and waiting for redelivery")
-        compose(
-            "up",
-            "-d",
-            "worker-b",
-            capture=False,
-        )
-
-        wait_for_log(
-            WORKER_B,
-            "ready.",
-        )
-
         stage["name"] = "redelivery_observation"
-        worker_b_terminal = worker_b_terminal_marker(
-            mode,
-            window,
-        )
+        with recovery_observation_deadline(60) as observation:
 
-        wait_for_log(
-            WORKER_B,
-            f"{worker_b_terminal} job={job_id}",
-            timeout=45,
-        )
+            print("[4/8] Waiting for Redis visibility timeout")
+            bounded_sleep(8)
+            print("      Redis visibility window expired")
+
+            print("[5/8] Starting Worker B and waiting for redelivery")
+            compose(
+                "up",
+                "-d",
+                "worker-b",
+                capture=False,
+            )
+
+            wait_for_log(
+                WORKER_B,
+                "ready.",
+            )
+
+            worker_b_terminal = worker_b_terminal_marker(
+                mode,
+                window,
+            )
+
+            wait_for_log(
+                WORKER_B,
+                f"{worker_b_terminal} job={job_id}",
+                timeout=45,
+            )
 
         takeover_token = current_token(job_id)
 
@@ -673,6 +687,8 @@ def _run_race(
                 )
             ),
         }
+
+        report["live_recovery_observation"] = observation.as_report()
 
         # Persist only authoritative commit-transaction ownership evidence.
         ownership_audit = audit_effect_ownership(effects)

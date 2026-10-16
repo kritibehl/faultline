@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from faultline.recovery_deadline import (
+    bounded_sleep, bounded_subprocess_run, current_observation,
+    recovery_observation_deadline,
+)
+
 from faultline.reporting.failure_artifacts import preserve_failed_run
 
 from faultline.reporting.recovery_audit import save_recovery_audit
@@ -57,7 +62,7 @@ def run(
     capture: bool = True,
     check: bool = True,
 ) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
+    return bounded_subprocess_run(
         list(args),
         text=True,
         stdin=subprocess.DEVNULL,
@@ -109,20 +114,24 @@ def wait_for_log(
     needle: str,
     timeout: int = 45,
 ) -> None:
+    # Existing readiness waits retain their own timeout. During recovery,
+    # the *shared* deadline limits all readiness/terminal polls together.
     import time
-
-    deadline = time.monotonic() + timeout
-
-    while time.monotonic() < deadline:
+    local_end = time.monotonic() + timeout
+    while True:
+        active = current_observation()
+        if active is not None:
+            active.remaining(f"waiting for {needle!r} in {container}")
+        if time.monotonic() >= local_end:
+            raise RunError(
+                f"timed out waiting for {needle!r} in {container}"
+            )
         if needle in logs(container):
+            if active is not None:
+                active.remaining(f"observing {needle!r} in {container}")
             return
+        bounded_sleep(min(0.5, max(0.0, local_end - time.monotonic())))
 
-        time.sleep(0.5)
-
-    raise RunError(
-        f"timed out waiting for "
-        f"{needle!r} in {container}"
-    )
 
 
 def log_event_timestamp(
@@ -540,72 +549,73 @@ def _run_race(
                 },
             )
         )
-
-        print(
-            "[4/8] Starting Worker B and "
-            "waiting for BullMQ stalled-job recovery"
-        )
-
-        compose(
-            "up",
-            "-d",
-            "worker-b",
-            capture=False,
-        )
-
-        wait_for_log(
-            WORKER_B,
-            "WORKER_READY worker=worker-b",
-        )
-
-        wait_for_log(
-            WORKER_B,
-            f"JOB_STALLED job={job_id}",
-            timeout=45,
-        )
-
-        print(
-            "      BullMQ detected the expired "
-            "job lock and recovered the stalled job"
-        )
-
-        stalled_ts = log_event_timestamp(
-            WORKER_B,
-            f"JOB_STALLED job={job_id}",
-        )
-
-        orchestrator_events.append(
-            HistoryEvent(
-                ts=stalled_ts,
-                type="stalled_recovery_observed",
-                job_id=job_id,
-                worker="worker-b",
-                fencing_token=1,
-                details={
-                    "mechanism":
-                        "BullMQ stalled-job recovery",
-                    "semantics":
-                        "worker event observation",
-                },
-            )
-        )
-
-        print(
-            "[5/8] Waiting for redelivered "
-            "job terminal result"
-        )
-
         stage["name"] = "redelivery_observation"
-        worker_b_terminal = (
-            worker_b_terminal_marker(mode)
-        )
+        with recovery_observation_deadline(60) as observation:
 
-        wait_for_log(
-            WORKER_B,
-            f"{worker_b_terminal} "
-            f"job={job_id}",
-            timeout=45,
-        )
+            print(
+                "[4/8] Starting Worker B and "
+                "waiting for BullMQ stalled-job recovery"
+            )
+
+            compose(
+                "up",
+                "-d",
+                "worker-b",
+                capture=False,
+            )
+
+            wait_for_log(
+                WORKER_B,
+                "WORKER_READY worker=worker-b",
+            )
+
+            wait_for_log(
+                WORKER_B,
+                f"JOB_STALLED job={job_id}",
+                timeout=45,
+            )
+
+            print(
+                "      BullMQ detected the expired "
+                "job lock and recovered the stalled job"
+            )
+
+            stalled_ts = log_event_timestamp(
+                WORKER_B,
+                f"JOB_STALLED job={job_id}",
+            )
+
+            orchestrator_events.append(
+                HistoryEvent(
+                    ts=stalled_ts,
+                    type="stalled_recovery_observed",
+                    job_id=job_id,
+                    worker="worker-b",
+                    fencing_token=1,
+                    details={
+                        "mechanism":
+                            "BullMQ stalled-job recovery",
+                        "semantics":
+                            "worker event observation",
+                    },
+                )
+            )
+
+            print(
+                "[5/8] Waiting for redelivered "
+                "job terminal result"
+            )
+
+            worker_b_terminal = (
+                worker_b_terminal_marker(mode)
+            )
+
+            wait_for_log(
+                WORKER_B,
+                f"{worker_b_terminal} "
+                f"job={job_id}",
+                timeout=45,
+            )
 
         takeover_token = current_token(
             job_id
@@ -777,6 +787,8 @@ def _run_race(
                 "Worker B."
             ),
         }
+
+        report["live_recovery_observation"] = observation.as_report()
 
         (
             artifact_dir / "report.json"
